@@ -10,6 +10,7 @@ import {
   Wallet,
   LogOut,
   Building2,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,22 +27,34 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/hooks/useUserRole";
 
-const operacional = [
+type NavItem = { title: string; url: string; icon: any };
+
+const operacionalAdmin: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Obras", url: "/obras", icon: HardHat },
   { title: "Etapas", url: "/etapas", icon: Columns3 },
 ];
 
-const modulos = [
+const modulosAdmin: NavItem[] = [
   { title: "Vistorias", url: "/vistorias", icon: ClipboardList },
   { title: "Orçamentos", url: "/orcamentos", icon: FileText },
   { title: "Execuções", url: "/execucoes", icon: Hammer },
 ];
 
-const financeiro = [
+const financeiroAdmin: NavItem[] = [
   { title: "Faturamento", url: "/faturamento", icon: Receipt },
   { title: "Recebimentos", url: "/recebimentos", icon: Wallet },
+];
+
+const gestaoAdmin: NavItem[] = [
+  { title: "Equipes", url: "/equipes", icon: Users },
+];
+
+// Operacional / terceirizado: apenas obras vinculadas
+const operacionalRestrito: NavItem[] = [
+  { title: "Minhas obras", url: "/obras", icon: HardHat },
 ];
 
 export function AppSidebar() {
@@ -49,8 +62,9 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { isAdmin, isLoading } = useUserRole();
 
-  const renderItems = (items: typeof operacional) =>
+  const renderItems = (items: NavItem[]) =>
     items.map((item) => {
       const active = item.url === "/" ? location.pathname === "/" : location.pathname.startsWith(item.url);
       return (
@@ -82,26 +96,44 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Operacional</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(operacional)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {isLoading ? null : isAdmin ? (
+          <>
+            <SidebarGroup>
+              <SidebarGroupLabel>Operacional</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>{renderItems(operacionalAdmin)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Módulos</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(modulos)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Módulos</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>{renderItems(modulosAdmin)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Financeiro</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(financeiro)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Financeiro</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>{renderItems(financeiroAdmin)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Gestão</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>{renderItems(gestaoAdmin)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          <SidebarGroup>
+            <SidebarGroupLabel>Minha área</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderItems(operacionalRestrito)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t">

@@ -38,6 +38,7 @@ export function FotosTab({ obraId }: { obraId: string }) {
       const { data: u } = await supabase.auth.getUser();
       const { error: insErr } = await supabase.from("fotos_obra").insert([{
         obra_id: obraId, tipo, imagem_url: pub.publicUrl, storage_path: path, observacao: observacao || null,
+        uploaded_by: u.user?.id ?? null,
       }]);
       if (insErr) throw insErr;
       await supabase.from("obra_timeline").insert([{
