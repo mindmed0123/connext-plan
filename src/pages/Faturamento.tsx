@@ -8,10 +8,12 @@ import { Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { format } from "date-fns";
 import { FaturamentoFormDialog } from "@/components/financeiro/FaturamentoFormDialog";
+import { PedidoCompraEditDialog } from "@/components/financeiro/PedidoCompraEditDialog";
 
 export default function Faturamento() {
   const [tab, setTab] = useState<"rcs" | "pcs" | "nfs">("rcs");
   const [openTipo, setOpenTipo] = useState<"rc" | "pc" | "nf" | null>(null);
+  const [editPc, setEditPc] = useState<any | null>(null);
 
   const rcs = useQuery({
     queryKey: ["faturamento-rcs"],
@@ -73,14 +75,18 @@ export default function Faturamento() {
         <TabsContent value="pcs">
           <div className="rounded-lg border bg-card overflow-hidden">
             <Table>
-              <TableHeader><TableRow><TableHead>Chamado</TableHead><TableHead>Nº pedido</TableHead><TableHead>Data</TableHead><TableHead>Valor</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Chamado</TableHead><TableHead>Nº pedido</TableHead><TableHead>Recebimento</TableHead><TableHead>Valor</TableHead><TableHead>Status</TableHead><TableHead className="w-20 text-right">Ações</TableHead></TableRow></TableHeader>
               <TableBody>
                 {pcs.data?.map((p: any) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{chamado(p)}{!p.obras && p.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
                     <TableCell>{p.numero_pedido}</TableCell>
-                    <TableCell>{p.data_recebimento && format(new Date(p.data_recebimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{p.data_recebimento ? format(new Date(p.data_recebimento), "dd/MM/yyyy") : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>{formatCurrency(p.valor)}</TableCell>
+                    <TableCell className="text-xs capitalize">{p.status}</TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" onClick={() => setEditPc(p)}>Editar</Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -109,6 +115,12 @@ export default function Faturamento() {
       {openTipo && (
         <FaturamentoFormDialog tipo={openTipo} open={!!openTipo} onOpenChange={(v) => !v && setOpenTipo(null)} />
       )}
+
+      <PedidoCompraEditDialog
+        pedido={editPc}
+        open={!!editPc}
+        onOpenChange={(v) => !v && setEditPc(null)}
+      />
     </div>
   );
 }
