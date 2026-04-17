@@ -129,6 +129,9 @@ export function PessoaFormDialog({
         <Tabs defaultValue="dados">
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            {editing && isTerceirizado && (
+              <TabsTrigger value="obras">Obras &amp; pagamentos</TabsTrigger>
+            )}
             {editing && isAdmin && (
               <TabsTrigger value="permissoes">Permissões</TabsTrigger>
             )}
