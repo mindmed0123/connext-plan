@@ -28,6 +28,7 @@ export function FotosTab({ obraId }: { obraId: string }) {
   const [observacao, setObservacao] = useState("");
   const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
   const [fotoParaExcluir, setFotoParaExcluir] = useState<{ id: string; storage_path: string | null } | null>(null);
+  const [baixando, setBaixando] = useState<{ feitas: number; total: number } | null>(null);
 
   const { data: fotos } = useQuery({
     queryKey: ["fotos", obraId],
