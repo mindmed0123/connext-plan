@@ -29,34 +29,35 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks/useUserRole";
+import { AppModulo, usePermissions } from "@/hooks/usePermissions";
 
-type NavItem = { title: string; url: string; icon: any };
+type NavItem = { title: string; url: string; icon: any; modulo: AppModulo };
 
 const operacionalAdmin: NavItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Obras", url: "/obras", icon: HardHat },
-  { title: "Etapas", url: "/etapas", icon: Columns3 },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, modulo: "dashboard" },
+  { title: "Obras", url: "/obras", icon: HardHat, modulo: "obras" },
+  { title: "Etapas", url: "/etapas", icon: Columns3, modulo: "etapas" },
 ];
 
 const modulosAdmin: NavItem[] = [
-  { title: "Vistorias", url: "/vistorias", icon: ClipboardList },
-  { title: "Orçamentos", url: "/orcamentos", icon: FileText },
-  { title: "Execuções", url: "/execucoes", icon: Hammer },
+  { title: "Vistorias", url: "/vistorias", icon: ClipboardList, modulo: "vistorias" },
+  { title: "Orçamentos", url: "/orcamentos", icon: FileText, modulo: "orcamentos" },
+  { title: "Execuções", url: "/execucoes", icon: Hammer, modulo: "execucoes" },
 ];
 
 const financeiroAdmin: NavItem[] = [
-  { title: "Financeiro", url: "/financeiro", icon: DollarSign },
-  { title: "Faturamento", url: "/faturamento", icon: Receipt },
-  { title: "Recebimentos", url: "/recebimentos", icon: Wallet },
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign, modulo: "financeiro" },
+  { title: "Faturamento", url: "/faturamento", icon: Receipt, modulo: "faturamento" },
+  { title: "Recebimentos", url: "/recebimentos", icon: Wallet, modulo: "financeiro" },
 ];
 
 const gestaoAdmin: NavItem[] = [
-  { title: "Equipes", url: "/equipes", icon: Users },
+  { title: "Equipes", url: "/equipes", icon: Users, modulo: "equipes" },
 ];
 
 // Operacional / terceirizado: apenas obras vinculadas
 const operacionalRestrito: NavItem[] = [
-  { title: "Minhas obras", url: "/obras", icon: HardHat },
+  { title: "Minhas obras", url: "/obras", icon: HardHat, modulo: "obras" },
 ];
 
 export function AppSidebar() {
