@@ -18,18 +18,14 @@ const LABEL: Record<typeof STATUS[number], string> = {
 const FORMAS = ["pix", "dinheiro", "transferencia", "boleto", "outro"] as const;
 type Forma = typeof FORMAS[number];
 const FORMA_LABEL: Record<Forma, string> = {
-  pix: "Pix",
-  dinheiro: "Dinheiro",
-  transferencia: "Transferência",
-  boleto: "Boleto",
-  outro: "Outro",
+  pix: "Pix", dinheiro: "Dinheiro", transferencia: "Transferência", boleto: "Boleto", outro: "Outro",
 };
 
 export function ExecucaoTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
     tipo_execucao: "equipe_propria" as "equipe_propria" | "terceirizado",
-    nome_terceirizado: "",
+    terceirizado_id: "",
     valor_terceirizado: "",
     forma_pagamento: "" as Forma | "",
     responsavel_obra: "",
@@ -41,10 +37,29 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
 
   const isTerceirizado = form.tipo_execucao === "terceirizado";
 
+  const { data: terceirizados } = useQuery({
+    queryKey: ["pessoas-ativas", "terceirizado"],
+    enabled: isTerceirizado,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pessoas")
+        .select("id, nome, tipo_servico")
+        .eq("tipo", "terceirizado")
+        .eq("status", "ativo")
+        .order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data } = useQuery({
     queryKey: ["execucoes", obraId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("execucoes").select("*").eq("obra_id", obraId).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("execucoes")
+        .select("*, terceirizado:terceirizado_id ( id, nome )")
+        .eq("obra_id", obraId)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -53,10 +68,12 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
   const mut = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
+      const terceirizado = terceirizados?.find((t) => t.id === form.terceirizado_id);
       const { error } = await supabase.from("execucoes").insert([{
         obra_id: obraId,
         tipo_execucao: form.tipo_execucao,
-        nome_terceirizado: isTerceirizado ? form.nome_terceirizado || null : null,
+        terceirizado_id: isTerceirizado && form.terceirizado_id ? form.terceirizado_id : null,
+        nome_terceirizado: isTerceirizado ? (terceirizado?.nome ?? null) : null,
         valor_terceirizado: isTerceirizado ? (parseFloat(form.valor_terceirizado) || 0) : 0,
         forma_pagamento: isTerceirizado && form.forma_pagamento ? form.forma_pagamento : null,
         responsavel_obra: form.responsavel_obra,
@@ -75,15 +92,7 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
       toast.success("Execução registrada");
       qc.invalidateQueries({ queryKey: ["execucoes", obraId] });
       qc.invalidateQueries({ queryKey: ["timeline", obraId] });
-      setForm({
-        ...form,
-        nome_terceirizado: "",
-        valor_terceirizado: "",
-        forma_pagamento: "",
-        responsavel_obra: "",
-        prazo_estimado: "",
-        observacoes: "",
-      });
+      setForm({ ...form, terceirizado_id: "", valor_terceirizado: "", forma_pagamento: "", responsavel_obra: "", prazo_estimado: "", observacoes: "" });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -116,24 +125,31 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
           {isTerceirizado && (
             <>
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs">Nome do terceirizado</Label>
-                <Input value={form.nome_terceirizado} onChange={(e) => setForm({ ...form, nome_terceirizado: e.target.value })} />
+                <Label className="text-xs">Terceirizado *</Label>
+                <Select value={form.terceirizado_id} onValueChange={(v) => setForm({ ...form, terceirizado_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um terceirizado cadastrado" /></SelectTrigger>
+                  <SelectContent>
+                    {(terceirizados?.length ?? 0) === 0 && (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                        Nenhum terceirizado ativo. Cadastre em Equipes.
+                      </div>
+                    )}
+                    {terceirizados?.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.nome}{t.tipo_servico ? ` • ${t.tipo_servico}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Valor do terceirizado (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.valor_terceirizado}
-                  onChange={(e) => setForm({ ...form, valor_terceirizado: e.target.value })}
-                />
+                <Input type="number" step="0.01" value={form.valor_terceirizado}
+                  onChange={(e) => setForm({ ...form, valor_terceirizado: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Forma de pagamento</Label>
-                <Select
-                  value={form.forma_pagamento || undefined}
-                  onValueChange={(v: Forma) => setForm({ ...form, forma_pagamento: v })}
-                >
+                <Select value={form.forma_pagamento || undefined} onValueChange={(v: Forma) => setForm({ ...form, forma_pagamento: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                   <SelectContent>
                     {FORMAS.map((f) => <SelectItem key={f} value={f}>{FORMA_LABEL[f]}</SelectItem>)}
@@ -160,7 +176,11 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           </div>
         </div>
-        <Button size="sm" onClick={() => mut.mutate()} disabled={!form.responsavel_obra || mut.isPending}>
+        <Button
+          size="sm"
+          onClick={() => mut.mutate()}
+          disabled={!form.responsavel_obra || (isTerceirizado && !form.terceirizado_id) || mut.isPending}
+        >
           {mut.isPending ? "Salvando..." : "Registrar execução"}
         </Button>
       </div>
@@ -173,7 +193,9 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
             <div className="flex items-center justify-between">
               <span className="font-medium">{x.responsavel_obra} • {LABEL[x.status as typeof STATUS[number]]}</span>
               <span className="text-xs text-muted-foreground">
-                {x.tipo_execucao === "terceirizado" ? `Terceirizado: ${x.nome_terceirizado ?? "—"}` : "Equipe própria"}
+                {x.tipo_execucao === "terceirizado"
+                  ? `Terceirizado: ${x.terceirizado?.nome ?? x.nome_terceirizado ?? "—"}`
+                  : "Equipe própria"}
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">

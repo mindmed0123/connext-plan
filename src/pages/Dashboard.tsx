@@ -122,7 +122,7 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-1">
           <p>• Cadastre uma obra em <Link className="text-primary hover:underline" to="/obras">Obras</Link></p>
-          <p>• Acompanhe o pipeline visual em <Link className="text-primary hover:underline" to="/kanban">Kanban</Link></p>
+          <p>• Acompanhe o pipeline visual em <Link className="text-primary hover:underline" to="/etapas">Etapas</Link></p>
           <p>• Registre vistoria, orçamento, execução e fotos diretamente no detalhe da obra</p>
         </CardContent>
       </Card>
