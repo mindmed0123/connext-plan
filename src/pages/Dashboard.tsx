@@ -98,9 +98,10 @@ export default function Dashboard() {
 
       <section>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Operacional</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <StatCard title="Total de obras" value={String(data?.totalObras ?? "—")} icon={HardHat} accent="primary" />
           <StatCard title="Em execução" value={String(data?.inEx ?? "—")} icon={Hammer} accent="status-execucao" />
+          <StatCard title="Finalizadas" value={String(data?.finalizadas ?? "—")} icon={CheckCircle2} accent="status-finalizado" />
           <StatCard title="Aguardando orçamento" value={String(data?.aguardandoOrc ?? "—")} icon={FileText} accent="status-orcamento" />
           <StatCard title="Em aprovação" value={String(data?.aguardandoAprov ?? "—")} icon={AlertCircle} accent="status-aprovacao" />
         </div>
