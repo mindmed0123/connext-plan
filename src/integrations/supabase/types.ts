@@ -64,6 +64,7 @@ export type Database = {
           prazo_estimado: number | null
           responsavel_obra: string
           status: Database["public"]["Enums"]["execucao_status"]
+          terceirizado_id: string | null
           tipo_execucao: Database["public"]["Enums"]["execucao_tipo"]
           updated_at: string
           valor_terceirizado: number
@@ -81,6 +82,7 @@ export type Database = {
           prazo_estimado?: number | null
           responsavel_obra: string
           status?: Database["public"]["Enums"]["execucao_status"]
+          terceirizado_id?: string | null
           tipo_execucao?: Database["public"]["Enums"]["execucao_tipo"]
           updated_at?: string
           valor_terceirizado?: number
@@ -98,6 +100,7 @@ export type Database = {
           prazo_estimado?: number | null
           responsavel_obra?: string
           status?: Database["public"]["Enums"]["execucao_status"]
+          terceirizado_id?: string | null
           tipo_execucao?: Database["public"]["Enums"]["execucao_tipo"]
           updated_at?: string
           valor_terceirizado?: number
@@ -108,6 +111,13 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "execucoes_terceirizado_id_fkey"
+            columns: ["terceirizado_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
             referencedColumns: ["id"]
           },
         ]
@@ -121,6 +131,7 @@ export type Database = {
           observacao: string | null
           storage_path: string | null
           tipo: Database["public"]["Enums"]["foto_tipo"]
+          uploaded_by: string | null
         }
         Insert: {
           data_upload?: string
@@ -130,6 +141,7 @@ export type Database = {
           observacao?: string | null
           storage_path?: string | null
           tipo: Database["public"]["Enums"]["foto_tipo"]
+          uploaded_by?: string | null
         }
         Update: {
           data_upload?: string
@@ -139,6 +151,7 @@ export type Database = {
           observacao?: string | null
           storage_path?: string | null
           tipo?: Database["public"]["Enums"]["foto_tipo"]
+          uploaded_by?: string | null
         }
         Relationships: [
           {
@@ -187,6 +200,51 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_responsaveis: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          obra_id: string
+          observacao: string | null
+          papel: Database["public"]["Enums"]["obra_papel"]
+          pessoa_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          obra_id: string
+          observacao?: string | null
+          papel: Database["public"]["Enums"]["obra_papel"]
+          pessoa_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          obra_id?: string
+          observacao?: string | null
+          papel?: Database["public"]["Enums"]["obra_papel"]
+          pessoa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_responsaveis_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
             referencedColumns: ["id"]
           },
         ]
@@ -374,6 +432,75 @@ export type Database = {
           },
         ]
       }
+      pessoas: {
+        Row: {
+          agencia: string | null
+          banco: string | null
+          cargo: string | null
+          chave_pix: string | null
+          conta: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          created_by: string | null
+          data_admissao: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          status: Database["public"]["Enums"]["pessoa_status"]
+          telefone: string | null
+          tipo: Database["public"]["Enums"]["pessoa_tipo"]
+          tipo_servico: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          agencia?: string | null
+          banco?: string | null
+          cargo?: string | null
+          chave_pix?: string | null
+          conta?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["pessoa_status"]
+          telefone?: string | null
+          tipo: Database["public"]["Enums"]["pessoa_tipo"]
+          tipo_servico?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          agencia?: string | null
+          banco?: string | null
+          cargo?: string | null
+          chave_pix?: string | null
+          conta?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["pessoa_status"]
+          telefone?: string | null
+          tipo?: Database["public"]["Enums"]["pessoa_tipo"]
+          tipo_servico?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -547,6 +674,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_obra: {
+        Args: { _obra_id: string; _uid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -554,6 +685,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_or_super: { Args: { _uid: string }; Returns: boolean }
+      is_super_admin: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
       app_role:
@@ -569,6 +702,10 @@ export type Database = {
       forma_pagamento: "pix" | "dinheiro" | "transferencia" | "boleto" | "outro"
       foto_tipo: "antes" | "durante" | "depois"
       obra_origem: "veman" | "sabesp"
+      obra_papel:
+        | "responsavel_administrativo"
+        | "executor_operacional"
+        | "terceirizado"
       obra_regiao: "leste" | "oeste" | "norte" | "sul"
       obra_status:
         | "recebido"
@@ -590,6 +727,8 @@ export type Database = {
         | "aprovado"
         | "reprovado"
       pc_status: "aguardando" | "recebido"
+      pessoa_status: "ativo" | "inativo"
+      pessoa_tipo: "terceirizado" | "administrativo" | "operacional"
       rc_status: "aguardando" | "recebido"
       recebimento_status: "a_receber" | "recebido"
       vistoria_status: "pendente" | "vistoriado"
@@ -734,6 +873,11 @@ export const Constants = {
       forma_pagamento: ["pix", "dinheiro", "transferencia", "boleto", "outro"],
       foto_tipo: ["antes", "durante", "depois"],
       obra_origem: ["veman", "sabesp"],
+      obra_papel: [
+        "responsavel_administrativo",
+        "executor_operacional",
+        "terceirizado",
+      ],
       obra_regiao: ["leste", "oeste", "norte", "sul"],
       obra_status: [
         "recebido",
@@ -757,6 +901,8 @@ export const Constants = {
         "reprovado",
       ],
       pc_status: ["aguardando", "recebido"],
+      pessoa_status: ["ativo", "inativo"],
+      pessoa_tipo: ["terceirizado", "administrativo", "operacional"],
       rc_status: ["aguardando", "recebido"],
       recebimento_status: ["a_receber", "recebido"],
       vistoria_status: ["pendente", "vistoriado"],
