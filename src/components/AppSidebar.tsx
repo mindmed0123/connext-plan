@@ -65,7 +65,12 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut, user } = useAuth();
-  const { isAdmin, isLoading } = useUserRole();
+  const { isAdmin, isSuperAdmin, isLoading } = useUserRole();
+  const { can, isLoading: permLoading } = usePermissions();
+
+  // super_admin/admin/gestor veem tudo. Administrativo "comum" filtra por permissão.
+  const filtra = (items: NavItem[]) =>
+    isSuperAdmin || isAdmin ? items : items.filter((i) => can(i.modulo, "view"));
 
   const renderItems = (items: NavItem[]) =>
     items.map((item) => {
