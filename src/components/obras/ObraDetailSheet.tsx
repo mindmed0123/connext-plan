@@ -98,6 +98,7 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                     <TabsTrigger value="equipe" className="text-xs px-3 py-1.5 whitespace-nowrap">Equipe</TabsTrigger>
                     <TabsTrigger value="fotos" className="text-xs px-3 py-1.5 whitespace-nowrap">Fotos</TabsTrigger>
                     <TabsTrigger value="contratacoes" className="text-xs px-3 py-1.5 whitespace-nowrap">Pagamentos</TabsTrigger>
+                    <TabsTrigger value="materiais" className="text-xs px-3 py-1.5 whitespace-nowrap">Materiais</TabsTrigger>
                     <TabsTrigger value="faturamento" className="text-xs px-3 py-1.5 whitespace-nowrap">Faturamento</TabsTrigger>
                     <TabsTrigger value="timeline" className="text-xs px-3 py-1.5 whitespace-nowrap">Histórico</TabsTrigger>
                   </TabsList>
