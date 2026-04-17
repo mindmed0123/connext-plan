@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   PESSOA_TIPO_LIST, PESSOA_TIPO_LABEL, PessoaTipo, CARGOS_OPERACIONAIS,
 } from "@/lib/pessoas-helpers";
+import { PermissoesEditor } from "./PermissoesEditor";
 
 type Pessoa = {
   id?: string;
