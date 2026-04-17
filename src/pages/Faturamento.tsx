@@ -115,6 +115,12 @@ export default function Faturamento() {
       {openTipo && (
         <FaturamentoFormDialog tipo={openTipo} open={!!openTipo} onOpenChange={(v) => !v && setOpenTipo(null)} />
       )}
+
+      <PedidoCompraEditDialog
+        pedido={editPc}
+        open={!!editPc}
+        onOpenChange={(v) => !v && setEditPc(null)}
+      />
     </div>
   );
 }
