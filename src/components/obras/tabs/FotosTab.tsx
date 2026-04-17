@@ -16,7 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Upload, ImageIcon, Trash2, Loader2 } from "lucide-react";
+import { Upload, ImageIcon, Trash2, Loader2, Download } from "lucide-react";
+import JSZip from "jszip";
 
 const TIPO_LABEL = { antes: "Antes", durante: "Durante", depois: "Depois" } as const;
 const MAX_FOTOS = 50;
@@ -27,6 +28,7 @@ export function FotosTab({ obraId }: { obraId: string }) {
   const [observacao, setObservacao] = useState("");
   const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
   const [fotoParaExcluir, setFotoParaExcluir] = useState<{ id: string; storage_path: string | null } | null>(null);
+  const [baixando, setBaixando] = useState<{ feitas: number; total: number } | null>(null);
 
   const { data: fotos } = useQuery({
     queryKey: ["fotos", obraId],
@@ -138,6 +140,58 @@ export function FotosTab({ obraId }: { obraId: string }) {
 
   const enviando = progresso !== null;
 
+  const baixarTodas = async () => {
+    if (!fotos || fotos.length === 0) return;
+    setBaixando({ feitas: 0, total: fotos.length });
+    try {
+      const zip = new JSZip();
+      const usados = new Set<string>();
+      let feitas = 0;
+
+      const BATCH = 5;
+      for (let i = 0; i < fotos.length; i += BATCH) {
+        const lote = fotos.slice(i, i + BATCH);
+        await Promise.all(
+          lote.map(async (f) => {
+            try {
+              const res = await fetch(f.imagem_url);
+              if (!res.ok) throw new Error("falha");
+              const blob = await res.blob();
+              const ext = (f.storage_path?.split(".").pop() || "jpg").toLowerCase();
+              const tipoLabel = TIPO_LABEL[f.tipo as keyof typeof TIPO_LABEL] || "Foto";
+              let nome = `${tipoLabel}/${tipoLabel}-${String(feitas + 1).padStart(3, "0")}.${ext}`;
+              while (usados.has(nome)) {
+                nome = `${tipoLabel}/${tipoLabel}-${String(feitas + 1).padStart(3, "0")}-${Math.random().toString(36).slice(2, 5)}.${ext}`;
+              }
+              usados.add(nome);
+              zip.file(nome, blob);
+            } catch {
+              // ignora foto que falhar
+            } finally {
+              feitas++;
+              setBaixando({ feitas, total: fotos.length });
+            }
+          }),
+        );
+      }
+
+      const conteudo = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(conteudo);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fotos-obra-${obraId.slice(0, 8)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`${fotos.length} foto(s) baixada(s)`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao baixar");
+    } finally {
+      setBaixando(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -183,7 +237,26 @@ export function FotosTab({ obraId }: { obraId: string }) {
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">Galeria {fotos && fotos.length > 0 && <span className="text-muted-foreground font-normal">({fotos.length})</span>}</h3>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">
+            Galeria {fotos && fotos.length > 0 && <span className="text-muted-foreground font-normal">({fotos.length})</span>}
+          </h3>
+          {fotos && fotos.length > 0 && (
+            <Button size="sm" variant="outline" onClick={baixarTodas} disabled={!!baixando}>
+              {baixando ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  Baixando {baixando.feitas}/{baixando.total}
+                </>
+              ) : (
+                <>
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Baixar tudo
+                </>
+              )}
+            </Button>
+          )}
+        </div>
         {(fotos?.length ?? 0) === 0 && (
           <div className="flex flex-col items-center gap-2 rounded-md border bg-card p-8 text-muted-foreground">
             <ImageIcon className="h-6 w-6" />
