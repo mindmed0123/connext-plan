@@ -301,31 +301,34 @@ export type Database = {
       notas_fiscais: {
         Row: {
           arquivo_pdf_url: string | null
+          codigo_chamado_avulso: string | null
           created_at: string
           data_emissao: string
           id: string
           numero_nf: string
-          obra_id: string
+          obra_id: string | null
           updated_at: string
           valor: number
         }
         Insert: {
           arquivo_pdf_url?: string | null
+          codigo_chamado_avulso?: string | null
           created_at?: string
           data_emissao: string
           id?: string
           numero_nf: string
-          obra_id: string
+          obra_id?: string | null
           updated_at?: string
           valor?: number
         }
         Update: {
           arquivo_pdf_url?: string | null
+          codigo_chamado_avulso?: string | null
           created_at?: string
           data_emissao?: string
           id?: string
           numero_nf?: string
-          obra_id?: string
+          obra_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -591,31 +594,34 @@ export type Database = {
       }
       pedidos_compra: {
         Row: {
+          codigo_chamado_avulso: string | null
           created_at: string
           data_recebimento: string | null
           id: string
           numero_pedido: string | null
-          obra_id: string
+          obra_id: string | null
           status: Database["public"]["Enums"]["pc_status"]
           updated_at: string
           valor: number
         }
         Insert: {
+          codigo_chamado_avulso?: string | null
           created_at?: string
           data_recebimento?: string | null
           id?: string
           numero_pedido?: string | null
-          obra_id: string
+          obra_id?: string | null
           status?: Database["public"]["Enums"]["pc_status"]
           updated_at?: string
           valor?: number
         }
         Update: {
+          codigo_chamado_avulso?: string | null
           created_at?: string
           data_recebimento?: string | null
           id?: string
           numero_pedido?: string | null
-          obra_id?: string
+          obra_id?: string | null
           status?: Database["public"]["Enums"]["pc_status"]
           updated_at?: string
           valor?: number
@@ -728,29 +734,32 @@ export type Database = {
       }
       rcs: {
         Row: {
+          codigo_chamado_avulso: string | null
           created_at: string
           data_rc: string | null
           id: string
           numero_rc: string | null
-          obra_id: string
+          obra_id: string | null
           status: Database["public"]["Enums"]["rc_status"]
           updated_at: string
         }
         Insert: {
+          codigo_chamado_avulso?: string | null
           created_at?: string
           data_rc?: string | null
           id?: string
           numero_rc?: string | null
-          obra_id: string
+          obra_id?: string | null
           status?: Database["public"]["Enums"]["rc_status"]
           updated_at?: string
         }
         Update: {
+          codigo_chamado_avulso?: string | null
           created_at?: string
           data_rc?: string | null
           id?: string
           numero_rc?: string | null
-          obra_id?: string
+          obra_id?: string | null
           status?: Database["public"]["Enums"]["rc_status"]
           updated_at?: string
         }
