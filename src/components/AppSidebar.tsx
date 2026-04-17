@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   HardHat,
-  KanbanSquare,
+  Columns3,
   ClipboardList,
   FileText,
   Hammer,
@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 const operacional = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Obras", url: "/obras", icon: HardHat },
-  { title: "Kanban", url: "/kanban", icon: KanbanSquare },
+  { title: "Etapas", url: "/etapas", icon: Columns3 },
 ];
 
 const modulos = [

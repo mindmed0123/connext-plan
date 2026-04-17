@@ -56,6 +56,7 @@ export type Database = {
         Row: {
           created_at: string
           data_inicio: string | null
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           id: string
           nome_terceirizado: string | null
           obra_id: string
@@ -65,10 +66,14 @@ export type Database = {
           status: Database["public"]["Enums"]["execucao_status"]
           tipo_execucao: Database["public"]["Enums"]["execucao_tipo"]
           updated_at: string
+          valor_terceirizado: number
         }
         Insert: {
           created_at?: string
           data_inicio?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
           id?: string
           nome_terceirizado?: string | null
           obra_id: string
@@ -78,10 +83,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["execucao_status"]
           tipo_execucao?: Database["public"]["Enums"]["execucao_tipo"]
           updated_at?: string
+          valor_terceirizado?: number
         }
         Update: {
           created_at?: string
           data_inicio?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
           id?: string
           nome_terceirizado?: string | null
           obra_id?: string
@@ -91,6 +100,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["execucao_status"]
           tipo_execucao?: Database["public"]["Enums"]["execucao_tipo"]
           updated_at?: string
+          valor_terceirizado?: number
         }
         Relationships: [
           {
@@ -263,10 +273,15 @@ export type Database = {
       }
       orcamentos: {
         Row: {
+          arquivo_path: string | null
+          arquivo_url: string | null
           created_at: string
           data_envio: string | null
+          descricao: string | null
           engenheiro_aprovador: string | null
           id: string
+          last_updated_at: string | null
+          last_updated_by: string | null
           numero_orcamento: string | null
           obra_id: string
           observacoes: string | null
@@ -275,10 +290,15 @@ export type Database = {
           valor_orcamento: number
         }
         Insert: {
+          arquivo_path?: string | null
+          arquivo_url?: string | null
           created_at?: string
           data_envio?: string | null
+          descricao?: string | null
           engenheiro_aprovador?: string | null
           id?: string
+          last_updated_at?: string | null
+          last_updated_by?: string | null
           numero_orcamento?: string | null
           obra_id: string
           observacoes?: string | null
@@ -287,10 +307,15 @@ export type Database = {
           valor_orcamento?: number
         }
         Update: {
+          arquivo_path?: string | null
+          arquivo_url?: string | null
           created_at?: string
           data_envio?: string | null
+          descricao?: string | null
           engenheiro_aprovador?: string | null
           id?: string
+          last_updated_at?: string | null
+          last_updated_by?: string | null
           numero_orcamento?: string | null
           obra_id?: string
           observacoes?: string | null
@@ -535,6 +560,7 @@ export type Database = {
       diario_status: "enviado" | "aprovado" | "reprovado"
       execucao_status: "nao_iniciada" | "em_execucao" | "pausada" | "finalizada"
       execucao_tipo: "equipe_propria" | "terceirizado"
+      forma_pagamento: "pix" | "dinheiro" | "transferencia" | "boleto" | "outro"
       foto_tipo: "antes" | "durante" | "depois"
       obra_origem: "veman" | "sabesp"
       obra_regiao: "leste" | "oeste" | "norte" | "sul"
@@ -692,6 +718,7 @@ export const Constants = {
       diario_status: ["enviado", "aprovado", "reprovado"],
       execucao_status: ["nao_iniciada", "em_execucao", "pausada", "finalizada"],
       execucao_tipo: ["equipe_propria", "terceirizado"],
+      forma_pagamento: ["pix", "dinheiro", "transferencia", "boleto", "outro"],
       foto_tipo: ["antes", "durante", "depois"],
       obra_origem: ["veman", "sabesp"],
       obra_regiao: ["leste", "oeste", "norte", "sul"],
