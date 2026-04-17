@@ -1,0 +1,1 @@
+ALTER TYPE public.obra_regiao ADD VALUE IF NOT EXISTS 'interior';

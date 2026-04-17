@@ -55,6 +55,7 @@ export const REGIAO_LABEL: Record<ObraRegiao, string> = {
   oeste: "Oeste",
   norte: "Norte",
   sul: "Sul",
+  interior: "Interior",
 };
 
 export const ORIGEM_LABEL: Record<ObraOrigem, string> = {

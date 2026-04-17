@@ -837,7 +837,7 @@ export type Database = {
         | "responsavel_administrativo"
         | "executor_operacional"
         | "terceirizado"
-      obra_regiao: "leste" | "oeste" | "norte" | "sul"
+      obra_regiao: "leste" | "oeste" | "norte" | "sul" | "interior"
       obra_status:
         | "recebido"
         | "em_vistoria"
@@ -1016,7 +1016,7 @@ export const Constants = {
         "executor_operacional",
         "terceirizado",
       ],
-      obra_regiao: ["leste", "oeste", "norte", "sul"],
+      obra_regiao: ["leste", "oeste", "norte", "sul", "interior"],
       obra_status: [
         "recebido",
         "em_vistoria",
