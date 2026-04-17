@@ -13,6 +13,7 @@ import {
   PESSOA_TIPO_LIST, PESSOA_TIPO_LABEL, PessoaTipo, CARGOS_OPERACIONAIS,
 } from "@/lib/pessoas-helpers";
 import { PermissoesEditor } from "./PermissoesEditor";
+import { TerceirizadoObrasTab } from "./TerceirizadoObrasTab";
 
 type Pessoa = {
   id?: string;
