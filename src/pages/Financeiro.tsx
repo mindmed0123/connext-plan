@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, AlertCircle, Clock, Search, ExternalLink } from "lucide-react";
+import { Wallet, TrendingUp, AlertCircle, Clock, Search, ExternalLink, Hammer, CheckCircle2, FileText } from "lucide-react";
 import { format, addDays, isBefore } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import {
@@ -44,6 +44,33 @@ export default function Financeiro() {
       return data ?? [];
     },
   });
+
+  const { data: obrasStats } = useQuery({
+    queryKey: ["financeiro-obras-stats"],
+    queryFn: async () => {
+      const { data } = await supabase.from("obras").select("id, status");
+      return data ?? [];
+    },
+  });
+
+  const { data: orcamentosStats } = useQuery({
+    queryKey: ["financeiro-orcamentos-stats"],
+    queryFn: async () => {
+      const { data } = await supabase.from("orcamentos").select("id, status");
+      return data ?? [];
+    },
+  });
+
+  const operacaoStats = useMemo(() => {
+    const obras = obrasStats ?? [];
+    const orcamentos = orcamentosStats ?? [];
+    const emExecucao = obras.filter((o: any) => o.status === "em_execucao").length;
+    const finalizadas = obras.filter((o: any) => o.status === "finalizado" || o.status === "pago").length;
+    const orcamentosPendentes = orcamentos.filter((o: any) =>
+      ["em_elaboracao", "enviado", "em_negociacao"].includes(o.status)
+    ).length;
+    return { emExecucao, finalizadas, orcamentosPendentes };
+  }, [obrasStats, orcamentosStats]);
 
   const stats = useMemo(() => {
     const list = contratacoes ?? [];
@@ -100,6 +127,30 @@ export default function Financeiro() {
           sub={`${stats.proximas} parcela${stats.proximas !== 1 ? "s" : ""}`}
           icon={Clock}
           tone="blue"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <StatCard
+          label="Obras em execução"
+          value={String(operacaoStats.emExecucao)}
+          sub={`${operacaoStats.emExecucao === 1 ? "obra ativa" : "obras ativas"}`}
+          icon={Hammer}
+          tone="blue"
+        />
+        <StatCard
+          label="Obras finalizadas"
+          value={String(operacaoStats.finalizadas)}
+          sub="concluídas ou pagas"
+          icon={CheckCircle2}
+          tone="emerald"
+        />
+        <StatCard
+          label="Orçamentos pendentes"
+          value={String(operacaoStats.orcamentosPendentes)}
+          sub="aguardando aprovação"
+          icon={FileText}
+          tone="amber"
         />
       </div>
 
