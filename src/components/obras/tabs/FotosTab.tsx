@@ -1,69 +1,151 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Upload, ImageIcon } from "lucide-react";
+import { Upload, ImageIcon, Trash2, Loader2 } from "lucide-react";
 
 const TIPO_LABEL = { antes: "Antes", durante: "Durante", depois: "Depois" } as const;
+const MAX_FOTOS = 50;
 
 export function FotosTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [tipo, setTipo] = useState<"antes" | "durante" | "depois">("durante");
   const [observacao, setObservacao] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
+  const [fotoParaExcluir, setFotoParaExcluir] = useState<{ id: string; storage_path: string | null } | null>(null);
 
   const { data: fotos } = useQuery({
     queryKey: ["fotos", obraId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("fotos_obra").select("*").eq("obra_id", obraId).order("data_upload", { ascending: false });
+      const { data, error } = await supabase
+        .from("fotos_obra")
+        .select("*")
+        .eq("obra_id", obraId)
+        .order("data_upload", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBusy(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `${obraId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("obras-fotos").upload(path, file, { upsert: false });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("obras-fotos").getPublicUrl(path);
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    if (files.length > MAX_FOTOS) {
+      toast.error(`Máximo de ${MAX_FOTOS} fotos por vez. Você selecionou ${files.length}.`);
+      return;
+    }
+
+    setProgresso({ feitas: 0, total: files.length });
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u.user?.id ?? null;
+
+    let sucessos = 0;
+    let falhas = 0;
+
+    // Processa em paralelo (lotes de 5 para não sobrecarregar)
+    const BATCH = 5;
+    for (let i = 0; i < files.length; i += BATCH) {
+      const lote = files.slice(i, i + BATCH);
+      const resultados = await Promise.allSettled(
+        lote.map(async (file) => {
+          const ext = file.name.split(".").pop();
+          const path = `${obraId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("obras-fotos")
+            .upload(path, file, { upsert: false });
+          if (upErr) throw upErr;
+          const { data: pub } = supabase.storage.from("obras-fotos").getPublicUrl(path);
+          const { error: insErr } = await supabase.from("fotos_obra").insert([
+            {
+              obra_id: obraId,
+              tipo,
+              imagem_url: pub.publicUrl,
+              storage_path: path,
+              observacao: observacao || null,
+              uploaded_by: userId,
+            },
+          ]);
+          if (insErr) throw insErr;
+        }),
+      );
+      resultados.forEach((r) => {
+        if (r.status === "fulfilled") sucessos++;
+        else falhas++;
+      });
+      setProgresso({ feitas: Math.min(i + BATCH, files.length), total: files.length });
+    }
+
+    if (sucessos > 0) {
+      await supabase.from("obra_timeline").insert([
+        {
+          obra_id: obraId,
+          user_id: userId,
+          evento: sucessos === 1 ? "Foto adicionada" : `${sucessos} fotos adicionadas`,
+          detalhes: `Tipo: ${TIPO_LABEL[tipo]}`,
+        },
+      ]);
+    }
+
+    setProgresso(null);
+    setObservacao("");
+    qc.invalidateQueries({ queryKey: ["fotos", obraId] });
+    qc.invalidateQueries({ queryKey: ["timeline", obraId] });
+
+    if (falhas === 0) toast.success(`${sucessos} foto(s) enviada(s)`);
+    else if (sucessos === 0) toast.error(`Falha ao enviar as ${falhas} foto(s)`);
+    else toast.warning(`${sucessos} enviada(s), ${falhas} falharam`);
+  };
+
+  const excluir = useMutation({
+    mutationFn: async ({ id, storage_path }: { id: string; storage_path: string | null }) => {
+      if (storage_path) {
+        await supabase.storage.from("obras-fotos").remove([storage_path]);
+      }
+      const { error } = await supabase.from("fotos_obra").delete().eq("id", id);
+      if (error) throw error;
       const { data: u } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from("fotos_obra").insert([{
-        obra_id: obraId, tipo, imagem_url: pub.publicUrl, storage_path: path, observacao: observacao || null,
-        uploaded_by: u.user?.id ?? null,
-      }]);
-      if (insErr) throw insErr;
-      await supabase.from("obra_timeline").insert([{
-        obra_id: obraId, user_id: u.user?.id, evento: "Foto adicionada", detalhes: `Tipo: ${TIPO_LABEL[tipo]}`,
-      }]);
-      toast.success("Foto enviada");
-      setObservacao("");
+      await supabase.from("obra_timeline").insert([
+        { obra_id: obraId, user_id: u.user?.id, evento: "Foto excluída" },
+      ]);
+    },
+    onSuccess: () => {
+      toast.success("Foto excluída");
       qc.invalidateQueries({ queryKey: ["fotos", obraId] });
       qc.invalidateQueries({ queryKey: ["timeline", obraId] });
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setBusy(false);
-      e.target.value = "";
-    }
-  };
+      setFotoParaExcluir(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message ?? "Erro ao excluir");
+      setFotoParaExcluir(null);
+    },
+  });
+
+  const enviando = progresso !== null;
 
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card p-4 space-y-3">
-        <h3 className="text-sm font-semibold">Adicionar foto</h3>
+        <h3 className="text-sm font-semibold">Adicionar fotos</h3>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Tipo</Label>
-            <Select value={tipo} onValueChange={(v: any) => setTipo(v)}>
+            <Select value={tipo} onValueChange={(v: any) => setTipo(v)} disabled={enviando}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="antes">Antes</SelectItem>
@@ -73,19 +155,35 @@ export function FotosTab({ obraId }: { obraId: string }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Observação</Label>
-            <Input value={observacao} onChange={(e) => setObservacao(e.target.value)} />
+            <Label className="text-xs">Observação (aplicada a todas)</Label>
+            <Input value={observacao} onChange={(e) => setObservacao(e.target.value)} disabled={enviando} />
           </div>
         </div>
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-surface-muted px-4 py-6 text-sm text-muted-foreground transition hover:bg-secondary">
-          <Upload className="h-4 w-4" />
-          {busy ? "Enviando..." : "Selecionar arquivo"}
-          <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={busy} />
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-surface-muted px-4 py-6 text-sm text-muted-foreground transition hover:bg-secondary ${enviando ? "pointer-events-none opacity-60" : ""}`}>
+          {enviando ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Enviando {progresso?.feitas}/{progresso?.total}...
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              Selecionar fotos (até {MAX_FOTOS} por vez)
+            </>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleUpload}
+            disabled={enviando}
+          />
         </label>
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">Galeria</h3>
+        <h3 className="mb-2 text-sm font-semibold">Galeria {fotos && fotos.length > 0 && <span className="text-muted-foreground font-normal">({fotos.length})</span>}</h3>
         {(fotos?.length ?? 0) === 0 && (
           <div className="flex flex-col items-center gap-2 rounded-md border bg-card p-8 text-muted-foreground">
             <ImageIcon className="h-6 w-6" />
@@ -94,15 +192,54 @@ export function FotosTab({ obraId }: { obraId: string }) {
         )}
         <div className="grid grid-cols-3 gap-2">
           {fotos?.map((f) => (
-            <a key={f.id} href={f.imagem_url} target="_blank" rel="noreferrer" className="group relative block overflow-hidden rounded-md border">
-              <img src={f.imagem_url} alt={f.observacao || ""} className="aspect-square w-full object-cover transition group-hover:scale-105" />
-              <span className="absolute left-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-medium">
+            <div key={f.id} className="group relative overflow-hidden rounded-md border">
+              <a href={f.imagem_url} target="_blank" rel="noreferrer" className="block">
+                <img
+                  src={f.imagem_url}
+                  alt={f.observacao || ""}
+                  loading="lazy"
+                  className="aspect-square w-full object-cover transition group-hover:scale-105"
+                />
+              </a>
+              <span className="pointer-events-none absolute left-1 top-1 rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-medium">
                 {TIPO_LABEL[f.tipo as keyof typeof TIPO_LABEL]}
               </span>
-            </a>
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute right-1 top-1 h-7 w-7 opacity-0 transition group-hover:opacity-100"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setFotoParaExcluir({ id: f.id, storage_path: f.storage_path });
+                }}
+                aria-label="Excluir foto"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           ))}
         </div>
       </div>
+
+      <AlertDialog open={!!fotoParaExcluir} onOpenChange={(v) => !v && setFotoParaExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir foto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A foto será removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => fotoParaExcluir && excluir.mutate(fotoParaExcluir)}
+              disabled={excluir.isPending}
+            >
+              {excluir.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
