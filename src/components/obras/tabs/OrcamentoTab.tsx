@@ -139,7 +139,7 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
         arquivo_path = null;
       }
 
-      const patch: Record<string, any> = {
+      const patch: any = {
         numero_orcamento: editForm.numero_orcamento || null,
         valor_orcamento: parseFloat(editForm.valor_orcamento) || 0,
         data_envio: editForm.data_envio || null,
