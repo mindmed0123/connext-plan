@@ -15,6 +15,7 @@ import { FaturamentoTab } from "./tabs/FaturamentoTab";
 import { TimelineTab } from "./tabs/TimelineTab";
 import { EquipeTab } from "./tabs/EquipeTab";
 import { ContratacoesTab } from "./tabs/ContratacoesTab";
+import { MateriaisTab } from "./tabs/MateriaisTab";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; onClose: () => void }) {
@@ -109,6 +110,7 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <TabsContent value="equipe" className="mt-4"><EquipeTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="contratacoes" className="mt-4"><ContratacoesTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="materiais" className="mt-4"><MateriaisTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
               </Tabs>
