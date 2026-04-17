@@ -1,149 +1,136 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  HardHat, FileText, Hammer, CheckCircle2, Receipt, Wallet, AlertCircle, TrendingUp,
-} from "lucide-react";
-import { formatCurrency } from "@/lib/obra-helpers";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  HardHat, FileText, Hammer, CheckCircle2, Wallet, TrendingUp, Receipt, Clock, AlertCircle,
+} from "lucide-react";
+import { useDashboardData, type DashboardFilters as TFilters } from "@/hooks/useDashboardData";
+import { useUserRole } from "@/hooks/useUserRole";
+import { formatCurrency } from "@/lib/obra-helpers";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { EtapasOverview } from "@/components/dashboard/EtapasOverview";
+import { AlertsList } from "@/components/dashboard/AlertsList";
+import { ObrasRecentes } from "@/components/dashboard/ObrasRecentes";
+import { PipelineFinanceiro } from "@/components/dashboard/PipelineFinanceiro";
+import { AgendaRecebimentos } from "@/components/dashboard/AgendaRecebimentos";
+import { AgendaPagamentos } from "@/components/dashboard/AgendaPagamentos";
+import { RankingTerceirizados, RankingResponsaveis } from "@/components/dashboard/Rankings";
+import { ChartsBlock } from "@/components/dashboard/ChartsBlock";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-function StatCard({
-  title, value, hint, icon: Icon, accent = "primary",
-}: { title: string; value: string; hint?: string; icon: any; accent?: string }) {
-  return (
-    <div className="stat-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-          {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-        </div>
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-lg"
-          style={{
-            backgroundColor: `hsl(var(--${accent}) / 0.10)`,
-            color: `hsl(var(--${accent}))`,
-          }}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-    </div>
-  );
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
 }
 
 export default function Dashboard() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: async () => {
-      const [obras, orcamentos, pcs, nfs, recebimentos] = await Promise.all([
-        supabase.from("obras").select("id,status"),
-        supabase.from("orcamentos").select("obra_id,valor_orcamento,status"),
-        supabase.from("pedidos_compra").select("valor,status"),
-        supabase.from("notas_fiscais").select("valor"),
-        supabase.from("recebimentos").select("valor,status,data_prevista"),
-      ]);
-
-      const obrasData = obras.data || [];
-      const orcs = orcamentos.data || [];
-      const pcsData = pcs.data || [];
-      const nfsData = nfs.data || [];
-      const recs = recebimentos.data || [];
-
-      // Mapa: obra_id -> valor do orçamento aprovado mais recente (fallback: maior valor)
-      const valorPorObra = new Map<string, number>();
-      for (const o of orcs) {
-        const v = Number(o.valor_orcamento || 0);
-        const atual = valorPorObra.get(o.obra_id as string) || 0;
-        if (o.status === "aprovado") {
-          valorPorObra.set(o.obra_id as string, Math.max(atual, v));
-        } else if (atual === 0) {
-          valorPorObra.set(o.obra_id as string, v);
-        }
-      }
-      const somaPorStatus = (status: string) =>
-        obrasData
-          .filter((o) => o.status === status)
-          .reduce((s, o) => s + (valorPorObra.get(o.id as string) || 0), 0);
-
-      const inEx = obrasData.filter((o) => o.status === "em_execucao").length;
-      const finalizadas = obrasData.filter((o) => o.status === "finalizado").length;
-      const aguardandoOrc = obrasData.filter((o) => o.status === "aguardando_orcamento").length;
-      const aguardandoAprov = obrasData.filter((o) => o.status === "em_aprovacao").length;
-
-      const valorTotal = obrasData.reduce((s, o) => s + (valorPorObra.get(o.id as string) || 0), 0);
-      const valorEmEx = somaPorStatus("em_execucao");
-      const valorFinalizadas = somaPorStatus("finalizado");
-      const valorAguardOrc = somaPorStatus("aguardando_orcamento");
-      const valorAguardAprov = somaPorStatus("em_aprovacao");
-
-      const totalOrcPendente = orcs
-        .filter((o) => ["enviado", "em_negociacao"].includes(o.status as string))
-        .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0);
-
-      const totalPC = pcsData.reduce((s, o) => s + Number(o.valor || 0), 0);
-      const totalNF = nfsData.reduce((s, o) => s + Number(o.valor || 0), 0);
-
-      const hoje = new Date();
-      const em15 = new Date();
-      em15.setDate(hoje.getDate() + 15);
-      const aReceber = recs
-        .filter((r) => r.status === "a_receber" && r.data_prevista && new Date(r.data_prevista) <= em15)
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-
-      return {
-        totalObras: obrasData.length,
-        inEx, finalizadas, aguardandoOrc, aguardandoAprov,
-        valorTotal, valorEmEx, valorFinalizadas, valorAguardOrc, valorAguardAprov,
-        totalOrcPendente, totalPC, totalNF, aReceber,
-      };
-    },
+  const { isOperacional, isSuperAdmin, isAdmin } = useUserRole();
+  const [filters, setFilters] = useState<TFilters>({
+    regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos",
   });
+  const { data, isLoading } = useDashboardData(filters);
+
+  // Visão simplificada para operacional/terceirizado
+  if (isOperacional && !isAdmin && !isSuperAdmin) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Minhas obras</h1>
+          <p className="text-sm text-muted-foreground">Acompanhe as obras atribuídas a você</p>
+        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-base">Acesso simplificado</CardTitle></CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            <p>Vá em <Link className="text-primary hover:underline" to="/obras">Obras</Link> para ver as obras em que você está envolvido.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const showRankings = isSuperAdmin || isAdmin;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Visão geral</h1>
-          <p className="text-sm text-muted-foreground">Resumo operacional e financeiro das obras</p>
+          <h1 className="text-2xl font-semibold">Painel executivo</h1>
+          <p className="text-sm text-muted-foreground">Visão completa da operação e do financeiro</p>
         </div>
-        <Link to="/obras" className="text-sm font-medium text-primary hover:underline">
-          Ver todas as obras →
-        </Link>
+        <Link to="/obras" className="text-sm font-medium text-primary hover:underline">Ver todas as obras →</Link>
       </div>
 
+      <DashboardFilters
+        filters={filters}
+        setFilters={setFilters}
+        engenheiros={data?.engenheiros ?? []}
+        pessoas={data?.pessoas ?? []}
+      />
+
+      {/* BLOCO 1 — Resumo executivo */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Operacional</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <StatCard title="Total de obras" value={String(data?.totalObras ?? "—")} hint={formatCurrency(data?.valorTotal)} icon={HardHat} accent="primary" />
-          <StatCard title="Em execução" value={String(data?.inEx ?? "—")} hint={formatCurrency(data?.valorEmEx)} icon={Hammer} accent="status-execucao" />
-          <StatCard title="Finalizadas" value={String(data?.finalizadas ?? "—")} hint={formatCurrency(data?.valorFinalizadas)} icon={CheckCircle2} accent="status-finalizado" />
-          <StatCard title="Aguardando orçamento" value={String(data?.aguardandoOrc ?? "—")} hint={formatCurrency(data?.valorAguardOrc)} icon={FileText} accent="status-orcamento" />
-          <StatCard title="Em aprovação" value={String(data?.aguardandoAprov ?? "—")} hint={formatCurrency(data?.valorAguardAprov)} icon={AlertCircle} accent="status-aprovacao" />
+        <SectionTitle>Resumo executivo</SectionTitle>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard title="Obras ativas" value={String(data?.totalAtivas ?? "—")} icon={HardHat} accent="primary" to="/obras" />
+          <KpiCard title="Em orçamento" value={formatCurrency(data?.valorEmOrcamento)} hint="Aguardando aprovação" icon={FileText} accent="status-orcamento" to="/orcamentos" />
+          <KpiCard title="Em execução" value={formatCurrency(data?.valorEmExecucao)} icon={Hammer} accent="status-execucao" to="/execucoes" />
+          <KpiCard title="Finalizadas aguardando" value={formatCurrency(data?.valorFinalizadasAguard)} hint={`${data?.qtdFinalizadasAguard ?? 0} obras travadas`} icon={CheckCircle2} accent="status-finalizado" />
+          <KpiCard title="Total a receber" value={formatCurrency(data?.valorAReceber)} icon={Wallet} accent="success" to="/recebimentos" />
+          <KpiCard title="Recebimentos 15 dias" value={formatCurrency(data?.valorReceber15d)} icon={Clock} accent="info" to="/recebimentos" />
+          <KpiCard title="Pago a terceirizados" value={formatCurrency(data?.valorPagoTerc)} icon={TrendingUp} accent="status-pago" to="/financeiro" />
+          <KpiCard title="Pendente terceirizados" value={formatCurrency(data?.valorPendenteTerc)} icon={AlertCircle} accent="warning" to="/financeiro" />
         </div>
       </section>
 
+      {/* BLOCO 2 — Operação */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Financeiro</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Orçamentos pendentes" value={formatCurrency(data?.totalOrcPendente)} icon={FileText} accent="status-orcamento" />
-          <StatCard title="Pedidos de compra" value={formatCurrency(data?.totalPC)} icon={Receipt} accent="status-pc" />
-          <StatCard title="Faturado (NF)" value={formatCurrency(data?.totalNF)} icon={TrendingUp} accent="status-nf" />
-          <StatCard title="A receber em 15 dias" value={formatCurrency(data?.aReceber)} icon={Wallet} accent="success" />
+        <SectionTitle>Operação</SectionTitle>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2"><EtapasOverview porEtapa={data?.porEtapa ?? new Map()} /></div>
+          <div><AlertsList data={data!} /></div>
+        </div>
+        <div className="mt-4"><ObrasRecentes data={data!} /></div>
+      </section>
+
+      {/* BLOCO 3 — Financeiro */}
+      <section>
+        <SectionTitle>Financeiro</SectionTitle>
+        <div className="space-y-4">
+          <PipelineFinanceiro data={data!} />
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <KpiCard title="Total orçado" value={formatCurrency(data?.valorTotalOrcado)} icon={FileText} accent="status-orcamento" />
+            <KpiCard title="Total aprovado" value={formatCurrency(data?.valorTotalAprovado)} icon={CheckCircle2} accent="status-aprovado" />
+            <KpiCard title="Total faturado (NF)" value={formatCurrency(data?.valorTotalFaturado)} icon={Receipt} accent="status-nf" />
+            <KpiCard title="Total recebido" value={formatCurrency(data?.valorRecebido)} icon={Wallet} accent="status-pago" />
+            <KpiCard title="Em aberto (faturado − recebido)" value={formatCurrency(data?.valorEmAberto)} icon={Clock} accent="warning" />
+            <KpiCard title="Materiais (custo)" value={formatCurrency(data?.valorMateriais)} icon={Hammer} accent="status-pc" />
+            <KpiCard title="Contratado terceirizados" value={formatCurrency(data?.valorContratadoTerc)} icon={HardHat} accent="primary" />
+            <KpiCard title="Pago terceirizados" value={formatCurrency(data?.valorPagoTerc)} icon={TrendingUp} accent="success" />
+            <KpiCard title="Pendente terceirizados" value={formatCurrency(data?.valorPendenteTerc)} icon={AlertCircle} accent="warning" />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {data && <AgendaRecebimentos data={data} />}
+            {data && <AgendaPagamentos data={data} />}
+          </div>
         </div>
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Próximos passos</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-1">
-          <p>• Cadastre uma obra em <Link className="text-primary hover:underline" to="/obras">Obras</Link></p>
-          <p>• Acompanhe o pipeline visual em <Link className="text-primary hover:underline" to="/etapas">Etapas</Link></p>
-          <p>• Registre vistoria, orçamento, execução e fotos diretamente no detalhe da obra</p>
-        </CardContent>
-      </Card>
+      {/* BLOCO 4 — Performance */}
+      {showRankings && (
+        <section>
+          <SectionTitle>Performance</SectionTitle>
+          <div className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-2">
+              {data && <RankingTerceirizados data={data} />}
+              {data && <RankingResponsaveis data={data} />}
+            </div>
+            {data && <ChartsBlock data={data} />}
+          </div>
+        </section>
+      )}
+
+      {isLoading && <p className="text-center text-xs text-muted-foreground">Carregando…</p>}
     </div>
   );
 }
