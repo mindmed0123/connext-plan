@@ -9,9 +9,9 @@ const formatBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
 
 const STATUS_COLOR: Record<string, string> = {
-  pendente: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  parcialmente_pago: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  pago: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  pendente: "bg-warning/15 text-warning",
+  parcialmente_pago: "bg-info/15 text-info",
+  pago: "bg-success/15 text-success",
   cancelado: "bg-muted text-muted-foreground",
 };
 
