@@ -50,7 +50,7 @@ export function useDashboardData(filters: DashboardFilters) {
         supabase
           .from("parcelas_pagamento")
           .select(
-            "id,contratacao_id,valor,status,data_prevista,data_pagamento,created_at",
+            "id,contratacao_id,numero_parcela,valor,status,data_prevista,data_pagamento,created_at",
           ),
         supabase.from("materiais_obra").select("id,obra_id,valor_total,data_compra"),
         supabase.from("notas_fiscais").select("id,obra_id,numero_nf,valor,data_emissao"),
