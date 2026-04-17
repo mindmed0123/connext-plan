@@ -256,7 +256,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
                   {diferenca > 0 ? `Faltam ${formatCurrency(diferenca)}` : `Excesso de ${formatCurrency(-diferenca)}`}
                 </span>
               ) : totalContratado > 0 ? (
-                <span className="text-emerald-600 font-semibold">✓ Confere</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Confere</span>
               ) : null}
             </div>
           </div>
