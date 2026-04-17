@@ -195,20 +195,83 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
             </div>
             <div>
               <Label className="text-xs">Valor total contratado</Label>
-              <Input type="number" step="0.01" value={form.valor_total} onChange={(e) => setForm({ ...form, valor_total: e.target.value })} />
+              <Input type="number" step="0.01" value={form.valor_total} onChange={(e) => handleTotalChange(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Quantidade de parcelas</Label>
-              <Input type="number" min={1} value={form.quantidade_parcelas} onChange={(e) => setForm({ ...form, quantidade_parcelas: e.target.value })} />
+              <Input type="number" min={1} value={form.quantidade_parcelas} onChange={(e) => handleQtdChange(e.target.value)} />
             </div>
           </div>
+
+          <div className="space-y-2 pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Parcelas (você pode editar valores e datas individualmente)</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px]"
+                onClick={() => aplicarDivisaoAutomatica(parcelasInput.length, totalContratado)}
+                disabled={!totalContratado}
+              >
+                Dividir igualmente
+              </Button>
+            </div>
+
+            <div className="space-y-1.5">
+              {parcelasInput.map((p, i) => (
+                <div key={i} className="grid grid-cols-[40px_1fr_1fr] gap-2 items-end">
+                  <div className="text-xs text-muted-foreground pb-2 text-center">#{i + 1}</div>
+                  <div>
+                    <Label className="text-[10px]">Valor</Label>
+                    <Input
+                      className="h-8 text-xs"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={p.valor}
+                      onChange={(e) => updateParcela(i, { valor: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Vencimento (opcional)</Label>
+                    <Input
+                      className="h-8 text-xs"
+                      type="date"
+                      value={p.data_prevista}
+                      onChange={(e) => updateParcela(i, { data_prevista: e.target.value })}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
+              <span>
+                Soma das parcelas: <span className="font-semibold">{formatCurrency(somaParcelas)}</span>
+                {" "}/ Total: <span className="font-semibold">{formatCurrency(totalContratado)}</span>
+              </span>
+              {Math.abs(diferenca) > 0.01 ? (
+                <span className="text-destructive font-semibold">
+                  {diferenca > 0 ? `Faltam ${formatCurrency(diferenca)}` : `Excesso de ${formatCurrency(-diferenca)}`}
+                </span>
+              ) : totalContratado > 0 ? (
+                <span className="text-emerald-600 font-semibold">✓ Confere</span>
+              ) : null}
+            </div>
+          </div>
+
           <div>
             <Label className="text-xs">Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={() => create.mutate()} disabled={!form.terceirizado_id || !form.valor_total}>
+            <Button
+              size="sm"
+              onClick={() => create.mutate()}
+              disabled={!form.terceirizado_id || !form.valor_total || Math.abs(diferenca) > 0.01 || create.isPending}
+            >
               Criar contratação
             </Button>
           </div>
