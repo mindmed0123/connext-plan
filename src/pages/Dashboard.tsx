@@ -39,7 +39,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const [obras, orcamentos, pcs, nfs, recebimentos] = await Promise.all([
         supabase.from("obras").select("id,status"),
-        supabase.from("orcamentos").select("valor_orcamento,status"),
+        supabase.from("orcamentos").select("obra_id,valor_orcamento,status"),
         supabase.from("pedidos_compra").select("valor,status"),
         supabase.from("notas_fiscais").select("valor"),
         supabase.from("recebimentos").select("valor,status,data_prevista"),
@@ -51,10 +51,32 @@ export default function Dashboard() {
       const nfsData = nfs.data || [];
       const recs = recebimentos.data || [];
 
+      // Mapa: obra_id -> valor do orçamento aprovado mais recente (fallback: maior valor)
+      const valorPorObra = new Map<string, number>();
+      for (const o of orcs) {
+        const v = Number(o.valor_orcamento || 0);
+        const atual = valorPorObra.get(o.obra_id as string) || 0;
+        if (o.status === "aprovado") {
+          valorPorObra.set(o.obra_id as string, Math.max(atual, v));
+        } else if (atual === 0) {
+          valorPorObra.set(o.obra_id as string, v);
+        }
+      }
+      const somaPorStatus = (status: string) =>
+        obrasData
+          .filter((o) => o.status === status)
+          .reduce((s, o) => s + (valorPorObra.get(o.id as string) || 0), 0);
+
       const inEx = obrasData.filter((o) => o.status === "em_execucao").length;
       const finalizadas = obrasData.filter((o) => o.status === "finalizado").length;
       const aguardandoOrc = obrasData.filter((o) => o.status === "aguardando_orcamento").length;
       const aguardandoAprov = obrasData.filter((o) => o.status === "em_aprovacao").length;
+
+      const valorTotal = obrasData.reduce((s, o) => s + (valorPorObra.get(o.id as string) || 0), 0);
+      const valorEmEx = somaPorStatus("em_execucao");
+      const valorFinalizadas = somaPorStatus("finalizado");
+      const valorAguardOrc = somaPorStatus("aguardando_orcamento");
+      const valorAguardAprov = somaPorStatus("em_aprovacao");
 
       const totalOrcPendente = orcs
         .filter((o) => ["enviado", "em_negociacao"].includes(o.status as string))
@@ -72,14 +94,9 @@ export default function Dashboard() {
 
       return {
         totalObras: obrasData.length,
-        inEx,
-        finalizadas,
-        aguardandoOrc,
-        aguardandoAprov,
-        totalOrcPendente,
-        totalPC,
-        totalNF,
-        aReceber,
+        inEx, finalizadas, aguardandoOrc, aguardandoAprov,
+        valorTotal, valorEmEx, valorFinalizadas, valorAguardOrc, valorAguardAprov,
+        totalOrcPendente, totalPC, totalNF, aReceber,
       };
     },
   });
