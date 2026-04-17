@@ -104,7 +104,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {isLoading ? null : isAdmin ? (
+        {isLoading || permLoading ? null : (isAdmin || isSuperAdmin) ? (
           <>
             <SidebarGroup>
               <SidebarGroupLabel>Operacional</SidebarGroupLabel>
@@ -135,12 +135,26 @@ export function AppSidebar() {
             </SidebarGroup>
           </>
         ) : (
-          <SidebarGroup>
-            <SidebarGroupLabel>Minha área</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>{renderItems(operacionalRestrito)}</SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            {/* Itens liberados via permissões (administrativos com escopo restrito) */}
+            {filtra([...operacionalAdmin, ...modulosAdmin, ...financeiroAdmin, ...gestaoAdmin]).length > 0 && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Liberado para você</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {renderItems(filtra([...operacionalAdmin, ...modulosAdmin, ...financeiroAdmin, ...gestaoAdmin]))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+            {/* Sempre mostra "Minhas obras" para operacional/terceirizado */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Minha área</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>{renderItems(operacionalRestrito)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
       </SidebarContent>
 
