@@ -92,7 +92,7 @@ export function TerceirizadoObrasTab({ pessoaId }: { pessoaId: string }) {
         </div>
         <div className="rounded-lg border bg-card p-3">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">A pagar</p>
-          <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+          <p className="text-sm font-semibold text-warning">
             {formatBRL(totais.pendente)}
           </p>
         </div>
