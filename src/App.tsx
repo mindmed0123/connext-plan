@@ -9,7 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Obras from "./pages/Obras";
-import Kanban from "./pages/Kanban";
+import Etapas from "./pages/Etapas";
 import Vistorias from "./pages/Vistorias";
 import Orcamentos from "./pages/Orcamentos";
 import Execucoes from "./pages/Execucoes";
@@ -37,7 +37,8 @@ const App = () => (
             >
               <Route path="/" element={<Dashboard />} />
               <Route path="/obras" element={<Obras />} />
-              <Route path="/kanban" element={<Kanban />} />
+              <Route path="/etapas" element={<Etapas />} />
+              <Route path="/kanban" element={<Etapas />} />
               <Route path="/vistorias" element={<Vistorias />} />
               <Route path="/orcamentos" element={<Orcamentos />} />
               <Route path="/execucoes" element={<Execucoes />} />
