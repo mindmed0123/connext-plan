@@ -41,11 +41,10 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const save = useMutation({
     mutationFn: async () => {
       if (vinculo === "existente" && !obraId) throw new Error("Selecione uma obra");
-      if (vinculo === "avulso" && !codigoAvulso.trim()) throw new Error("Informe o código do chamado");
 
       const baseObra = vinculo === "existente"
         ? { obra_id: obraId, codigo_chamado_avulso: null }
-        : { obra_id: null, codigo_chamado_avulso: codigoAvulso.trim() };
+        : { obra_id: null, codigo_chamado_avulso: codigoAvulso.trim() || null };
 
       if (tipo === "rc") {
         const { error } = await supabase.from("rcs").insert([{
