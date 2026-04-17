@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      contratacoes_terceirizado: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          forma_pagamento_prevista:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id: string
+          obra_id: string
+          observacoes: string | null
+          quantidade_parcelas: number
+          status_financeiro: Database["public"]["Enums"]["contratacao_status"]
+          terceirizado_id: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          forma_pagamento_prevista?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          obra_id: string
+          observacoes?: string | null
+          quantidade_parcelas?: number
+          status_financeiro?: Database["public"]["Enums"]["contratacao_status"]
+          terceirizado_id: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          forma_pagamento_prevista?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          obra_id?: string
+          observacoes?: string | null
+          quantidade_parcelas?: number
+          status_financeiro?: Database["public"]["Enums"]["contratacao_status"]
+          terceirizado_id?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratacoes_terceirizado_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacoes_terceirizado_terceirizado_id_fkey"
+            columns: ["terceirizado_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diario_obra: {
         Row: {
           created_at: string
@@ -391,6 +454,69 @@ export type Database = {
           },
         ]
       }
+      parcelas_pagamento: {
+        Row: {
+          comprovante_path: string | null
+          comprovante_url: string | null
+          contratacao_id: string
+          created_at: string
+          data_pagamento: string | null
+          data_prevista: string | null
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          numero_parcela: number
+          observacao: string | null
+          paid_by: string | null
+          status: Database["public"]["Enums"]["parcela_status"]
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          comprovante_path?: string | null
+          comprovante_url?: string | null
+          contratacao_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_prevista?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          numero_parcela: number
+          observacao?: string | null
+          paid_by?: string | null
+          status?: Database["public"]["Enums"]["parcela_status"]
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          comprovante_path?: string | null
+          comprovante_url?: string | null
+          contratacao_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_prevista?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          numero_parcela?: number
+          observacao?: string | null
+          paid_by?: string | null
+          status?: Database["public"]["Enums"]["parcela_status"]
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcelas_pagamento_contratacao_id_fkey"
+            columns: ["contratacao_id"]
+            isOneToOne: false
+            referencedRelation: "contratacoes_terceirizado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos_compra: {
         Row: {
           created_at: string
@@ -696,6 +822,11 @@ export type Database = {
         | "financeiro"
         | "operacional"
         | "super_admin"
+      contratacao_status:
+        | "pendente"
+        | "parcialmente_pago"
+        | "pago"
+        | "cancelado"
       diario_status: "enviado" | "aprovado" | "reprovado"
       execucao_status: "nao_iniciada" | "em_execucao" | "pausada" | "finalizada"
       execucao_tipo: "equipe_propria" | "terceirizado"
@@ -726,6 +857,7 @@ export type Database = {
         | "em_negociacao"
         | "aprovado"
         | "reprovado"
+      parcela_status: "pendente" | "pago"
       pc_status: "aguardando" | "recebido"
       pessoa_status: "ativo" | "inativo"
       pessoa_tipo: "terceirizado" | "administrativo" | "operacional"
@@ -867,6 +999,12 @@ export const Constants = {
         "operacional",
         "super_admin",
       ],
+      contratacao_status: [
+        "pendente",
+        "parcialmente_pago",
+        "pago",
+        "cancelado",
+      ],
       diario_status: ["enviado", "aprovado", "reprovado"],
       execucao_status: ["nao_iniciada", "em_execucao", "pausada", "finalizada"],
       execucao_tipo: ["equipe_propria", "terceirizado"],
@@ -900,6 +1038,7 @@ export const Constants = {
         "aprovado",
         "reprovado",
       ],
+      parcela_status: ["pendente", "pago"],
       pc_status: ["aguardando", "recebido"],
       pessoa_status: ["ativo", "inativo"],
       pessoa_tipo: ["terceirizado", "administrativo", "operacional"],
