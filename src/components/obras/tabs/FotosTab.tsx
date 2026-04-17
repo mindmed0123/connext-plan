@@ -140,6 +140,58 @@ export function FotosTab({ obraId }: { obraId: string }) {
 
   const enviando = progresso !== null;
 
+  const baixarTodas = async () => {
+    if (!fotos || fotos.length === 0) return;
+    setBaixando({ feitas: 0, total: fotos.length });
+    try {
+      const zip = new JSZip();
+      const usados = new Set<string>();
+      let feitas = 0;
+
+      const BATCH = 5;
+      for (let i = 0; i < fotos.length; i += BATCH) {
+        const lote = fotos.slice(i, i + BATCH);
+        await Promise.all(
+          lote.map(async (f) => {
+            try {
+              const res = await fetch(f.imagem_url);
+              if (!res.ok) throw new Error("falha");
+              const blob = await res.blob();
+              const ext = (f.storage_path?.split(".").pop() || "jpg").toLowerCase();
+              const tipoLabel = TIPO_LABEL[f.tipo as keyof typeof TIPO_LABEL] || "Foto";
+              let nome = `${tipoLabel}/${tipoLabel}-${String(feitas + 1).padStart(3, "0")}.${ext}`;
+              while (usados.has(nome)) {
+                nome = `${tipoLabel}/${tipoLabel}-${String(feitas + 1).padStart(3, "0")}-${Math.random().toString(36).slice(2, 5)}.${ext}`;
+              }
+              usados.add(nome);
+              zip.file(nome, blob);
+            } catch {
+              // ignora foto que falhar
+            } finally {
+              feitas++;
+              setBaixando({ feitas, total: fotos.length });
+            }
+          }),
+        );
+      }
+
+      const conteudo = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(conteudo);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fotos-obra-${obraId.slice(0, 8)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`${fotos.length} foto(s) baixada(s)`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao baixar");
+    } finally {
+      setBaixando(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card p-4 space-y-3">
