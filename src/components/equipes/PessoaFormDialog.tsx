@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   PESSOA_TIPO_LIST, PESSOA_TIPO_LABEL, PessoaTipo, CARGOS_OPERACIONAIS,
 } from "@/lib/pessoas-helpers";
+import { PermissoesEditor } from "./PermissoesEditor";
 
 type Pessoa = {
   id?: string;
@@ -123,149 +125,166 @@ export function PessoaFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Tipo</Label>
-            <Select
-              value={form.tipo}
-              onValueChange={(v: PessoaTipo) => setForm({ ...form, tipo: v })}
-              disabled={editing}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PESSOA_TIPO_LIST.map((t) => (
-                  <SelectItem key={t} value={t}>{PESSOA_TIPO_LABEL[t]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Status</Label>
-            <Select value={form.status} onValueChange={(v: "ativo" | "inativo") => setForm({ ...form, status: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <Tabs defaultValue="dados">
+          <TabsList>
+            <TabsTrigger value="dados">Dados</TabsTrigger>
+            {editing && isAdmin && (
+              <TabsTrigger value="permissoes">Permissões</TabsTrigger>
+            )}
+          </TabsList>
 
-          <div className="space-y-1.5 col-span-2">
-            <Label className="text-xs">Nome completo *</Label>
-            <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
-          </div>
+          <TabsContent value="dados" className="mt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tipo</Label>
+                <Select
+                  value={form.tipo}
+                  onValueChange={(v: PessoaTipo) => setForm({ ...form, tipo: v })}
+                  disabled={editing}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PESSOA_TIPO_LIST.map((t) => (
+                      <SelectItem key={t} value={t}>{PESSOA_TIPO_LABEL[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select value={form.status} onValueChange={(v: "ativo" | "inativo") => setForm({ ...form, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">{isTerceirizado ? "CPF ou CNPJ" : "CPF"}</Label>
-            <Input value={form.cpf_cnpj ?? ""} onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Telefone</Label>
-            <Input value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">E-mail</Label>
-            <Input
-              type="email"
-              value={form.email ?? ""}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="usado para vincular ao login"
-            />
-          </div>
-
-          {(isAdmin || isOperacional) && (
-            <div className="space-y-1.5">
-              <Label className="text-xs">Data de admissão</Label>
-              <Input
-                type="date"
-                value={form.data_admissao ?? ""}
-                onChange={(e) => setForm({ ...form, data_admissao: e.target.value || null })}
-              />
-            </div>
-          )}
-
-          {isTerceirizado && (
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-xs">Endereço</Label>
-              <Input value={form.endereco ?? ""} onChange={(e) => setForm({ ...form, endereco: e.target.value })} />
-            </div>
-          )}
-
-          {isAdmin && (
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-xs">Cargo</Label>
-              <Input
-                value={form.cargo ?? ""}
-                onChange={(e) => setForm({ ...form, cargo: e.target.value })}
-                placeholder="Ex: Supervisor de obras, Coordenador"
-              />
-            </div>
-          )}
-
-          {isOperacional && (
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-xs">Função</Label>
-              <Select
-                value={form.cargo ?? ""}
-                onValueChange={(v) => setForm({ ...form, cargo: v })}
-              >
-                <SelectTrigger><SelectValue placeholder="Selecione a função" /></SelectTrigger>
-                <SelectContent>
-                  {CARGOS_OPERACIONAIS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {isTerceirizado && (
-            <>
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs">Tipo de serviço principal</Label>
+                <Label className="text-xs">Nome completo *</Label>
+                <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{isTerceirizado ? "CPF ou CNPJ" : "CPF"}</Label>
+                <Input value={form.cpf_cnpj ?? ""} onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Telefone</Label>
+                <Input value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">E-mail</Label>
                 <Input
-                  value={form.tipo_servico ?? ""}
-                  onChange={(e) => setForm({ ...form, tipo_servico: e.target.value })}
-                  placeholder="Ex: Hidráulica, alvenaria, pintura"
+                  type="email"
+                  value={form.email ?? ""}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="usado para vincular ao login"
                 />
               </div>
-              <div className="space-y-1.5 col-span-2 pt-2 border-t">
-                <Label className="text-xs font-semibold">Dados de pagamento</Label>
-              </div>
+
+              {(isAdmin || isOperacional) && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Data de admissão</Label>
+                  <Input
+                    type="date"
+                    value={form.data_admissao ?? ""}
+                    onChange={(e) => setForm({ ...form, data_admissao: e.target.value || null })}
+                  />
+                </div>
+              )}
+
+              {isTerceirizado && (
+                <div className="space-y-1.5 col-span-2">
+                  <Label className="text-xs">Endereço</Label>
+                  <Input value={form.endereco ?? ""} onChange={(e) => setForm({ ...form, endereco: e.target.value })} />
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className="space-y-1.5 col-span-2">
+                  <Label className="text-xs">Cargo</Label>
+                  <Input
+                    value={form.cargo ?? ""}
+                    onChange={(e) => setForm({ ...form, cargo: e.target.value })}
+                    placeholder="Ex: Supervisor de obras, Coordenador"
+                  />
+                </div>
+              )}
+
+              {isOperacional && (
+                <div className="space-y-1.5 col-span-2">
+                  <Label className="text-xs">Função</Label>
+                  <Select
+                    value={form.cargo ?? ""}
+                    onValueChange={(v) => setForm({ ...form, cargo: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione a função" /></SelectTrigger>
+                    <SelectContent>
+                      {CARGOS_OPERACIONAIS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {isTerceirizado && (
+                <>
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className="text-xs">Tipo de serviço principal</Label>
+                    <Input
+                      value={form.tipo_servico ?? ""}
+                      onChange={(e) => setForm({ ...form, tipo_servico: e.target.value })}
+                      placeholder="Ex: Hidráulica, alvenaria, pintura"
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2 pt-2 border-t">
+                    <Label className="text-xs font-semibold">Dados de pagamento</Label>
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className="text-xs">Chave Pix</Label>
+                    <Input value={form.chave_pix ?? ""} onChange={(e) => setForm({ ...form, chave_pix: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Banco</Label>
+                    <Input value={form.banco ?? ""} onChange={(e) => setForm({ ...form, banco: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Agência</Label>
+                    <Input value={form.agencia ?? ""} onChange={(e) => setForm({ ...form, agencia: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className="text-xs">Conta</Label>
+                    <Input value={form.conta ?? ""} onChange={(e) => setForm({ ...form, conta: e.target.value })} />
+                  </div>
+                </>
+              )}
+
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs">Chave Pix</Label>
-                <Input value={form.chave_pix ?? ""} onChange={(e) => setForm({ ...form, chave_pix: e.target.value })} />
+                <Label className="text-xs">Observações</Label>
+                <Textarea
+                  rows={2}
+                  value={form.observacoes ?? ""}
+                  onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+                />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Banco</Label>
-                <Input value={form.banco ?? ""} onChange={(e) => setForm({ ...form, banco: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Agência</Label>
-                <Input value={form.agencia ?? ""} onChange={(e) => setForm({ ...form, agencia: e.target.value })} />
-              </div>
-              <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs">Conta</Label>
-                <Input value={form.conta ?? ""} onChange={(e) => setForm({ ...form, conta: e.target.value })} />
-              </div>
-            </>
+            </div>
+
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button onClick={() => mut.mutate()} disabled={!form.nome.trim() || mut.isPending}>
+                {mut.isPending ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar"}
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+
+          {editing && isAdmin && (
+            <TabsContent value="permissoes" className="mt-4">
+              <PermissoesEditor pessoaId={pessoa.id} />
+            </TabsContent>
           )}
-
-          <div className="space-y-1.5 col-span-2">
-            <Label className="text-xs">Observações</Label>
-            <Textarea
-              rows={2}
-              value={form.observacoes ?? ""}
-              onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={!form.nome.trim() || mut.isPending}>
-            {mut.isPending ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar"}
-          </Button>
-        </DialogFooter>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

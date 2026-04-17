@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RequirePermission } from "@/components/RequirePermission";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -37,17 +38,17 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/obras" element={<Obras />} />
-              <Route path="/etapas" element={<Etapas />} />
-              <Route path="/kanban" element={<Etapas />} />
-              <Route path="/vistorias" element={<Vistorias />} />
-              <Route path="/orcamentos" element={<Orcamentos />} />
-              <Route path="/execucoes" element={<Execucoes />} />
-              <Route path="/financeiro" element={<Financeiro />} />
-              <Route path="/faturamento" element={<Faturamento />} />
-              <Route path="/recebimentos" element={<Recebimentos />} />
-              <Route path="/equipes" element={<Equipes />} />
+              <Route path="/" element={<RequirePermission modulo="dashboard"><Dashboard /></RequirePermission>} />
+              <Route path="/obras" element={<RequirePermission modulo="obras"><Obras /></RequirePermission>} />
+              <Route path="/etapas" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
+              <Route path="/kanban" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
+              <Route path="/vistorias" element={<RequirePermission modulo="vistorias"><Vistorias /></RequirePermission>} />
+              <Route path="/orcamentos" element={<RequirePermission modulo="orcamentos"><Orcamentos /></RequirePermission>} />
+              <Route path="/execucoes" element={<RequirePermission modulo="execucoes"><Execucoes /></RequirePermission>} />
+              <Route path="/financeiro" element={<RequirePermission modulo="financeiro"><Financeiro /></RequirePermission>} />
+              <Route path="/faturamento" element={<RequirePermission modulo="faturamento"><Faturamento /></RequirePermission>} />
+              <Route path="/recebimentos" element={<RequirePermission modulo="financeiro"><Recebimentos /></RequirePermission>} />
+              <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
