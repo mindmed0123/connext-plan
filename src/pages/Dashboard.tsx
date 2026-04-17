@@ -49,6 +49,14 @@ export default function Dashboard() {
 
   const showRankings = isSuperAdmin || isAdmin;
 
+  if (isLoading || !data) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Carregando painel…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
