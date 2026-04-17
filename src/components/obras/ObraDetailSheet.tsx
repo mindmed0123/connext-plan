@@ -13,9 +13,12 @@ import { ExecucaoTab } from "./tabs/ExecucaoTab";
 import { FotosTab } from "./tabs/FotosTab";
 import { FaturamentoTab } from "./tabs/FaturamentoTab";
 import { TimelineTab } from "./tabs/TimelineTab";
+import { EquipeTab } from "./tabs/EquipeTab";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; onClose: () => void }) {
   const qc = useQueryClient();
+  const { isAdmin } = useUserRole();
   const { data: obra } = useQuery({
     queryKey: ["obra", obraId],
     enabled: !!obraId,
@@ -69,35 +72,52 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <strong className="text-foreground">Endereço:</strong> {obra.endereco}
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
-                <span className="text-xs text-muted-foreground">Atualizar status:</span>
-                <Select value={obra.status} onValueChange={(v) => updateStatus.mutate(v)}>
-                  <SelectTrigger className="h-8 w-[230px] text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {OBRA_STATUS_LIST.map((s) => (
-                      <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="text-xs text-muted-foreground">Atualizar status:</span>
+                  <Select value={obra.status} onValueChange={(v) => updateStatus.mutate(v)}>
+                    <SelectTrigger className="h-8 w-[230px] text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {OBRA_STATUS_LIST.map((s) => (
+                        <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </SheetHeader>
 
-            <Tabs defaultValue="vistoria" className="mt-6">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="vistoria">Vistoria</TabsTrigger>
-                <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-                <TabsTrigger value="execucao">Execução</TabsTrigger>
-                <TabsTrigger value="fotos">Fotos</TabsTrigger>
-                <TabsTrigger value="faturamento">Financeiro</TabsTrigger>
-                <TabsTrigger value="timeline">Histórico</TabsTrigger>
-              </TabsList>
-              <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
-              <TabsContent value="orcamento" className="mt-4"><OrcamentoTab obraId={obra.id} /></TabsContent>
-              <TabsContent value="execucao" className="mt-4"><ExecucaoTab obraId={obra.id} /></TabsContent>
-              <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
-              <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
-              <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
-            </Tabs>
+            {isAdmin ? (
+              <Tabs defaultValue="vistoria" className="mt-6">
+                <TabsList className="grid w-full grid-cols-7">
+                  <TabsTrigger value="vistoria">Vistoria</TabsTrigger>
+                  <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
+                  <TabsTrigger value="execucao">Execução</TabsTrigger>
+                  <TabsTrigger value="equipe">Equipe</TabsTrigger>
+                  <TabsTrigger value="fotos">Fotos</TabsTrigger>
+                  <TabsTrigger value="faturamento">Financeiro</TabsTrigger>
+                  <TabsTrigger value="timeline">Histórico</TabsTrigger>
+                </TabsList>
+                <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="orcamento" className="mt-4"><OrcamentoTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="execucao" className="mt-4"><ExecucaoTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="equipe" className="mt-4"><EquipeTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
+              </Tabs>
+            ) : (
+              <Tabs defaultValue="fotos" className="mt-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="fotos">Fotos</TabsTrigger>
+                  <TabsTrigger value="equipe">Equipe</TabsTrigger>
+                  <TabsTrigger value="timeline">Histórico</TabsTrigger>
+                </TabsList>
+                <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="equipe" className="mt-4"><EquipeTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
+              </Tabs>
+            )}
           </>
         )}
       </SheetContent>
