@@ -636,6 +636,50 @@ export type Database = {
           },
         ]
       }
+      pessoa_permissoes: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_edit: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          modulo: Database["public"]["Enums"]["app_modulo"]
+          pessoa_id: string
+          updated_at: string
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          modulo: Database["public"]["Enums"]["app_modulo"]
+          pessoa_id: string
+          updated_at?: string
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          modulo?: Database["public"]["Enums"]["app_modulo"]
+          pessoa_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pessoa_permissoes_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pessoas: {
         Row: {
           agencia: string | null
@@ -885,6 +929,14 @@ export type Database = {
         Args: { _obra_id: string; _uid: string }
         Returns: boolean
       }
+      has_permission: {
+        Args: {
+          _acao: Database["public"]["Enums"]["app_acao"]
+          _modulo: Database["public"]["Enums"]["app_modulo"]
+          _uid: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -896,6 +948,17 @@ export type Database = {
       is_super_admin: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
+      app_acao: "view" | "create" | "edit" | "delete"
+      app_modulo:
+        | "dashboard"
+        | "obras"
+        | "financeiro"
+        | "faturamento"
+        | "equipes"
+        | "vistorias"
+        | "orcamentos"
+        | "execucoes"
+        | "etapas"
       app_role:
         | "admin"
         | "gestor"
@@ -1072,6 +1135,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_acao: ["view", "create", "edit", "delete"],
+      app_modulo: [
+        "dashboard",
+        "obras",
+        "financeiro",
+        "faturamento",
+        "equipes",
+        "vistorias",
+        "orcamentos",
+        "execucoes",
+        "etapas",
+      ],
       app_role: [
         "admin",
         "gestor",
