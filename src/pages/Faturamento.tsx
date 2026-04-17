@@ -8,10 +8,12 @@ import { Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { format } from "date-fns";
 import { FaturamentoFormDialog } from "@/components/financeiro/FaturamentoFormDialog";
+import { PedidoCompraEditDialog } from "@/components/financeiro/PedidoCompraEditDialog";
 
 export default function Faturamento() {
   const [tab, setTab] = useState<"rcs" | "pcs" | "nfs">("rcs");
   const [openTipo, setOpenTipo] = useState<"rc" | "pc" | "nf" | null>(null);
+  const [editPc, setEditPc] = useState<any | null>(null);
 
   const rcs = useQuery({
     queryKey: ["faturamento-rcs"],
