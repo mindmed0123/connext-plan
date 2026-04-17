@@ -18,6 +18,8 @@ import {
 } from "@/lib/financeiro-helpers";
 import { ContratacaoCard } from "@/components/financeiro/ContratacaoCard";
 
+type ParcelaInput = { valor: string; data_prevista: string };
+
 export function ContratacoesTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -28,6 +30,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
     forma_pagamento_prevista: "" as string,
     observacoes: "",
   });
+  const [parcelasInput, setParcelasInput] = useState<ParcelaInput[]>([{ valor: "", data_prevista: "" }]);
 
   const { data: terceirizados } = useQuery({
     queryKey: ["pessoas-terceirizados-ativos"],
@@ -60,11 +63,47 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
     await supabase.from("obra_timeline").insert([{ obra_id: obraId, user_id: u.user?.id, evento, detalhes }]);
   };
 
+  const aplicarDivisaoAutomatica = (qtd: number, total: number) => {
+    if (qtd < 1) return;
+    const valor = +(total / qtd).toFixed(2);
+    const novas: ParcelaInput[] = Array.from({ length: qtd }).map((_, i) => ({
+      valor: i === qtd - 1 ? (total - valor * (qtd - 1)).toFixed(2) : valor.toFixed(2),
+      data_prevista: parcelasInput[i]?.data_prevista ?? "",
+    }));
+    setParcelasInput(novas);
+  };
+
+  const handleQtdChange = (v: string) => {
+    const qtd = Math.max(1, parseInt(v) || 1);
+    setForm((f) => ({ ...f, quantidade_parcelas: String(qtd) }));
+    const total = parseFloat(form.valor_total) || 0;
+    if (total > 0) aplicarDivisaoAutomatica(qtd, total);
+    else setParcelasInput(Array.from({ length: qtd }).map((_, i) => parcelasInput[i] ?? { valor: "", data_prevista: "" }));
+  };
+
+  const handleTotalChange = (v: string) => {
+    setForm((f) => ({ ...f, valor_total: v }));
+    const total = parseFloat(v) || 0;
+    const qtd = Math.max(1, parseInt(form.quantidade_parcelas) || 1);
+    if (total > 0) aplicarDivisaoAutomatica(qtd, total);
+  };
+
+  const updateParcela = (i: number, patch: Partial<ParcelaInput>) => {
+    setParcelasInput((arr) => arr.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  };
+
+  const somaParcelas = parcelasInput.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
+  const totalContratado = parseFloat(form.valor_total) || 0;
+  const diferenca = +(totalContratado - somaParcelas).toFixed(2);
+
   const create = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      const valor_total = parseFloat(form.valor_total) || 0;
-      const qtd = Math.max(1, parseInt(form.quantidade_parcelas) || 1);
+      const valor_total = totalContratado;
+      const qtd = parcelasInput.length;
+      if (Math.abs(diferenca) > 0.01) {
+        throw new Error(`Soma das parcelas (${formatCurrency(somaParcelas)}) precisa ser igual ao valor total (${formatCurrency(valor_total)})`);
+      }
 
       const { data: contratacao, error } = await supabase
         .from("contratacoes_terceirizado")
@@ -81,11 +120,11 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
         .single();
       if (error) throw error;
 
-      const valorParcela = +(valor_total / qtd).toFixed(2);
-      const parcelas = Array.from({ length: qtd }).map((_, i) => ({
+      const parcelas = parcelasInput.map((p, i) => ({
         contratacao_id: contratacao!.id,
         numero_parcela: i + 1,
-        valor: i === qtd - 1 ? +(valor_total - valorParcela * (qtd - 1)).toFixed(2) : valorParcela,
+        valor: parseFloat(p.valor) || 0,
+        data_prevista: p.data_prevista || null,
         forma_pagamento: (form.forma_pagamento_prevista || null) as any,
       }));
       const { error: pErr } = await supabase.from("parcelas_pagamento").insert(parcelas);
@@ -102,6 +141,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
       qc.invalidateQueries({ queryKey: ["financeiro-contratacoes"] });
       setOpen(false);
       setForm({ terceirizado_id: "", valor_total: "", quantidade_parcelas: "1", forma_pagamento_prevista: "", observacoes: "" });
+      setParcelasInput([{ valor: "", data_prevista: "" }]);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -155,20 +195,83 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
             </div>
             <div>
               <Label className="text-xs">Valor total contratado</Label>
-              <Input type="number" step="0.01" value={form.valor_total} onChange={(e) => setForm({ ...form, valor_total: e.target.value })} />
+              <Input type="number" step="0.01" value={form.valor_total} onChange={(e) => handleTotalChange(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Quantidade de parcelas</Label>
-              <Input type="number" min={1} value={form.quantidade_parcelas} onChange={(e) => setForm({ ...form, quantidade_parcelas: e.target.value })} />
+              <Input type="number" min={1} value={form.quantidade_parcelas} onChange={(e) => handleQtdChange(e.target.value)} />
             </div>
           </div>
+
+          <div className="space-y-2 pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Parcelas (você pode editar valores e datas individualmente)</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px]"
+                onClick={() => aplicarDivisaoAutomatica(parcelasInput.length, totalContratado)}
+                disabled={!totalContratado}
+              >
+                Dividir igualmente
+              </Button>
+            </div>
+
+            <div className="space-y-1.5">
+              {parcelasInput.map((p, i) => (
+                <div key={i} className="grid grid-cols-[40px_1fr_1fr] gap-2 items-end">
+                  <div className="text-xs text-muted-foreground pb-2 text-center">#{i + 1}</div>
+                  <div>
+                    <Label className="text-[10px]">Valor</Label>
+                    <Input
+                      className="h-8 text-xs"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={p.valor}
+                      onChange={(e) => updateParcela(i, { valor: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Vencimento (opcional)</Label>
+                    <Input
+                      className="h-8 text-xs"
+                      type="date"
+                      value={p.data_prevista}
+                      onChange={(e) => updateParcela(i, { data_prevista: e.target.value })}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
+              <span>
+                Soma das parcelas: <span className="font-semibold">{formatCurrency(somaParcelas)}</span>
+                {" "}/ Total: <span className="font-semibold">{formatCurrency(totalContratado)}</span>
+              </span>
+              {Math.abs(diferenca) > 0.01 ? (
+                <span className="text-destructive font-semibold">
+                  {diferenca > 0 ? `Faltam ${formatCurrency(diferenca)}` : `Excesso de ${formatCurrency(-diferenca)}`}
+                </span>
+              ) : totalContratado > 0 ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Confere</span>
+              ) : null}
+            </div>
+          </div>
+
           <div>
             <Label className="text-xs">Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={() => create.mutate()} disabled={!form.terceirizado_id || !form.valor_total}>
+            <Button
+              size="sm"
+              onClick={() => create.mutate()}
+              disabled={!form.terceirizado_id || !form.valor_total || Math.abs(diferenca) > 0.01 || create.isPending}
+            >
               Criar contratação
             </Button>
           </div>
