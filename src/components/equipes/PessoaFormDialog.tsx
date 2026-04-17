@@ -283,6 +283,12 @@ export function PessoaFormDialog({
             </DialogFooter>
           </TabsContent>
 
+          {editing && isTerceirizado && (
+            <TabsContent value="obras" className="mt-4">
+              <TerceirizadoObrasTab pessoaId={pessoa.id} />
+            </TabsContent>
+          )}
+
           {editing && isAdmin && (
             <TabsContent value="permissoes" className="mt-4">
               <PermissoesEditor pessoaId={pessoa.id} />
