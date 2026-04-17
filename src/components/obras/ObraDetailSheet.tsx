@@ -90,16 +90,18 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
 
             {isAdmin ? (
               <Tabs defaultValue="vistoria" className="mt-6">
-                <TabsList className="grid w-full grid-cols-8">
-                  <TabsTrigger value="vistoria">Vistoria</TabsTrigger>
-                  <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-                  <TabsTrigger value="execucao">Execução</TabsTrigger>
-                  <TabsTrigger value="equipe">Equipe</TabsTrigger>
-                  <TabsTrigger value="fotos">Fotos</TabsTrigger>
-                  <TabsTrigger value="contratacoes">Pagamentos</TabsTrigger>
-                  <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-                  <TabsTrigger value="timeline">Histórico</TabsTrigger>
-                </TabsList>
+                <div className="-mx-6 overflow-x-auto px-6 pb-1">
+                  <TabsList className="inline-flex h-auto w-auto gap-1 p-1">
+                    <TabsTrigger value="vistoria" className="text-xs px-3 py-1.5 whitespace-nowrap">Vistoria</TabsTrigger>
+                    <TabsTrigger value="orcamento" className="text-xs px-3 py-1.5 whitespace-nowrap">Orçamento</TabsTrigger>
+                    <TabsTrigger value="execucao" className="text-xs px-3 py-1.5 whitespace-nowrap">Execução</TabsTrigger>
+                    <TabsTrigger value="equipe" className="text-xs px-3 py-1.5 whitespace-nowrap">Equipe</TabsTrigger>
+                    <TabsTrigger value="fotos" className="text-xs px-3 py-1.5 whitespace-nowrap">Fotos</TabsTrigger>
+                    <TabsTrigger value="contratacoes" className="text-xs px-3 py-1.5 whitespace-nowrap">Pagamentos</TabsTrigger>
+                    <TabsTrigger value="faturamento" className="text-xs px-3 py-1.5 whitespace-nowrap">Faturamento</TabsTrigger>
+                    <TabsTrigger value="timeline" className="text-xs px-3 py-1.5 whitespace-nowrap">Histórico</TabsTrigger>
+                  </TabsList>
+                </div>
                 <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="orcamento" className="mt-4"><OrcamentoTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="execucao" className="mt-4"><ExecucaoTab obraId={obra.id} /></TabsContent>
