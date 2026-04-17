@@ -1,0 +1,169 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
+
+type Tipo = "rc" | "pc" | "nf";
+
+const TITULO: Record<Tipo, string> = {
+  rc: "Nova RC",
+  pc: "Novo pedido de compra",
+  nf: "Nova nota fiscal",
+};
+
+export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const qc = useQueryClient();
+  const [vinculo, setVinculo] = useState<"existente" | "avulso">("existente");
+  const [obraId, setObraId] = useState<string>("");
+  const [codigoAvulso, setCodigoAvulso] = useState("");
+  const [numero, setNumero] = useState("");
+  const [data, setData] = useState("");
+  const [valor, setValor] = useState("");
+  const [status, setStatus] = useState<string>(tipo === "nf" ? "" : "aguardando");
+
+  const obras = useQuery({
+    queryKey: ["obras-select"],
+    enabled: open && vinculo === "existente",
+    queryFn: async () => (await supabase.from("obras").select("id, codigo_chamado").order("codigo_chamado")).data ?? [],
+  });
+
+  const reset = () => {
+    setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(""); setValor("");
+    setStatus(tipo === "nf" ? "" : "aguardando");
+  };
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (vinculo === "existente" && !obraId) throw new Error("Selecione uma obra");
+      if (vinculo === "avulso" && !codigoAvulso.trim()) throw new Error("Informe o código do chamado");
+
+      const baseObra = vinculo === "existente"
+        ? { obra_id: obraId, codigo_chamado_avulso: null }
+        : { obra_id: null, codigo_chamado_avulso: codigoAvulso.trim() };
+
+      if (tipo === "rc") {
+        const { error } = await supabase.from("rcs").insert([{
+          ...baseObra,
+          numero_rc: numero || null,
+          data_rc: data || null,
+          status: (status || "aguardando") as any,
+        }]);
+        if (error) throw error;
+      } else if (tipo === "pc") {
+        const { error } = await supabase.from("pedidos_compra").insert([{
+          ...baseObra,
+          numero_pedido: numero || null,
+          data_recebimento: data || null,
+          valor: valor ? Number(valor) : 0,
+          status: (status || "aguardando") as any,
+        }]);
+        if (error) throw error;
+      } else {
+        if (!numero.trim()) throw new Error("Informe o número da NF");
+        if (!data) throw new Error("Informe a data de emissão");
+        const { error } = await supabase.from("notas_fiscais").insert([{
+          ...baseObra,
+          numero_nf: numero.trim(),
+          data_emissao: data,
+          valor: valor ? Number(valor) : 0,
+        }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Cadastrado com sucesso");
+      qc.invalidateQueries({ queryKey: ["faturamento-rcs"] });
+      qc.invalidateQueries({ queryKey: ["faturamento-pcs"] });
+      qc.invalidateQueries({ queryKey: ["faturamento-nfs"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-data"] });
+      reset();
+      onOpenChange(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao cadastrar"),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{TITULO[tipo]}</DialogTitle>
+          <DialogDescription>Vincule a uma obra cadastrada ou informe o código do chamado de uma obra antiga.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <RadioGroup value={vinculo} onValueChange={(v) => setVinculo(v as any)} className="grid grid-cols-2 gap-2">
+            <Label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
+              <RadioGroupItem value="existente" /> Obra cadastrada
+            </Label>
+            <Label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
+              <RadioGroupItem value="avulso" /> Obra antiga (avulso)
+            </Label>
+          </RadioGroup>
+
+          {vinculo === "existente" ? (
+            <div className="space-y-1.5">
+              <Label>Obra</Label>
+              <Select value={obraId} onValueChange={setObraId}>
+                <SelectTrigger><SelectValue placeholder="Selecione a obra" /></SelectTrigger>
+                <SelectContent>
+                  {obras.data?.map((o: any) => (
+                    <SelectItem key={o.id} value={o.id}>{o.codigo_chamado}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label>Código do chamado</Label>
+              <Input value={codigoAvulso} onChange={(e) => setCodigoAvulso(e.target.value)} placeholder="Ex: 123456" />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>{tipo === "rc" ? "Nº RC" : tipo === "pc" ? "Nº pedido" : "Nº NF"}</Label>
+              <Input value={numero} onChange={(e) => setNumero(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{tipo === "nf" ? "Data emissão" : "Data"}</Label>
+              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            </div>
+          </div>
+
+          {tipo !== "rc" && (
+            <div className="space-y-1.5">
+              <Label>Valor (R$)</Label>
+              <Input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
+            </div>
+          )}
+
+          {tipo !== "nf" && (
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aguardando">Aguardando</SelectItem>
+                  <SelectItem value="recebido">Recebido</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
