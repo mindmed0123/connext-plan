@@ -14,6 +14,7 @@ import { FotosTab } from "./tabs/FotosTab";
 import { FaturamentoTab } from "./tabs/FaturamentoTab";
 import { TimelineTab } from "./tabs/TimelineTab";
 import { EquipeTab } from "./tabs/EquipeTab";
+import { ContratacoesTab } from "./tabs/ContratacoesTab";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; onClose: () => void }) {
@@ -89,13 +90,14 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
 
             {isAdmin ? (
               <Tabs defaultValue="vistoria" className="mt-6">
-                <TabsList className="grid w-full grid-cols-7">
+                <TabsList className="grid w-full grid-cols-8">
                   <TabsTrigger value="vistoria">Vistoria</TabsTrigger>
                   <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
                   <TabsTrigger value="execucao">Execução</TabsTrigger>
                   <TabsTrigger value="equipe">Equipe</TabsTrigger>
                   <TabsTrigger value="fotos">Fotos</TabsTrigger>
-                  <TabsTrigger value="faturamento">Financeiro</TabsTrigger>
+                  <TabsTrigger value="contratacoes">Pagamentos</TabsTrigger>
+                  <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
                   <TabsTrigger value="timeline">Histórico</TabsTrigger>
                 </TabsList>
                 <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
@@ -103,6 +105,7 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <TabsContent value="execucao" className="mt-4"><ExecucaoTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="equipe" className="mt-4"><EquipeTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="contratacoes" className="mt-4"><ContratacoesTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
               </Tabs>

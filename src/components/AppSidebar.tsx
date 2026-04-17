@@ -11,6 +11,7 @@ import {
   LogOut,
   Building2,
   Users,
+  DollarSign,
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const modulosAdmin: NavItem[] = [
 ];
 
 const financeiroAdmin: NavItem[] = [
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign },
   { title: "Faturamento", url: "/faturamento", icon: Receipt },
   { title: "Recebimentos", url: "/recebimentos", icon: Wallet },
 ];
