@@ -226,6 +226,78 @@ export type Database = {
           },
         ]
       }
+      materiais_obra: {
+        Row: {
+          anexo_path: string | null
+          anexo_url: string | null
+          created_at: string
+          created_by: string | null
+          data_compra: string
+          descricao: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          fornecedor: string | null
+          id: string
+          numero_nf: string | null
+          obra_id: string
+          observacoes: string | null
+          quantidade: number
+          unidade: string | null
+          updated_at: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          anexo_path?: string | null
+          anexo_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string
+          descricao: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          fornecedor?: string | null
+          id?: string
+          numero_nf?: string | null
+          obra_id: string
+          observacoes?: string | null
+          quantidade?: number
+          unidade?: string | null
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Update: {
+          anexo_path?: string | null
+          anexo_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string
+          descricao?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          fornecedor?: string | null
+          id?: string
+          numero_nf?: string | null
+          obra_id?: string
+          observacoes?: string | null
+          quantidade?: number
+          unidade?: string | null
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materiais_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais: {
         Row: {
           arquivo_pdf_url: string | null
