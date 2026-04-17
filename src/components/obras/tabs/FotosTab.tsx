@@ -16,7 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Upload, ImageIcon, Trash2, Loader2 } from "lucide-react";
+import { Upload, ImageIcon, Trash2, Loader2, Download } from "lucide-react";
+import JSZip from "jszip";
 
 const TIPO_LABEL = { antes: "Antes", durante: "Durante", depois: "Depois" } as const;
 const MAX_FOTOS = 50;
