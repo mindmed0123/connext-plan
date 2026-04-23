@@ -5,6 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, REGIAO_LABEL } from "@/lib/obra-helpers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { VistoriaTab } from "./tabs/VistoriaTab";
@@ -53,6 +59,36 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
     },
   });
 
+  const deleteObra = useMutation({
+    mutationFn: async () => {
+      if (!obraId) return;
+      // 1) Apagar fotos do storage (a tabela cai por cascade, mas os arquivos não)
+      const { data: fotos } = await supabase
+        .from("fotos_obra")
+        .select("storage_path")
+        .eq("obra_id", obraId);
+      const paths = (fotos ?? []).map((f) => f.storage_path).filter(Boolean) as string[];
+      if (paths.length > 0) {
+        await supabase.storage.from("obras-fotos").remove(paths);
+      }
+      // 2) Apagar a obra (cascade remove tudo que está vinculado)
+      const { error } = await supabase.from("obras").delete().eq("id", obraId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Obra excluída com sucesso");
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      qc.invalidateQueries({ queryKey: ["kanban"] });
+      qc.invalidateQueries({ queryKey: ["financeiro"] });
+      qc.invalidateQueries({ queryKey: ["faturamento"] });
+      onClose();
+    },
+    onError: (e: any) => {
+      toast.error("Erro ao excluir obra", { description: e?.message });
+    },
+  });
+
   return (
     <Sheet open={!!obraId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
@@ -75,16 +111,51 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
               </div>
 
               {isAdmin && (
-                <div className="flex items-center gap-2 pt-2">
-                  <span className="text-xs text-muted-foreground">Atualizar status:</span>
-                  <Select value={obra.status} onValueChange={(v) => updateStatus.mutate(v)}>
-                    <SelectTrigger className="h-8 w-[230px] text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {OBRA_STATUS_LIST.map((s) => (
-                        <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center justify-between gap-2 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Atualizar status:</span>
+                    <Select value={obra.status} onValueChange={(v) => updateStatus.mutate(v)}>
+                      <SelectTrigger className="h-8 w-[230px] text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {OBRA_STATUS_LIST.map((s) => (
+                          <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Excluir obra
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir obra {obra.codigo_chamado}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação <strong>não pode ser desfeita</strong>. Todos os dados vinculados a esta obra serão apagados permanentemente:
+                          <span className="block mt-2 text-xs">
+                            • Fotos, vistorias, orçamentos e execuções<br />
+                            • Equipe e responsáveis<br />
+                            • Contratações de terceirizados e parcelas de pagamento<br />
+                            • Materiais, RCs, pedidos de compra e notas fiscais<br />
+                            • Recebimentos e histórico
+                          </span>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteObra.mutate()}
+                          disabled={deleteObra.isPending}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleteObra.isPending ? "Excluindo..." : "Sim, excluir tudo"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               )}
             </SheetHeader>
