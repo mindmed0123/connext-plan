@@ -25,7 +25,10 @@ export default function Obras() {
   const { data: obras, isLoading } = useQuery({
     queryKey: ["obras", { search, statusFilter, regiaoFilter }],
     queryFn: async () => {
-      let q = supabase.from("obras").select("*").order("created_at", { ascending: false });
+      let q = supabase
+        .from("obras")
+        .select("*, orcamentos(valor_orcamento, status, created_at)")
+        .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
       if (regiaoFilter !== "all") q = q.eq("regiao", regiaoFilter as any);
       if (search.trim()) q = q.ilike("codigo_chamado", `%${search.trim()}%`);
@@ -34,6 +37,17 @@ export default function Obras() {
       return data;
     },
   });
+
+  const formatBRL = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const getValorObra = (orcs: Array<{ valor_orcamento: number; status: string; created_at: string }> | null) => {
+    if (!orcs || orcs.length === 0) return null;
+    const aprovado = orcs.find((o) => o.status === "aprovado");
+    if (aprovado) return Number(aprovado.valor_orcamento);
+    const recente = [...orcs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
+    return Number(recente.valor_orcamento);
+  };
 
   return (
     <div className="space-y-5">
@@ -86,26 +100,34 @@ export default function Obras() {
               <TableHead>Região</TableHead>
               <TableHead>Engenheiro</TableHead>
               <TableHead>Recebido em</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
             )}
             {!isLoading && (obras?.length ?? 0) === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">Nenhuma obra encontrada. Clique em "Nova obra" para criar.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">Nenhuma obra encontrada. Clique em "Nova obra" para criar.</TableCell></TableRow>
             )}
-            {obras?.map((o) => (
-              <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => setSelectedId(o.id)}>
-                <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
-                <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
-                <TableCell className="text-sm">{REGIAO_LABEL[o.regiao]}</TableCell>
-                <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
-                <TableCell className="text-sm">{format(new Date(o.data_recebimento), "dd/MM/yyyy")}</TableCell>
-                <TableCell><StatusBadge status={o.status} /></TableCell>
-              </TableRow>
-            ))}
+            {obras?.map((o: any) => {
+              const valor = getValorObra(o.orcamentos);
+              const isAprovado = o.orcamentos?.some((or: any) => or.status === "aprovado");
+              return (
+                <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => setSelectedId(o.id)}>
+                  <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
+                  <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
+                  <TableCell className="text-sm">{REGIAO_LABEL[o.regiao]}</TableCell>
+                  <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
+                  <TableCell className="text-sm">{format(new Date(o.data_recebimento), "dd/MM/yyyy")}</TableCell>
+                  <TableCell className={`text-right text-sm font-medium tabular-nums ${valor == null ? "text-muted-foreground" : isAprovado ? "text-success" : "text-foreground"}`}>
+                    {valor == null ? "—" : formatBRL(valor)}
+                  </TableCell>
+                  <TableCell><StatusBadge status={o.status} /></TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
