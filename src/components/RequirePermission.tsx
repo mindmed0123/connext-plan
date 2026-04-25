@@ -1,5 +1,6 @@
 import { ShieldAlert } from "lucide-react";
 import { AppModulo, usePermissions } from "@/hooks/usePermissions";
+import { useObrasVinculadas } from "@/hooks/useObrasVinculadas";
 
 export function RequirePermission({
   modulo,
@@ -9,14 +10,20 @@ export function RequirePermission({
   children: React.ReactNode;
 }) {
   const { can, isLoading } = usePermissions();
-  if (isLoading) {
+  const { temVinculo, isLoading: vincLoading } = useObrasVinculadas();
+
+  if (isLoading || vincLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
       </div>
     );
   }
-  if (!can(modulo, "view")) {
+
+  // Operacional / terceirizado vinculado a alguma obra pode acessar /obras
+  const liberadoPorVinculo = modulo === "obras" && temVinculo;
+
+  if (!can(modulo, "view") && !liberadoPorVinculo) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-2 text-muted-foreground">
         <ShieldAlert className="h-8 w-8" />
