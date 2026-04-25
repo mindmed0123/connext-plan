@@ -14,6 +14,7 @@ import {
 } from "@/lib/pessoas-helpers";
 import { PermissoesEditor } from "./PermissoesEditor";
 import { TerceirizadoObrasTab } from "./TerceirizadoObrasTab";
+import { PessoaObrasVinculadasTab } from "./PessoaObrasVinculadasTab";
 
 type Pessoa = {
   id?: string;
@@ -129,8 +130,11 @@ export function PessoaFormDialog({
         <Tabs defaultValue="dados">
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            {editing && (isTerceirizado || isOperacional) && (
+              <TabsTrigger value="obras-vinculadas">Obras vinculadas</TabsTrigger>
+            )}
             {editing && isTerceirizado && (
-              <TabsTrigger value="obras">Obras &amp; pagamentos</TabsTrigger>
+              <TabsTrigger value="obras">Pagamentos</TabsTrigger>
             )}
             {editing && isAdmin && (
               <TabsTrigger value="permissoes">Permissões</TabsTrigger>
@@ -282,6 +286,12 @@ export function PessoaFormDialog({
               </Button>
             </DialogFooter>
           </TabsContent>
+
+          {editing && (isTerceirizado || isOperacional) && (
+            <TabsContent value="obras-vinculadas" className="mt-4">
+              <PessoaObrasVinculadasTab pessoaId={pessoa.id} tipo={form.tipo} />
+            </TabsContent>
+          )}
 
           {editing && isTerceirizado && (
             <TabsContent value="obras" className="mt-4">
