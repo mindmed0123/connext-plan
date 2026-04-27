@@ -130,8 +130,15 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
               <Input value={numero} onChange={(e) => setNumero(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>{tipo === "nf" ? "Data emissão" : "Data"}</Label>
+              <Label>
+                {tipo === "nf" ? "Data emissão" : tipo === "pc" ? "Data de recebimento" : "Data"}
+              </Label>
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+              {tipo === "pc" && (
+                <p className="text-[11px] text-muted-foreground">
+                  Esta data alimenta automaticamente a agenda de recebimentos.
+                </p>
+              )}
             </div>
           </div>
 
