@@ -824,6 +824,7 @@ export type Database = {
           data_recebido: string | null
           id: string
           obra_id: string
+          pedido_compra_id: string | null
           status: Database["public"]["Enums"]["recebimento_status"]
           updated_at: string
           valor: number
@@ -834,6 +835,7 @@ export type Database = {
           data_recebido?: string | null
           id?: string
           obra_id: string
+          pedido_compra_id?: string | null
           status?: Database["public"]["Enums"]["recebimento_status"]
           updated_at?: string
           valor?: number
@@ -844,6 +846,7 @@ export type Database = {
           data_recebido?: string | null
           id?: string
           obra_id?: string
+          pedido_compra_id?: string | null
           status?: Database["public"]["Enums"]["recebimento_status"]
           updated_at?: string
           valor?: number
