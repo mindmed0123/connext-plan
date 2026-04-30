@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { Pencil, Paperclip, Upload, ExternalLink, Trash2, X } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const STATUS = ["em_elaboracao", "enviado", "em_negociacao", "aprovado", "reprovado"] as const;
 type Status = typeof STATUS[number];
