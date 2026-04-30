@@ -308,6 +308,32 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                       <Button size="icon" variant="ghost" onClick={() => startEdit(o)} title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" title="Excluir" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {o.numero_orcamento || "Sem nº"} • {formatCurrency(o.valor_orcamento)}
+                              <span className="block mt-2 text-xs">Esta ação não pode ser desfeita. O anexo também será removido.</span>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => remove.mutate(o)}
+                              disabled={remove.isPending}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {remove.isPending ? "Excluindo..." : "Sim, excluir"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </>
