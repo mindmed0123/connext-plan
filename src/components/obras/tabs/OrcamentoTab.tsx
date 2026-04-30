@@ -201,6 +201,8 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
     },
     onError: (e: any) => toast.error("Erro ao excluir", { description: e.message }),
   });
+
+  const startEdit = (o: any) => {
     setEditingId(o.id);
     setEditForm({
       numero_orcamento: o.numero_orcamento ?? "",
