@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { Pencil, Paperclip, Upload, ExternalLink, Trash2, X } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const STATUS = ["em_elaboracao", "enviado", "em_negociacao", "aprovado", "reprovado"] as const;
 type Status = typeof STATUS[number];
@@ -174,6 +178,30 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: async (o: any) => {
+      const { data: u } = await supabase.auth.getUser();
+      if (o.arquivo_path) {
+        await supabase.storage.from("orcamentos-anexos").remove([o.arquivo_path]);
+      }
+      const { error } = await supabase.from("orcamentos").delete().eq("id", o.id);
+      if (error) throw error;
+      await supabase.from("obra_timeline").insert([{
+        obra_id: obraId,
+        user_id: u.user?.id,
+        evento: "Orçamento excluído",
+        detalhes: `${o.numero_orcamento || "Sem nº"} • ${formatCurrency(o.valor_orcamento)}`,
+      }]);
+    },
+    onSuccess: () => {
+      toast.success("Orçamento excluído");
+      qc.invalidateQueries({ queryKey: ["orcamentos", obraId] });
+      qc.invalidateQueries({ queryKey: ["timeline", obraId] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+    onError: (e: any) => toast.error("Erro ao excluir", { description: e.message }),
+  });
+
   const startEdit = (o: any) => {
     setEditingId(o.id);
     setEditForm({
@@ -280,6 +308,32 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                       <Button size="icon" variant="ghost" onClick={() => startEdit(o)} title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" title="Excluir" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {o.numero_orcamento || "Sem nº"} • {formatCurrency(o.valor_orcamento)}
+                              <span className="block mt-2 text-xs">Esta ação não pode ser desfeita. O anexo também será removido.</span>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => remove.mutate(o)}
+                              disabled={remove.isPending}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {remove.isPending ? "Excluindo..." : "Sim, excluir"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </>
