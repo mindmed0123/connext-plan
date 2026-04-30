@@ -178,7 +178,29 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const startEdit = (o: any) => {
+  const remove = useMutation({
+    mutationFn: async (o: any) => {
+      const { data: u } = await supabase.auth.getUser();
+      if (o.arquivo_path) {
+        await supabase.storage.from("orcamentos-anexos").remove([o.arquivo_path]);
+      }
+      const { error } = await supabase.from("orcamentos").delete().eq("id", o.id);
+      if (error) throw error;
+      await supabase.from("obra_timeline").insert([{
+        obra_id: obraId,
+        user_id: u.user?.id,
+        evento: "Orçamento excluído",
+        detalhes: `${o.numero_orcamento || "Sem nº"} • ${formatCurrency(o.valor_orcamento)}`,
+      }]);
+    },
+    onSuccess: () => {
+      toast.success("Orçamento excluído");
+      qc.invalidateQueries({ queryKey: ["orcamentos", obraId] });
+      qc.invalidateQueries({ queryKey: ["timeline", obraId] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+    onError: (e: any) => toast.error("Erro ao excluir", { description: e.message }),
+  });
     setEditingId(o.id);
     setEditForm({
       numero_orcamento: o.numero_orcamento ?? "",
