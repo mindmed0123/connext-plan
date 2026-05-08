@@ -664,7 +664,7 @@ export default function Landing() {
             <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
               <div className="text-sm font-semibold uppercase tracking-wider text-gray-500">Básico</div>
               <div className="mt-4 flex items-baseline gap-1 transition-all duration-300">
-                <span className="text-4xl font-bold text-[#0F2448]">R$ {planoBasico}</span>
+                <span className="text-4xl font-bold text-[#0F2448]">{`R$ ${planoBasico.toLocaleString("pt-BR")}`}</span>
                 <span className="text-sm text-gray-500">/mês</span>
               </div>
               <p className="mt-2 text-sm text-gray-500">Para empresas iniciando a gestão digital</p>
@@ -690,7 +690,7 @@ export default function Landing() {
               </span>
               <div className="text-sm font-semibold uppercase tracking-wider" style={{ color: ORANGE }}>Profissional</div>
               <div className="mt-4 flex items-baseline gap-1 transition-all duration-300">
-                <span className="text-4xl font-bold text-[#0F2448]">R$ {planoPro}</span>
+                <span className="text-4xl font-bold text-[#0F2448]">{`R$ ${planoPro.toLocaleString("pt-BR")}`}</span>
                 <span className="text-sm text-gray-500">/mês</span>
               </div>
               <p className="mt-2 text-sm text-gray-500">Controle total para empresas em crescimento</p>
@@ -716,7 +716,7 @@ export default function Landing() {
             <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
               <div className="text-sm font-semibold uppercase tracking-wider text-gray-500">Enterprise</div>
               <div className="mt-4 flex items-baseline gap-1 transition-all duration-300">
-                <span className="text-4xl font-bold text-[#0F2448]">R$ {planoEnterprise}</span>
+                <span className="text-4xl font-bold text-[#0F2448]">{`R$ ${planoEnterprise.toLocaleString("pt-BR")}`}</span>
                 <span className="text-sm text-gray-500">/mês</span>
               </div>
               <p className="mt-2 text-sm text-gray-500">Para grupos e construtoras com múltiplas unidades</p>
