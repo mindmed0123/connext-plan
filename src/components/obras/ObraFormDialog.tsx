@@ -55,9 +55,9 @@ export function ObraFormDialog({
       setForm((f) => ({ ...f, origem: data.nome }));
       setNovaOrigem("");
       setShowAddOrigem(false);
-      toast.success("Origem adicionada");
+      toast.success("Comprador adicionado");
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar origem"),
+    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar comprador"),
   });
 
   const mut = useMutation({
