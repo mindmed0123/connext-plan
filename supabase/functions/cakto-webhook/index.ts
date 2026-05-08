@@ -242,32 +242,39 @@ Deno.serve(async (req) => {
 
   // Dispara e-mail transacional (best-effort) para eventos relevantes
   try {
-    const emailEvent = (() => {
+    const templateName = (() => {
       if (["purchase_approved", "subscription_created", "subscription_renewed", "payment.approved", "payment.completed"].includes(evt))
-        return "billing_payment_approved";
+        return "payment-approved";
       if (["purchase_refused", "subscription_renewal_refused", "payment.failed", "payment.refused"].includes(evt))
-        return "billing_payment_failed";
+        return "payment-failed";
       if (["subscription_canceled", "subscription.canceled", "subscription.cancelled", "refund", "chargeback"].includes(evt))
-        return "billing_subscription_canceled";
+        return "subscription-canceled";
       return null;
     })();
 
-    if (emailEvent && (customerEmail || empresa_id)) {
+    if (templateName && (customerEmail || empresa_id)) {
       let toEmail = customerEmail;
+      let toName: string | null = (data?.customer?.name ?? data?.client?.name ?? null);
       if (!toEmail && empresa_id) {
         const { data: admin } = await supabase
           .from("pessoas")
-          .select("email")
+          .select("email,nome")
           .eq("empresa_id", empresa_id)
           .not("email", "is", null)
           .limit(1)
           .maybeSingle();
         toEmail = (admin as any)?.email ?? null;
+        toName = toName ?? (admin as any)?.nome ?? null;
       }
       if (toEmail) {
-        await supabase.functions.invoke("billing-email", {
-          body: { to: toEmail, event: emailEvent, empresa_id, payload: { eventType, data } },
-        }).catch((e) => console.warn("billing-email invoke failed", e));
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName,
+            recipientEmail: toEmail,
+            idempotencyKey: `cakto-${eventId}-${templateName}`,
+            templateData: { name: toName ?? undefined },
+          },
+        }).catch((e) => console.warn("send-transactional-email invoke failed", e));
       }
     }
   } catch (e) {
