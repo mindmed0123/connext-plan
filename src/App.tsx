@@ -19,7 +19,10 @@ import Recebimentos from "./pages/Recebimentos";
 import Equipes from "./pages/Equipes";
 import Financeiro from "./pages/Financeiro";
 import Admin from "./pages/Admin";
+import Pricing from "./pages/Pricing";
+import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 
 const queryClient = new QueryClient();
 
@@ -32,10 +35,13 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route
               element={
                 <ProtectedRoute>
-                  <AppLayout />
+                  <SubscriptionGate>
+                    <AppLayout />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             >
@@ -51,6 +57,7 @@ const App = () => (
               <Route path="/recebimentos" element={<RequirePermission modulo="financeiro"><Recebimentos /></RequirePermission>} />
               <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/billing" element={<Billing />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
