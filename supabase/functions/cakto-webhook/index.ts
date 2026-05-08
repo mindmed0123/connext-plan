@@ -141,10 +141,29 @@ Deno.serve(async (req) => {
         .maybeSingle();
       target = existing as any;
     }
+    // Fallback: localizar empresa pelo email do cliente
+    if (!target && customerEmail) {
+      const { data: pessoa } = await supabase
+        .from("pessoas")
+        .select("empresa_id")
+        .ilike("email", customerEmail)
+        .maybeSingle();
+      const emp = (pessoa as any)?.empresa_id;
+      if (emp) {
+        const { data: existing } = await supabase
+          .from("assinaturas")
+          .select("id")
+          .eq("empresa_id", emp)
+          .maybeSingle();
+        target = existing as any;
+      }
+    }
     if (target) {
       await supabase.from("assinaturas").update(updates).eq("id", target.id);
     } else {
-      console.warn("Cakto webhook: assinatura não encontrada", { subscriptionId, empresa_id });
+      console.warn("Cakto webhook: assinatura não encontrada", {
+        subscriptionId, empresa_id, customerEmail, eventType,
+      });
     }
   }
 
