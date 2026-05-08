@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       assinaturas: {
         Row: {
+          cakto_customer_id: string | null
+          cakto_subscription_id: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
@@ -33,6 +35,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cakto_customer_id?: string | null
+          cakto_subscription_id?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
@@ -50,6 +54,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cakto_customer_id?: string | null
+          cakto_subscription_id?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
@@ -85,6 +91,7 @@ export type Database = {
       }
       billing_events: {
         Row: {
+          cakto_subscription_id: string | null
           created_at: string
           empresa_id: string | null
           event_id: string | null
@@ -95,6 +102,7 @@ export type Database = {
           processed_at: string | null
         }
         Insert: {
+          cakto_subscription_id?: string | null
           created_at?: string
           empresa_id?: string | null
           event_id?: string | null
@@ -105,6 +113,7 @@ export type Database = {
           processed_at?: string | null
         }
         Update: {
+          cakto_subscription_id?: string | null
           created_at?: string
           empresa_id?: string | null
           event_id?: string | null
@@ -1066,6 +1075,8 @@ export type Database = {
       planos: {
         Row: {
           ativo: boolean
+          cakto_product_id_anual: string | null
+          cakto_product_id_mensal: string | null
           created_at: string
           descricao: string | null
           destaque: boolean
@@ -1084,6 +1095,8 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          cakto_product_id_anual?: string | null
+          cakto_product_id_mensal?: string | null
           created_at?: string
           descricao?: string | null
           destaque?: boolean
@@ -1102,6 +1115,8 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          cakto_product_id_anual?: string | null
+          cakto_product_id_mensal?: string | null
           created_at?: string
           descricao?: string | null
           destaque?: boolean

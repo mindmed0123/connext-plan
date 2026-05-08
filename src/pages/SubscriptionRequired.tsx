@@ -15,7 +15,7 @@ export default function SubscriptionRequired() {
         <h1 className="text-2xl font-bold">Assinatura necessária</h1>
         <p className="mt-3 text-muted-foreground">
           Seu período gratuito de 14 dias terminou ou sua assinatura está inativa.
-          Escolha um plano para continuar usando o ObraFlow.
+          Escolha um plano para continuar usando a Gestão de Obra.
         </p>
         <div className="mt-6 flex justify-center gap-2">
           <Button onClick={() => navigate("/pricing")}>Ver planos</Button>

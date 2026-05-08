@@ -3,5 +3,5 @@ project_id = "wwlsizyhryhiskrzizvw"
 [functions.create-users]
 verify_jwt = false
 
-[functions.paddle-webhook]
+[functions.cakto-webhook]
 verify_jwt = false
