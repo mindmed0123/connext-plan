@@ -25,14 +25,25 @@ const Ctx = createContext<AuthCtx>({
 async function fetchEmpresa(userId: string) {
   const { data } = await supabase
     .from("user_roles")
-    .select("empresa_id, empresas(nome)")
+    .select("empresa_id, empresas(nome, ativo)")
     .eq("user_id", userId)
     .not("empresa_id", "is", null)
     .maybeSingle();
   return {
     empresaId: (data?.empresa_id as string | null) ?? null,
     empresaNome: ((data?.empresas as any)?.nome as string | null) ?? null,
+    empresaAtivo: ((data?.empresas as any)?.ativo as boolean | undefined) ?? null,
   };
+}
+
+async function isSuperAdmin(userId: string) {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "super_admin")
+    .maybeSingle();
+  return !!data;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
