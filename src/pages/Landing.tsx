@@ -699,15 +699,17 @@ export default function Landing() {
                   <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ORANGE }} />{t}</li>
                 ))}
               </ul>
-              <Link
-                to="/auth"
+              <a
+                href={urlPro}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white transition-colors"
                 style={{ backgroundColor: ORANGE }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = ORANGE_LT)}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = ORANGE)}
               >
-                Começar grátis
-              </Link>
+                Assinar Profissional
+              </a>
             </div>
 
             {/* Enterprise */}
