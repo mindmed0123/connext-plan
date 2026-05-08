@@ -412,7 +412,7 @@ export default function Landing() {
               <a href="#precos" onClick={() => setMobileMenu(false)}>Preços</a>
               <a href="#suporte" onClick={() => setMobileMenu(false)}>Suporte</a>
               <Link to="/auth" className="border-t border-white/10 pt-3">Entrar</Link>
-              <PrimaryCTA size="md">Começar grátis</PrimaryCTA>
+              <PrimaryCTA size="md" href="#precos">Assinar agora</PrimaryCTA>
             </nav>
           </div>
         )}
