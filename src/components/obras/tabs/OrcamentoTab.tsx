@@ -58,6 +58,20 @@ async function uploadAnexo(obraId: string, file: File) {
   return { path, url: data.publicUrl };
 }
 
+async function abrirAnexo(arquivoPath: string | null | undefined, fallback?: string | null) {
+  if (arquivoPath) {
+    const { data, error } = await supabase.storage
+      .from("orcamentos-anexos")
+      .createSignedUrl(arquivoPath, 60 * 10);
+    if (!error && data?.signedUrl) {
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+  }
+  if (fallback) window.open(fallback, "_blank", "noopener,noreferrer");
+}
+
+
 export function OrcamentoTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm());
@@ -295,15 +309,14 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                       )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {o.arquivo_url && (
-                        <a
-                          href={o.arquivo_url}
-                          target="_blank"
-                          rel="noreferrer"
+                      {(o.arquivo_path || o.arquivo_url) && (
+                        <button
+                          type="button"
+                          onClick={() => abrirAnexo(o.arquivo_path, o.arquivo_url)}
                           className="inline-flex h-8 items-center gap-1 rounded-md border px-2 text-xs hover:bg-accent"
                         >
                           <Paperclip className="h-3.5 w-3.5" /> Anexo <ExternalLink className="h-3 w-3" />
-                        </a>
+                        </button>
                       )}
                       <Button size="icon" variant="ghost" onClick={() => startEdit(o)} title="Editar">
                         <Pencil className="h-4 w-4" />
@@ -371,11 +384,11 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                     </div>
                     <div className="space-y-1.5 col-span-2">
                       <Label className="text-xs">Anexo (PDF/imagem)</Label>
-                      {o.arquivo_url && !editFile && !editRemoveAnexo && (
+                      {(o.arquivo_path || o.arquivo_url) && !editFile && !editRemoveAnexo && (
                         <div className="flex items-center gap-2 text-xs">
-                          <a href={o.arquivo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">
+                          <button type="button" onClick={() => abrirAnexo(o.arquivo_path, o.arquivo_url)} className="inline-flex items-center gap-1 underline">
                             <Paperclip className="h-3.5 w-3.5" /> Ver anexo atual
-                          </a>
+                          </button>
                           <Button type="button" size="sm" variant="ghost" onClick={() => setEditRemoveAnexo(true)}>
                             <Trash2 className="mr-1 h-3.5 w-3.5" /> Remover
                           </Button>
