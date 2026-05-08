@@ -346,16 +346,16 @@ export default function Landing() {
   // Preços e links de checkout reais (Cakto)
   const PLANS = {
     basico: {
-      mensal: { preco: 149, url: "https://pay.cakto.com.br/szaqwp9" },
-      anual: { preco: 124, url: "https://pay.cakto.com.br/538xp2i_878141" },
+      mensal: { preco: 297, url: "https://pay.cakto.com.br/szaqwp9" },
+      anual: { preco: 247, url: "https://pay.cakto.com.br/538xp2i_878141" },
     },
     pro: {
-      mensal: { preco: 349, url: "https://pay.cakto.com.br/dpjuzr2" },
-      anual: { preco: 291, url: "https://pay.cakto.com.br/3fb9oe2_878148" },
+      mensal: { preco: 697, url: "https://pay.cakto.com.br/dpjuzr2" },
+      anual: { preco: 581, url: "https://pay.cakto.com.br/3fb9oe2_878148" },
     },
     enterprise: {
-      mensal: { preco: 899, url: "https://pay.cakto.com.br/rpyd2ck" },
-      anual: { preco: 749, url: "https://pay.cakto.com.br/ve4ick5_878151" },
+      mensal: { preco: 1250, url: "https://pay.cakto.com.br/rpyd2ck" },
+      anual: { preco: 1042, url: "https://pay.cakto.com.br/ve4ick5_878151" },
     },
   } as const;
   const periodo = annual ? "anual" : "mensal";
