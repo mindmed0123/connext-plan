@@ -1075,6 +1075,8 @@ export type Database = {
       planos: {
         Row: {
           ativo: boolean
+          cakto_checkout_url_anual: string | null
+          cakto_checkout_url_mensal: string | null
           cakto_product_id_anual: string | null
           cakto_product_id_mensal: string | null
           created_at: string
@@ -1095,6 +1097,8 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          cakto_checkout_url_anual?: string | null
+          cakto_checkout_url_mensal?: string | null
           cakto_product_id_anual?: string | null
           cakto_product_id_mensal?: string | null
           created_at?: string
@@ -1115,6 +1119,8 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          cakto_checkout_url_anual?: string | null
+          cakto_checkout_url_mensal?: string | null
           cakto_product_id_anual?: string | null
           cakto_product_id_mensal?: string | null
           created_at?: string
