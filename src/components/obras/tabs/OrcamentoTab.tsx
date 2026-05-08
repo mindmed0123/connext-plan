@@ -58,6 +58,20 @@ async function uploadAnexo(obraId: string, file: File) {
   return { path, url: data.publicUrl };
 }
 
+async function abrirAnexo(arquivoPath: string | null | undefined, fallback?: string | null) {
+  if (arquivoPath) {
+    const { data, error } = await supabase.storage
+      .from("orcamentos-anexos")
+      .createSignedUrl(arquivoPath, 60 * 10);
+    if (!error && data?.signedUrl) {
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+  }
+  if (fallback) window.open(fallback, "_blank", "noopener,noreferrer");
+}
+
+
 export function OrcamentoTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm());
