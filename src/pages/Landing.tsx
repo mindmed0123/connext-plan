@@ -576,7 +576,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="mt-14 flex justify-center">
-            <PrimaryCTA size="lg">Criar minha conta grátis <ArrowRight className="h-5 w-5" /></PrimaryCTA>
+            <PrimaryCTA size="lg" href="#precos">Ver planos e assinar <ArrowRight className="h-5 w-5" /></PrimaryCTA>
           </div>
         </div>
       </section>
