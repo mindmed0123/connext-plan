@@ -13,6 +13,7 @@ import {
   Users,
   DollarSign,
   Shield,
+  CreditCard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -134,6 +135,22 @@ export function AppSidebar() {
               <SidebarGroupLabel>Gestão</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>{renderItems(gestaoAdmin)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Conta</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.startsWith("/billing")}>
+                      <NavLink to="/billing">
+                        <CreditCard className="h-4 w-4" />
+                        {!collapsed && <span>Assinatura</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
 
