@@ -36,7 +36,7 @@ import { AppModulo, usePermissions } from "@/hooks/usePermissions";
 type NavItem = { title: string; url: string; icon: any; modulo: AppModulo };
 
 const operacionalAdmin: NavItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, modulo: "dashboard" },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, modulo: "dashboard" },
   { title: "Obras", url: "/obras", icon: HardHat, modulo: "obras" },
   { title: "Etapas", url: "/etapas", icon: Columns3, modulo: "etapas" },
 ];
