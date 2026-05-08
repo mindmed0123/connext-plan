@@ -322,7 +322,7 @@ export default function Landing() {
     meta.setAttribute("name", "description");
     meta.setAttribute(
       "content",
-      "Sistema completo para construtoras: gerencie obras, equipes e financeiro em um só lugar. Comece grátis por 14 dias."
+      "Sistema completo para construtoras: gerencie obras, equipes e financeiro em um só lugar. Planos a partir de R$ 149/mês."
     );
     if (!meta.parentElement) document.head.appendChild(meta);
 
