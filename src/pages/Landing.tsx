@@ -133,20 +133,44 @@ const Pill = ({ children }: { children: React.ReactNode }) => (
   </span>
 );
 
-const PrimaryCTA = ({ children, to = "/auth", size = "md" }: { children: React.ReactNode; to?: string; size?: "md" | "lg" | "xl" }) => {
+const PrimaryCTA = ({
+  children,
+  to,
+  href,
+  size = "md",
+}: {
+  children: React.ReactNode;
+  to?: string;
+  href?: string;
+  size?: "md" | "lg" | "xl";
+}) => {
   const sizes: Record<string, string> = {
     md: "px-5 py-2.5 text-sm",
     lg: "px-8 py-4 text-base",
     xl: "px-10 py-5 text-lg",
   };
+  const cls = `inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${sizes[size]}`;
+  const style = { backgroundColor: ORANGE };
+  const hoverIn = (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.backgroundColor = ORANGE_LT);
+  const hoverOut = (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.backgroundColor = ORANGE);
+  if (href) {
+    const isAnchor = href.startsWith("#");
+    return (
+      <a
+        href={href}
+        target={isAnchor ? undefined : "_blank"}
+        rel={isAnchor ? undefined : "noopener noreferrer"}
+        className={cls}
+        style={style}
+        onMouseEnter={hoverIn}
+        onMouseLeave={hoverOut}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
-    <Link
-      to={to}
-      className={`inline-flex items-center gap-2 rounded-xl font-semibold text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${sizes[size]}`}
-      style={{ backgroundColor: ORANGE }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = ORANGE_LT)}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = ORANGE)}
-    >
+    <Link to={to ?? "/auth"} className={cls} style={style} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
       {children}
     </Link>
   );
