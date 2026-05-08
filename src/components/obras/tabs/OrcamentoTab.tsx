@@ -384,11 +384,11 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                     </div>
                     <div className="space-y-1.5 col-span-2">
                       <Label className="text-xs">Anexo (PDF/imagem)</Label>
-                      {o.arquivo_url && !editFile && !editRemoveAnexo && (
+                      {(o.arquivo_path || o.arquivo_url) && !editFile && !editRemoveAnexo && (
                         <div className="flex items-center gap-2 text-xs">
-                          <a href={o.arquivo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">
+                          <button type="button" onClick={() => abrirAnexo(o.arquivo_path, o.arquivo_url)} className="inline-flex items-center gap-1 underline">
                             <Paperclip className="h-3.5 w-3.5" /> Ver anexo atual
-                          </a>
+                          </button>
                           <Button type="button" size="sm" variant="ghost" onClick={() => setEditRemoveAnexo(true)}>
                             <Trash2 className="mr-1 h-3.5 w-3.5" /> Remover
                           </Button>
