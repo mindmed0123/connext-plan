@@ -112,19 +112,22 @@ export function ObraFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Origem</Label>
+            <Label>Comprador</Label>
             {showAddOrigem ? (
               <div className="flex gap-1">
                 <Input
                   autoFocus
                   value={novaOrigem}
-                  placeholder="Nova origem"
+                  placeholder="Nome do comprador"
                   onChange={(e) => setNovaOrigem(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && novaOrigem.trim()) addOrigem.mutate(novaOrigem.trim());
                   }}
                 />
-                <Button type="button" size="icon" variant="ghost" onClick={() => setShowAddOrigem(false)}>
+                <Button type="button" size="icon" variant="outline" onClick={() => novaOrigem.trim() && addOrigem.mutate(novaOrigem.trim())} disabled={addOrigem.isPending}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button type="button" size="icon" variant="ghost" onClick={() => { setShowAddOrigem(false); setNovaOrigem(""); }}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -138,7 +141,7 @@ export function ObraFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setShowAddOrigem(true)} title="Adicionar origem">
+                <Button type="button" size="icon" variant="outline" onClick={() => setShowAddOrigem(true)} title="Adicionar comprador">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
