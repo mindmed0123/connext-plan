@@ -36,6 +36,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pricing" element={<Pricing />} />
@@ -49,7 +50,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<RequirePermission modulo="dashboard"><Dashboard /></RequirePermission>} />
+              <Route path="/dashboard" element={<RequirePermission modulo="dashboard"><Dashboard /></RequirePermission>} />
               <Route path="/obras" element={<RequirePermission modulo="obras"><Obras /></RequirePermission>} />
               <Route path="/etapas" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
               <Route path="/kanban" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
