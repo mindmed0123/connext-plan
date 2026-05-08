@@ -17,7 +17,7 @@ type Assinatura = {
   current_period_end: string | null;
   canceled_at: string | null;
   cancel_at_period_end: boolean;
-  paddle_subscription_id: string | null;
+  cakto_subscription_id: string | null;
   planos: { nome: string; slug: string; preco_mensal: number; preco_anual: number } | null;
 };
 
@@ -35,7 +35,7 @@ export default function Billing() {
   const { empresaId } = useAuth();
 
   useEffect(() => {
-    document.title = "Assinatura | ObraFlow";
+    document.title = "Assinatura | Gestão de Obra";
   }, []);
 
   const { data, isLoading, refetch } = useQuery({
@@ -162,7 +162,7 @@ export default function Billing() {
             <Button onClick={() => navigate("/pricing")}>
               {status === "active" ? "Mudar de plano" : "Escolher plano"}
             </Button>
-            {data?.paddle_subscription_id && (
+            {data?.cakto_subscription_id && (
               <Button variant="outline" onClick={handlePortal}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 Gerenciar pagamento

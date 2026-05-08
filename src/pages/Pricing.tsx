@@ -16,8 +16,8 @@ type Plano = {
   descricao: string | null;
   preco_mensal: number;
   preco_anual: number;
-  paddle_price_id_mensal: string | null;
-  paddle_price_id_anual: string | null;
+  cakto_product_id_mensal: string | null;
+  cakto_product_id_anual: string | null;
   limite_obras: number | null;
   limite_usuarios: number | null;
   recursos: string[];
@@ -35,7 +35,7 @@ export default function Pricing() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Planos e preços | ObraFlow";
+    document.title = "Planos e preços | Gestão de Obra";
   }, []);
 
   const { data: planos, isLoading } = useQuery({
@@ -88,7 +88,7 @@ export default function Pricing() {
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-lg font-semibold">
-            ObraFlow
+            Gestão de Obra
           </button>
           <Button variant="ghost" onClick={() => navigate(user ? "/" : "/auth")}>
             {user ? "Voltar ao app" : "Entrar"}
@@ -199,7 +199,7 @@ export default function Pricing() {
         </section>
 
         <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-muted-foreground">
-          Cancele quando quiser. Pagamentos processados com segurança via Paddle.
+          Cancele quando quiser. Pagamentos processados com segurança via Cakto.
         </p>
       </main>
     </div>
