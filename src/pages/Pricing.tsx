@@ -87,7 +87,7 @@ export default function Pricing() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto flex items-center justify-between py-4">
-          <button onClick={() => navigate("/")} className="text-lg font-semibold">
+          <button onClick={() => navigate("/dashboard")} className="text-lg font-semibold">
             Gestão de Obra
           </button>
           <Button variant="ghost" onClick={() => navigate(user ? "/" : "/auth")}>
