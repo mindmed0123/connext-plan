@@ -309,15 +309,14 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                       )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {o.arquivo_url && (
-                        <a
-                          href={o.arquivo_url}
-                          target="_blank"
-                          rel="noreferrer"
+                      {(o.arquivo_path || o.arquivo_url) && (
+                        <button
+                          type="button"
+                          onClick={() => abrirAnexo(o.arquivo_path, o.arquivo_url)}
                           className="inline-flex h-8 items-center gap-1 rounded-md border px-2 text-xs hover:bg-accent"
                         >
                           <Paperclip className="h-3.5 w-3.5" /> Anexo <ExternalLink className="h-3 w-3" />
-                        </a>
+                        </button>
                       )}
                       <Button size="icon" variant="ghost" onClick={() => startEdit(o)} title="Editar">
                         <Pencil className="h-4 w-4" />
