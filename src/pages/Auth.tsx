@@ -23,6 +23,8 @@ function slugify(s: string) {
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const motivo = searchParams.get("motivo");
   const { user, loading, refreshEmpresa } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
