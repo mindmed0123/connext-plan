@@ -11,11 +11,14 @@ const CAKTO_WEBHOOK_SECRET = Deno.env.get("CAKTO_WEBHOOK_SECRET") ?? "";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // Validação simples por secret no header (Cakto envia x-webhook-secret ou similar)
+  // Validação por secret: aceita via header OU query param ?token=
   if (CAKTO_WEBHOOK_SECRET) {
+    const url = new URL(req.url);
+    const tokenQuery = url.searchParams.get("token") ?? url.searchParams.get("secret") ?? "";
     const sig = req.headers.get("x-cakto-signature")
       ?? req.headers.get("x-webhook-secret")
       ?? req.headers.get("authorization")?.replace(/^Bearer\s+/i, "")
+      ?? tokenQuery
       ?? "";
     if (sig !== CAKTO_WEBHOOK_SECRET) {
       console.warn("Cakto webhook: assinatura inválida");
