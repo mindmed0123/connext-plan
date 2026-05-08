@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.cakto-webhook]
 verify_jwt = false
+
+[functions.webhook]
+verify_jwt = false
