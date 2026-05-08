@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Pencil, Mail, Phone, ShieldAlert } from "lucide-react";
+import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PessoaFormDialog } from "@/components/equipes/PessoaFormDialog";
+import { InviteUserDialog } from "@/components/equipes/InviteUserDialog";
 import { PESSOA_TIPO_LABEL, PESSOA_TIPO_DESC, PessoaTipo } from "@/lib/pessoas-helpers";
 import { useUserRole } from "@/hooks/useUserRole";
 
