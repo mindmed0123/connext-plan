@@ -809,9 +809,9 @@ export default function Landing() {
             Cada semana que passa é mais uma semana de planilha, de informação perdida e de dinheiro que não fecha. Comece agora — em 5 minutos você já tem sua primeira obra cadastrada.
           </p>
           <div className="mt-10 flex justify-center">
-            <PrimaryCTA size="xl">Criar minha conta grátis <ArrowRight className="h-5 w-5" /></PrimaryCTA>
+            <PrimaryCTA size="xl" href="#precos">Assinar agora <ArrowRight className="h-5 w-5" /></PrimaryCTA>
           </div>
-          <p className="mt-4 text-sm text-gray-500">14 dias grátis · Sem cartão · Cancele quando quiser</p>
+          <p className="mt-4 text-sm text-gray-500">A partir de R$ 149/mês · Pagamento seguro · Cancele quando quiser</p>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-12 opacity-60">
             <div className="flex items-center gap-2 text-sm text-white"><Shield className="h-4 w-4" /> Dados seguros (LGPD)</div>
             <div className="flex items-center gap-2 text-sm text-white"><Zap className="h-4 w-4" /> Setup em 5 minutos</div>
