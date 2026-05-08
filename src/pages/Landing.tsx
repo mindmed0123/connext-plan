@@ -343,8 +343,28 @@ export default function Landing() {
     { icon: Users, title: "Equipes e Permissões", desc: "Cada pessoa acessa somente o que precisa — por módulo e por obra." },
   ];
 
-  const planoBasico = annual ? 247 : 297;
-  const planoPro = annual ? 581 : 697;
+  // Preços e links de checkout reais (Cakto)
+  const PLANS = {
+    basico: {
+      mensal: { preco: 149, url: "https://pay.cakto.com.br/szaqwp9" },
+      anual: { preco: 124, url: "https://pay.cakto.com.br/538xp2i_878141" },
+    },
+    pro: {
+      mensal: { preco: 349, url: "https://pay.cakto.com.br/dpjuzr2" },
+      anual: { preco: 291, url: "https://pay.cakto.com.br/3fb9oe2_878148" },
+    },
+    enterprise: {
+      mensal: { preco: 899, url: "https://pay.cakto.com.br/rpyd2ck" },
+      anual: { preco: 749, url: "https://pay.cakto.com.br/ve4ick5_878151" },
+    },
+  } as const;
+  const periodo = annual ? "anual" : "mensal";
+  const planoBasico = PLANS.basico[periodo].preco;
+  const planoPro = PLANS.pro[periodo].preco;
+  const planoEnterprise = PLANS.enterprise[periodo].preco;
+  const urlBasico = PLANS.basico[periodo].url;
+  const urlPro = PLANS.pro[periodo].url;
+  const urlEnterprise = PLANS.enterprise[periodo].url;
 
   return (
     <div className="min-h-screen bg-white text-[#0F2448]" style={{ fontFamily: "'Space Grotesk','Inter',ui-sans-serif,system-ui,sans-serif", fontFeatureSettings: '"ss01"' }}>
