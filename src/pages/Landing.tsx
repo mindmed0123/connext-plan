@@ -715,8 +715,9 @@ export default function Landing() {
             {/* Enterprise */}
             <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
               <div className="text-sm font-semibold uppercase tracking-wider text-gray-500">Enterprise</div>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-[#0F2448]">Sob consulta</span>
+              <div className="mt-4 flex items-baseline gap-1 transition-all duration-300">
+                <span className="text-4xl font-bold text-[#0F2448]">R$ {planoEnterprise}</span>
+                <span className="text-sm text-gray-500">/mês</span>
               </div>
               <p className="mt-2 text-sm text-gray-500">Para grupos e construtoras com múltiplas unidades</p>
               <ul className="mt-6 space-y-3 text-sm text-[#0F2448]">
@@ -725,16 +726,18 @@ export default function Landing() {
                 ))}
               </ul>
               <a
-                href="mailto:contato@gestaodeobra.online"
+                href={urlEnterprise}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl border border-[#0F2448] px-6 py-3 text-sm font-semibold text-[#0F2448] transition-colors hover:bg-[#0F2448] hover:text-white"
               >
-                Falar com consultor
+                Assinar Enterprise
               </a>
             </div>
           </div>
 
           <p className="mt-10 text-center text-sm text-gray-400">
-            Todos os planos incluem 14 dias grátis • Sem cartão de crédito • Cancele quando quiser
+            Pagamento seguro processado pela Cakto • Cancele quando quiser • Nota fiscal emitida automaticamente
           </p>
         </div>
       </section>
