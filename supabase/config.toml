@@ -2,3 +2,6 @@ project_id = "wwlsizyhryhiskrzizvw"
 
 [functions.create-users]
 verify_jwt = false
+
+[functions.paddle-webhook]
+verify_jwt = false

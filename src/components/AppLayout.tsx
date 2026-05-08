@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { TrialBanner } from "./TrialBanner";
 
 export function AppLayout() {
   return (
@@ -12,6 +13,7 @@ export function AppLayout() {
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
+          <TrialBanner />
           <main className="flex-1 overflow-auto">
             <div className="mx-auto w-full max-w-[1400px] p-6 animate-fade-in">
               <Outlet />
