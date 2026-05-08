@@ -1,13 +1,10 @@
-// Cria checkout de assinatura na Cakto
+// Retorna a URL de checkout fixo da Cakto correspondente ao plano/período
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const CAKTO_API_KEY = Deno.env.get("CAKTO_API_KEY") ?? "";
-const CAKTO_BASE = Deno.env.get("CAKTO_API_BASE") ?? "https://api.cakto.com.br/v1";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -42,12 +39,11 @@ Deno.serve(async (req) => {
 
     const { data: roleRow } = await supabase
       .from("user_roles")
-      .select("empresa_id, empresas(nome)")
+      .select("empresa_id")
       .eq("user_id", user.id)
       .not("empresa_id", "is", null)
       .maybeSingle();
     const empresa_id = (roleRow?.empresa_id as string) ?? null;
-    const empresa_nome = ((roleRow?.empresas as any)?.nome as string) ?? "";
     if (!empresa_id) {
       return new Response(JSON.stringify({ error: "Sem empresa vinculada" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -62,64 +58,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    const productId = periodo === "anual"
-      ? plano.cakto_product_id_anual
-      : plano.cakto_product_id_mensal;
+    const baseUrl = periodo === "anual"
+      ? plano.cakto_checkout_url_anual
+      : plano.cakto_checkout_url_mensal;
 
-    const origin = req.headers.get("origin") ?? "";
-
-    // Modo desenvolvimento (sem API key Cakto ou produto não cadastrado): ativa direto
-    if (!CAKTO_API_KEY || !productId) {
-      await supabase.from("assinaturas").update({
-        plano_id: plano.id,
-        periodo,
-        status: "active",
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(
-          Date.now() + (periodo === "anual" ? 365 : 30) * 86400000
-        ).toISOString(),
-      }).eq("empresa_id", empresa_id);
-
-      return new Response(JSON.stringify({
-        checkout_url: `${origin}/billing?success=mock`,
-        mock: true,
-        message: "Cakto não configurado — assinatura ativada em modo desenvolvimento",
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!baseUrl) {
+      return new Response(JSON.stringify({ error: "Link de checkout não configurado para este plano" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Cria checkout na Cakto
-    const caktoResp = await fetch(`${CAKTO_BASE}/checkouts`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${CAKTO_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        product_id: productId,
-        customer: { email: user.email, name: empresa_nome },
-        success_url: `${origin}/billing?success=true`,
-        cancel_url: `${origin}/pricing?canceled=true`,
-        metadata: {
-          empresa_id,
-          plano_id: plano.id,
-          periodo,
-          user_id: user.id,
-        },
-      }),
-    });
+    // Anexa email + metadata para rastrear no webhook da Cakto
+    const url = new URL(baseUrl);
+    if (user.email) url.searchParams.set("email", user.email);
+    url.searchParams.set("ref", `${empresa_id}|${plano.id}|${periodo}|${user.id}`);
 
-    const caktoJson = await caktoResp.json();
-    if (!caktoResp.ok) {
-      console.error("Cakto error", caktoJson);
-      return new Response(JSON.stringify({
-        error: caktoJson?.message ?? caktoJson?.error ?? "Erro ao criar checkout Cakto",
-      }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const checkout_url =
-      caktoJson?.checkout_url ?? caktoJson?.url ?? caktoJson?.data?.checkout_url;
-
-    return new Response(JSON.stringify({ checkout_url }), {
+    return new Response(JSON.stringify({ checkout_url: url.toString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
