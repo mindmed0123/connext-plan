@@ -12,6 +12,7 @@ import {
   Building2,
   Users,
   DollarSign,
+  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -64,7 +65,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut, user, empresaNome } = useAuth();
   const { isAdmin, isSuperAdmin, isLoading } = useUserRole();
   const { can, isLoading: permLoading } = usePermissions();
 
@@ -95,9 +96,11 @@ export function AppSidebar() {
             <Building2 className="h-4 w-4" />
           </div>
           {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold">ObraFlow</span>
-              <span className="text-[11px] text-muted-foreground">ERP de Obras</span>
+            <div className="flex flex-col leading-tight overflow-hidden">
+              <span className="text-sm font-semibold truncate">{empresaNome ?? "ObraFlow"}</span>
+              <span className="text-[11px] text-muted-foreground truncate">
+                {empresaNome ? "Gestão de Obras" : "ERP de Obras"}
+              </span>
             </div>
           )}
         </div>
@@ -133,6 +136,24 @@ export function AppSidebar() {
                 <SidebarMenu>{renderItems(gestaoAdmin)}</SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+
+            {isSuperAdmin && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={location.pathname.startsWith("/admin")}>
+                        <NavLink to="/admin">
+                          <Shield className="h-4 w-4" />
+                          {!collapsed && <span>Admin</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
           </>
         ) : (
           <>

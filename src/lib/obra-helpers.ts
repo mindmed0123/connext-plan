@@ -1,7 +1,7 @@
 import type { Database } from "@/integrations/supabase/types";
 
 export type ObraStatus = Database["public"]["Enums"]["obra_status"];
-export type ObraOrigem = Database["public"]["Enums"]["obra_origem"];
+export type ObraOrigem = string;
 export type ObraRegiao = Database["public"]["Enums"]["obra_regiao"];
 
 export const OBRA_STATUS_LIST: ObraStatus[] = [
@@ -58,10 +58,15 @@ export const REGIAO_LABEL: Record<ObraRegiao, string> = {
   interior: "Interior",
 };
 
-export const ORIGEM_LABEL: Record<ObraOrigem, string> = {
+// Origens agora são dinâmicas por empresa (tabela origens_obra).
+// Esse mapa é mantido apenas como fallback de exibição.
+const ORIGEM_LABEL_FALLBACK: Record<string, string> = {
   veman: "Veman",
   sabesp: "Sabesp",
 };
+export const ORIGEM_LABEL: Record<string, string> = new Proxy(ORIGEM_LABEL_FALLBACK, {
+  get: (target, key: string) => target[key] ?? key,
+});
 
 export function formatCurrency(value: number | string | null | undefined) {
   const n = typeof value === "string" ? parseFloat(value) : value ?? 0;

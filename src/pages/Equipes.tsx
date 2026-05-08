@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Pencil, Mail, Phone, ShieldAlert } from "lucide-react";
+import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PessoaFormDialog } from "@/components/equipes/PessoaFormDialog";
+import { InviteUserDialog } from "@/components/equipes/InviteUserDialog";
 import { PESSOA_TIPO_LABEL, PESSOA_TIPO_DESC, PessoaTipo } from "@/lib/pessoas-helpers";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -111,11 +112,20 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
 }
 
 export default function Equipes() {
+  const { isAdmin } = useUserRole();
+  const [inviteOpen, setInviteOpen] = useState(false);
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold">Equipes</h1>
-        <p className="text-sm text-muted-foreground">Cadastro de terceirizados, administrativos e operacionais</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Equipes</h1>
+          <p className="text-sm text-muted-foreground">Cadastro de terceirizados, administrativos e operacionais</p>
+        </div>
+        {isAdmin && (
+          <Button onClick={() => setInviteOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" /> Convidar usuário
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="terceirizado">
@@ -128,6 +138,8 @@ export default function Equipes() {
         <TabsContent value="administrativo" className="mt-4"><PessoasList tipo="administrativo" /></TabsContent>
         <TabsContent value="operacional" className="mt-4"><PessoasList tipo="operacional" /></TabsContent>
       </Tabs>
+
+      <InviteUserDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   );
 }
