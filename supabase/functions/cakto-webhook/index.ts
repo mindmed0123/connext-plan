@@ -43,10 +43,30 @@ Deno.serve(async (req) => {
     data?.subscription_id ?? data?.subscription?.id ?? data?.id ?? null;
   const customerId: string | null =
     data?.customer_id ?? data?.customer?.id ?? null;
-  const metadata: any = data?.metadata ?? data?.subscription?.metadata ?? {};
-  const empresa_id: string | null = metadata?.empresa_id ?? null;
-  const plano_id: string | null = metadata?.plano_id ?? null;
-  const periodo: string | null = metadata?.periodo ?? null;
+  const customerEmail: string | null = (
+    data?.customer?.email ?? data?.customer_email ?? data?.email ?? null
+  )?.toLowerCase?.() ?? null;
+
+  // Tentamos extrair metadata de vários locais (Cakto pode mandar em formatos distintos)
+  const metadata: any =
+    data?.metadata ?? data?.subscription?.metadata ?? data?.checkout?.metadata ?? {};
+  let empresa_id: string | null = metadata?.empresa_id ?? null;
+  let plano_id: string | null = metadata?.plano_id ?? null;
+  let periodo: string | null = metadata?.periodo ?? null;
+  let user_id: string | null = metadata?.user_id ?? null;
+
+  // Fallback: parametro `ref` que enviamos no link de checkout
+  // Formato: empresa_id|plano_id|periodo|user_id
+  const refRaw: string | null =
+    data?.ref ?? data?.utm?.ref ?? metadata?.ref
+    ?? data?.checkout?.ref ?? data?.tracking?.ref ?? null;
+  if (refRaw && typeof refRaw === "string" && refRaw.includes("|")) {
+    const [r_empresa, r_plano, r_periodo, r_user] = refRaw.split("|");
+    empresa_id = empresa_id ?? r_empresa ?? null;
+    plano_id = plano_id ?? r_plano ?? null;
+    periodo = periodo ?? r_periodo ?? null;
+    user_id = user_id ?? r_user ?? null;
+  }
 
   // Idempotência
   await supabase.from("billing_events").upsert({
@@ -121,10 +141,29 @@ Deno.serve(async (req) => {
         .maybeSingle();
       target = existing as any;
     }
+    // Fallback: localizar empresa pelo email do cliente
+    if (!target && customerEmail) {
+      const { data: pessoa } = await supabase
+        .from("pessoas")
+        .select("empresa_id")
+        .ilike("email", customerEmail)
+        .maybeSingle();
+      const emp = (pessoa as any)?.empresa_id;
+      if (emp) {
+        const { data: existing } = await supabase
+          .from("assinaturas")
+          .select("id")
+          .eq("empresa_id", emp)
+          .maybeSingle();
+        target = existing as any;
+      }
+    }
     if (target) {
       await supabase.from("assinaturas").update(updates).eq("id", target.id);
     } else {
-      console.warn("Cakto webhook: assinatura não encontrada", { subscriptionId, empresa_id });
+      console.warn("Cakto webhook: assinatura não encontrada", {
+        subscriptionId, empresa_id, customerEmail, eventType,
+      });
     }
   }
 
