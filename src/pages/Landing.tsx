@@ -783,7 +783,7 @@ export default function Landing() {
           <Accordion type="single" collapsible className="mt-12">
             {[
               { q: "Preciso instalar alguma coisa?", a: "Não. O Gestão de Obra é 100% online. Acesse pelo navegador de qualquer computador, sem instalação." },
-              { q: "Como funciona o período grátis de 14 dias?", a: "Você cria a conta, convida sua equipe e usa o sistema completo por 14 dias sem precisar informar cartão de crédito. Ao final, escolhe o plano que faz sentido para sua empresa." },
+              { q: "Como funciona o pagamento?", a: "O pagamento é mensal ou anual, processado de forma segura pela Cakto. Aceitamos cartão de crédito, Pix e boleto. A nota fiscal é emitida automaticamente." },
               { q: "Posso migrar meus dados de planilha para o sistema?", a: "Sim. Oferecemos suporte para importação de obras e equipes via planilha Excel nos planos Profissional e Enterprise." },
               { q: "Quantos usuários posso ter?", a: "Depende do plano: Básico (3), Profissional (15), Enterprise (ilimitados). Cada usuário recebe permissões específicas por módulo." },
               { q: "O sistema é seguro? Meus dados ficam protegidos?", a: "Sim. Utilizamos infraestrutura com criptografia em repouso e em trânsito, backups automáticos diários e conformidade com a LGPD. Cada empresa tem seus dados completamente isolados." },
