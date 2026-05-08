@@ -34,7 +34,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
-          empresa_id: string
+          empresa_id?: string
           forma_pagamento_prevista?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -101,7 +101,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data_envio?: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           obra_id: string
           observacoes: string
@@ -189,7 +189,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data_inicio?: string | null
-          empresa_id: string
+          empresa_id?: string
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -262,7 +262,7 @@ export type Database = {
         }
         Insert: {
           data_upload?: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           imagem_url: string
           obra_id: string
@@ -327,7 +327,7 @@ export type Database = {
           created_by?: string | null
           data_compra?: string
           descricao: string
-          empresa_id: string
+          empresa_id?: string
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -399,7 +399,7 @@ export type Database = {
           codigo_chamado_avulso?: string | null
           created_at?: string
           data_emissao: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           numero_nf: string
           obra_id?: string | null
@@ -449,7 +449,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
-          empresa_id: string
+          empresa_id?: string
           id?: string
           obra_id: string
           observacao?: string | null
@@ -503,7 +503,7 @@ export type Database = {
         Insert: {
           created_at?: string
           detalhes?: string | null
-          empresa_id: string
+          empresa_id?: string
           evento: string
           id?: string
           obra_id: string
@@ -557,7 +557,7 @@ export type Database = {
           created_by?: string | null
           data_recebimento?: string
           descricao_servico: string
-          empresa_id: string
+          empresa_id?: string
           endereco: string
           engenheiro_responsavel: string
           id?: string
@@ -616,7 +616,7 @@ export type Database = {
           created_at?: string
           data_envio?: string | null
           descricao?: string | null
-          empresa_id: string
+          empresa_id?: string
           engenheiro_aprovador?: string | null
           id?: string
           last_updated_at?: string | null
@@ -672,7 +672,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           nome: string
         }
@@ -717,7 +717,7 @@ export type Database = {
           created_at?: string
           data_pagamento?: string | null
           data_prevista?: string | null
-          empresa_id: string
+          empresa_id?: string
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -782,7 +782,7 @@ export type Database = {
           codigo_chamado_avulso?: string | null
           created_at?: string
           data_recebimento?: string | null
-          empresa_id: string
+          empresa_id?: string
           id?: string
           numero_pedido?: string | null
           obra_id?: string | null
@@ -838,7 +838,7 @@ export type Database = {
           can_edit?: boolean
           can_view?: boolean
           created_at?: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           modulo: Database["public"]["Enums"]["app_modulo"]
           pessoa_id: string
@@ -908,7 +908,7 @@ export type Database = {
           created_by?: string | null
           data_admissao?: string | null
           email?: string | null
-          empresa_id: string
+          empresa_id?: string
           endereco?: string | null
           id?: string
           nome: string
@@ -996,7 +996,7 @@ export type Database = {
           codigo_chamado_avulso?: string | null
           created_at?: string
           data_rc?: string | null
-          empresa_id: string
+          empresa_id?: string
           id?: string
           numero_rc?: string | null
           obra_id?: string | null
@@ -1048,7 +1048,7 @@ export type Database = {
           created_at?: string
           data_prevista?: string | null
           data_recebido?: string | null
-          empresa_id: string
+          empresa_id?: string
           id?: string
           obra_id: string
           pedido_compra_id?: string | null
@@ -1132,7 +1132,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data_vistoria: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           obra_id: string
           observacoes?: string | null
