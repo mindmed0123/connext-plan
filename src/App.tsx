@@ -21,6 +21,7 @@ import Financeiro from "./pages/Financeiro";
 import Admin from "./pages/Admin";
 import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
+import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 
