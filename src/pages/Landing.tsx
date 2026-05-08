@@ -654,7 +654,7 @@ export default function Landing() {
             <span className={`flex items-center gap-2 text-sm font-medium ${annual ? "text-[#0F2448]" : "text-gray-400"}`}>
               Anual
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                2 meses grátis
+                Economize 2 meses
               </span>
             </span>
           </div>
