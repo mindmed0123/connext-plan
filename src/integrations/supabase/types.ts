@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      assinaturas: {
+        Row: {
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          empresa_id: string
+          id: string
+          paddle_customer_id: string | null
+          paddle_subscription_id: string | null
+          paddle_transaction_id: string | null
+          periodo: Database["public"]["Enums"]["assinatura_periodo"]
+          plano_id: string | null
+          status: Database["public"]["Enums"]["assinatura_status"]
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          empresa_id: string
+          id?: string
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
+          paddle_transaction_id?: string | null
+          periodo?: Database["public"]["Enums"]["assinatura_periodo"]
+          plano_id?: string | null
+          status?: Database["public"]["Enums"]["assinatura_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          empresa_id?: string
+          id?: string
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
+          paddle_transaction_id?: string | null
+          periodo?: Database["public"]["Enums"]["assinatura_periodo"]
+          plano_id?: string | null
+          status?: Database["public"]["Enums"]["assinatura_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_events: {
+        Row: {
+          created_at: string
+          empresa_id: string | null
+          event_id: string | null
+          event_type: string
+          id: string
+          paddle_subscription_id: string | null
+          payload: Json
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string | null
+          event_id?: string | null
+          event_type: string
+          id?: string
+          paddle_subscription_id?: string | null
+          payload: Json
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string | null
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          paddle_subscription_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratacoes_terceirizado: {
         Row: {
           created_at: string
@@ -953,6 +1063,63 @@ export type Database = {
           },
         ]
       }
+      planos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          destaque: boolean
+          id: string
+          limite_obras: number | null
+          limite_usuarios: number | null
+          nome: string
+          ordem: number
+          paddle_price_id_anual: string | null
+          paddle_price_id_mensal: string | null
+          preco_anual: number
+          preco_mensal: number
+          recursos: Json
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          limite_obras?: number | null
+          limite_usuarios?: number | null
+          nome: string
+          ordem?: number
+          paddle_price_id_anual?: string | null
+          paddle_price_id_mensal?: string | null
+          preco_anual?: number
+          preco_mensal?: number
+          recursos?: Json
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          limite_obras?: number | null
+          limite_usuarios?: number | null
+          nome?: string
+          ordem?: number
+          paddle_price_id_anual?: string | null
+          paddle_price_id_mensal?: string | null
+          preco_anual?: number
+          preco_mensal?: number
+          recursos?: Json
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1177,6 +1344,10 @@ export type Database = {
         Args: { _obra_id: string; _uid: string }
         Returns: boolean
       }
+      empresa_assinatura_ativa: {
+        Args: { _empresa_id: string }
+        Returns: boolean
+      }
       get_user_empresa_id: { Args: never; Returns: string }
       has_permission: {
         Args: {
@@ -1216,6 +1387,14 @@ export type Database = {
         | "financeiro"
         | "operacional"
         | "super_admin"
+      assinatura_periodo: "mensal" | "anual"
+      assinatura_status:
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "paused"
+        | "canceled"
+        | "expired"
       contratacao_status:
         | "pendente"
         | "parcialmente_pago"
@@ -1404,6 +1583,15 @@ export const Constants = {
         "financeiro",
         "operacional",
         "super_admin",
+      ],
+      assinatura_periodo: ["mensal", "anual"],
+      assinatura_status: [
+        "trialing",
+        "active",
+        "past_due",
+        "paused",
+        "canceled",
+        "expired",
       ],
       contratacao_status: [
         "pendente",
