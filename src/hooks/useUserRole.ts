@@ -13,14 +13,15 @@ export function useUserRole() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_roles")
-        .select("role")
+        .select("role, empresa_id")
         .eq("user_id", user!.id);
       if (error) throw error;
-      const roles = (data ?? []).map((r) => r.role as AppRole);
-      // Highest precedence first
+      const rows = data ?? [];
+      const roles = rows.map((r) => r.role as AppRole);
       const order: AppRole[] = ["super_admin", "admin", "gestor", "financeiro", "engenheiro", "operacional"];
       const top = order.find((r) => roles.includes(r)) ?? "operacional";
-      return { roles, role: top };
+      const empresaId = rows.find((r) => r.empresa_id)?.empresa_id ?? null;
+      return { roles, role: top, empresaId };
     },
   });
 
@@ -28,7 +29,6 @@ export function useUserRole() {
   const isSuperAdmin = role === "super_admin";
   const isAdmin = isSuperAdmin || role === "admin" || role === "gestor";
   const isOperacional = role === "operacional" || role === "engenheiro" || role === "financeiro";
-  // "Terceirizado" não é um app_role — é um tipo na tabela pessoas. UI o trata como operacional.
 
-  return { role, roles: data?.roles ?? [], isSuperAdmin, isAdmin, isOperacional, isLoading };
+  return { role, roles: data?.roles ?? [], empresaId: data?.empresaId ?? null, isSuperAdmin, isAdmin, isOperacional, isLoading };
 }
