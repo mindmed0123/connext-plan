@@ -39,7 +39,20 @@ export function FotosTab({ obraId }: { obraId: string }) {
         .eq("obra_id", obraId)
         .order("data_upload", { ascending: false });
       if (error) throw error;
-      return data;
+      const paths = (data ?? []).map((d) => d.storage_path).filter(Boolean) as string[];
+      const urlMap = new Map<string, string>();
+      if (paths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("obras-fotos")
+          .createSignedUrls(paths, 60 * 60);
+        (signed ?? []).forEach((s) => {
+          if (s.path && s.signedUrl) urlMap.set(s.path, s.signedUrl);
+        });
+      }
+      return (data ?? []).map((d) => ({
+        ...d,
+        imagem_url: (d.storage_path && urlMap.get(d.storage_path)) || d.imagem_url,
+      }));
     },
   });
 
