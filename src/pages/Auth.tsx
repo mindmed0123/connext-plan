@@ -45,18 +45,6 @@ export default function Auth() {
     else toast.success("Bem-vindo de volta");
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: { emailRedirectTo: `${window.location.origin}/`, data: { nome } },
-    });
-    setBusy(false);
-    if (error) toast.error(error.message);
-    else toast.success("Conta criada! Você já pode acessar.");
-  };
-
   const handleEmpresaSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!empresaNome.trim()) return toast.error("Informe o nome da empresa");
