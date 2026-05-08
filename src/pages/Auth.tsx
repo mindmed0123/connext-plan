@@ -130,17 +130,24 @@ export default function Auth() {
           <p className="text-sm text-muted-foreground">Gestão de Obras</p>
         </div>
 
+        {motivo === "conta-suspensa" && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              Sua empresa está suspensa. Entre em contato com o suporte para reativar o acesso.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card className="shadow-elev-md">
           <CardHeader>
             <CardTitle>Acesso</CardTitle>
-            <CardDescription>Entre, crie sua conta ou cadastre uma empresa</CardDescription>
+            <CardDescription>Entre com sua conta ou cadastre uma nova empresa</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Conta</TabsTrigger>
-                <TabsTrigger value="empresa">Empresa</TabsTrigger>
+                <TabsTrigger value="empresa">Cadastrar empresa</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -154,26 +161,8 @@ export default function Auth() {
                     <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome completo</Label>
-                    <Input id="nome" required value={nome} onChange={(e) => setNome(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email2">E-mail</Label>
-                    <Input id="email2" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password2">Senha</Label>
-                    <Input id="password2" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "Criando..." : "Criar conta"}</Button>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Use esta opção apenas se você foi convidado por uma empresa.
+                  <p className="text-center text-xs text-muted-foreground pt-2">
+                    Não tem conta? Cadastre sua empresa ao lado ou peça um convite ao administrador.
                   </p>
                 </form>
               </TabsContent>
