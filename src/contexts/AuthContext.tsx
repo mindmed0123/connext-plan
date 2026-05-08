@@ -59,7 +59,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setEmpresaNome(null);
       return;
     }
-    const { empresaId, empresaNome } = await fetchEmpresa(uid);
+    const { empresaId, empresaNome, empresaAtivo } = await fetchEmpresa(uid);
+    // Bloqueia login se empresa estiver inativa (super_admin é exceção)
+    if (empresaId && empresaAtivo === false) {
+      const superAdmin = await isSuperAdmin(uid);
+      if (!superAdmin) {
+        await supabase.auth.signOut();
+        setEmpresaId(null);
+        setEmpresaNome(null);
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth")) {
+          window.location.href = "/auth?motivo=conta-suspensa";
+        } else if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get("motivo") !== "conta-suspensa") {
+            url.searchParams.set("motivo", "conta-suspensa");
+            window.history.replaceState({}, "", url.toString());
+          }
+        }
+        return;
+      }
+    }
     setEmpresaId(empresaId);
     setEmpresaNome(empresaNome);
   };
