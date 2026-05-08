@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,19 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ORIGEM_LABEL, REGIAO_LABEL } from "@/lib/obra-helpers";
+import { REGIAO_LABEL } from "@/lib/obra-helpers";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
-type Origem = Database["public"]["Enums"]["obra_origem"];
 type Regiao = Database["public"]["Enums"]["obra_regiao"];
 
 export function ObraFormDialog({
   open, onOpenChange, onCreated,
 }: { open: boolean; onOpenChange: (v: boolean) => void; onCreated?: () => void }) {
+  const qc = useQueryClient();
+  const [novaOrigem, setNovaOrigem] = useState("");
+  const [showAddOrigem, setShowAddOrigem] = useState(false);
   const [form, setForm] = useState({
     codigo_chamado: "",
-    origem: "sabesp" as Origem,
+    origem: "",
     regiao: "leste" as Regiao,
     engenheiro_responsavel: "",
     descricao_servico: "",
@@ -27,22 +30,51 @@ export function ObraFormDialog({
     data_recebimento: new Date().toISOString().slice(0, 10),
   });
 
+  const { data: origens } = useQuery({
+    queryKey: ["origens-obra"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("origens_obra").select("*").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Define origem padrão quando origens carregarem
+  if (origens && origens.length > 0 && !form.origem) {
+    setForm((f) => ({ ...f, origem: origens[0].nome }));
+  }
+
+  const addOrigem = useMutation({
+    mutationFn: async (nome: string) => {
+      const { data, error } = await supabase.from("origens_obra").insert({ nome }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["origens-obra"] });
+      setForm((f) => ({ ...f, origem: data.nome }));
+      setNovaOrigem("");
+      setShowAddOrigem(false);
+      toast.success("Origem adicionada");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar origem"),
+  });
+
   const mut = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("obras")
-        .insert([{ ...form, created_by: u.user?.id }])
+        .insert([{ ...form, created_by: u.user?.id } as any])
         .select()
         .single();
       if (error) throw error;
-      // Timeline
       await supabase.from("obra_timeline").insert([{
         obra_id: data.id,
         user_id: u.user?.id,
         evento: "Obra criada",
         detalhes: `Chamado ${data.codigo_chamado} cadastrado no sistema`,
-      }]);
+      } as any]);
       return data;
     },
     onSuccess: () => {
@@ -81,14 +113,36 @@ export function ObraFormDialog({
           </div>
           <div className="space-y-2">
             <Label>Origem</Label>
-            <Select value={form.origem} onValueChange={(v) => setForm({ ...form, origem: v as Origem })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(ORIGEM_LABEL).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {showAddOrigem ? (
+              <div className="flex gap-1">
+                <Input
+                  autoFocus
+                  value={novaOrigem}
+                  placeholder="Nova origem"
+                  onChange={(e) => setNovaOrigem(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && novaOrigem.trim()) addOrigem.mutate(novaOrigem.trim());
+                  }}
+                />
+                <Button type="button" size="icon" variant="ghost" onClick={() => setShowAddOrigem(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-1">
+                <Select value={form.origem} onValueChange={(v) => setForm({ ...form, origem: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {origens?.map((o) => (
+                      <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setShowAddOrigem(true)} title="Adicionar origem">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <Label>Região</Label>
@@ -129,6 +183,7 @@ export function ObraFormDialog({
             disabled={
               mut.isPending ||
               !form.codigo_chamado ||
+              !form.origem ||
               !form.engenheiro_responsavel ||
               !form.endereco ||
               !form.descricao_servico
