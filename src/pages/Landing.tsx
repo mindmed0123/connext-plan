@@ -438,8 +438,8 @@ export default function Landing() {
             </Reveal>
             <Reveal delay={220}>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <PrimaryCTA size="lg">
-                  Começar grátis por 14 dias <ArrowRight className="h-5 w-5" />
+                <PrimaryCTA size="lg" href="#precos">
+                  Ver planos e assinar <ArrowRight className="h-5 w-5" />
                 </PrimaryCTA>
                 <a
                   href="#funcionalidades"
@@ -449,7 +449,7 @@ export default function Landing() {
                 </a>
               </div>
               <p className="mt-4 text-xs text-[#64748B]">
-                Sem cartão de crédito • Cancele quando quiser • Dados seguros (LGPD)
+                A partir de R$ 149/mês • Cancele quando quiser • Dados seguros (LGPD)
               </p>
             </Reveal>
           </div>
