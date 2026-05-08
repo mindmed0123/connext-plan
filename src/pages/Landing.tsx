@@ -399,7 +399,7 @@ export default function Landing() {
             >
               Entrar
             </Link>
-            <PrimaryCTA size="md">Começar grátis</PrimaryCTA>
+            <PrimaryCTA size="md" href="#precos">Assinar agora</PrimaryCTA>
           </div>
           <button className="md:hidden" onClick={() => setMobileMenu((v) => !v)} aria-label="Menu">
             {mobileMenu ? <X className={scrolled ? "text-[#0F2448]" : "text-white"} /> : <Menu className={scrolled ? "text-[#0F2448]" : "text-white"} />}
