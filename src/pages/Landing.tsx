@@ -673,12 +673,14 @@ export default function Landing() {
                   <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ORANGE }} />{t}</li>
                 ))}
               </ul>
-              <Link
-                to="/auth"
+              <a
+                href={urlBasico}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl border border-[#0F2448] px-6 py-3 text-sm font-semibold text-[#0F2448] transition-colors hover:bg-[#0F2448] hover:text-white"
               >
-                Começar grátis
-              </Link>
+                Assinar Básico
+              </a>
             </div>
 
             {/* Profissional */}
