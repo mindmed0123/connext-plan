@@ -133,20 +133,44 @@ const Pill = ({ children }: { children: React.ReactNode }) => (
   </span>
 );
 
-const PrimaryCTA = ({ children, to = "/auth", size = "md" }: { children: React.ReactNode; to?: string; size?: "md" | "lg" | "xl" }) => {
+const PrimaryCTA = ({
+  children,
+  to,
+  href,
+  size = "md",
+}: {
+  children: React.ReactNode;
+  to?: string;
+  href?: string;
+  size?: "md" | "lg" | "xl";
+}) => {
   const sizes: Record<string, string> = {
     md: "px-5 py-2.5 text-sm",
     lg: "px-8 py-4 text-base",
     xl: "px-10 py-5 text-lg",
   };
+  const cls = `inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${sizes[size]}`;
+  const style = { backgroundColor: ORANGE };
+  const hoverIn = (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.backgroundColor = ORANGE_LT);
+  const hoverOut = (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.backgroundColor = ORANGE);
+  if (href) {
+    const isAnchor = href.startsWith("#");
+    return (
+      <a
+        href={href}
+        target={isAnchor ? undefined : "_blank"}
+        rel={isAnchor ? undefined : "noopener noreferrer"}
+        className={cls}
+        style={style}
+        onMouseEnter={hoverIn}
+        onMouseLeave={hoverOut}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
-    <Link
-      to={to}
-      className={`inline-flex items-center gap-2 rounded-xl font-semibold text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${sizes[size]}`}
-      style={{ backgroundColor: ORANGE }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = ORANGE_LT)}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = ORANGE)}
-    >
+    <Link to={to ?? "/auth"} className={cls} style={style} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
       {children}
     </Link>
   );
@@ -298,7 +322,7 @@ export default function Landing() {
     meta.setAttribute("name", "description");
     meta.setAttribute(
       "content",
-      "Sistema completo para construtoras: gerencie obras, equipes e financeiro em um só lugar. Comece grátis por 14 dias."
+      "Sistema completo para construtoras: gerencie obras, equipes e financeiro em um só lugar. Planos a partir de R$ 149/mês."
     );
     if (!meta.parentElement) document.head.appendChild(meta);
 
@@ -319,8 +343,28 @@ export default function Landing() {
     { icon: Users, title: "Equipes e Permissões", desc: "Cada pessoa acessa somente o que precisa — por módulo e por obra." },
   ];
 
-  const planoBasico = annual ? 247 : 297;
-  const planoPro = annual ? 581 : 697;
+  // Preços e links de checkout reais (Cakto)
+  const PLANS = {
+    basico: {
+      mensal: { preco: 149, url: "https://pay.cakto.com.br/szaqwp9" },
+      anual: { preco: 124, url: "https://pay.cakto.com.br/538xp2i_878141" },
+    },
+    pro: {
+      mensal: { preco: 349, url: "https://pay.cakto.com.br/dpjuzr2" },
+      anual: { preco: 291, url: "https://pay.cakto.com.br/3fb9oe2_878148" },
+    },
+    enterprise: {
+      mensal: { preco: 899, url: "https://pay.cakto.com.br/rpyd2ck" },
+      anual: { preco: 749, url: "https://pay.cakto.com.br/ve4ick5_878151" },
+    },
+  } as const;
+  const periodo = annual ? "anual" : "mensal";
+  const planoBasico = PLANS.basico[periodo].preco;
+  const planoPro = PLANS.pro[periodo].preco;
+  const planoEnterprise = PLANS.enterprise[periodo].preco;
+  const urlBasico = PLANS.basico[periodo].url;
+  const urlPro = PLANS.pro[periodo].url;
+  const urlEnterprise = PLANS.enterprise[periodo].url;
 
   return (
     <div className="min-h-screen bg-white text-[#0F2448]" style={{ fontFamily: "'Space Grotesk','Inter',ui-sans-serif,system-ui,sans-serif", fontFeatureSettings: '"ss01"' }}>
@@ -355,7 +399,7 @@ export default function Landing() {
             >
               Entrar
             </Link>
-            <PrimaryCTA size="md">Começar grátis</PrimaryCTA>
+            <PrimaryCTA size="md" href="#precos">Assinar agora</PrimaryCTA>
           </div>
           <button className="md:hidden" onClick={() => setMobileMenu((v) => !v)} aria-label="Menu">
             {mobileMenu ? <X className={scrolled ? "text-[#0F2448]" : "text-white"} /> : <Menu className={scrolled ? "text-[#0F2448]" : "text-white"} />}
@@ -368,7 +412,7 @@ export default function Landing() {
               <a href="#precos" onClick={() => setMobileMenu(false)}>Preços</a>
               <a href="#suporte" onClick={() => setMobileMenu(false)}>Suporte</a>
               <Link to="/auth" className="border-t border-white/10 pt-3">Entrar</Link>
-              <PrimaryCTA size="md">Começar grátis</PrimaryCTA>
+              <PrimaryCTA size="md" href="#precos">Assinar agora</PrimaryCTA>
             </nav>
           </div>
         )}
@@ -394,8 +438,8 @@ export default function Landing() {
             </Reveal>
             <Reveal delay={220}>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <PrimaryCTA size="lg">
-                  Começar grátis por 14 dias <ArrowRight className="h-5 w-5" />
+                <PrimaryCTA size="lg" href="#precos">
+                  Ver planos e assinar <ArrowRight className="h-5 w-5" />
                 </PrimaryCTA>
                 <a
                   href="#funcionalidades"
@@ -405,7 +449,7 @@ export default function Landing() {
                 </a>
               </div>
               <p className="mt-4 text-xs text-[#64748B]">
-                Sem cartão de crédito • Cancele quando quiser • Dados seguros (LGPD)
+                A partir de R$ 149/mês • Cancele quando quiser • Dados seguros (LGPD)
               </p>
             </Reveal>
           </div>
@@ -532,7 +576,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="mt-14 flex justify-center">
-            <PrimaryCTA size="lg">Criar minha conta grátis <ArrowRight className="h-5 w-5" /></PrimaryCTA>
+            <PrimaryCTA size="lg" href="#precos">Ver planos e assinar <ArrowRight className="h-5 w-5" /></PrimaryCTA>
           </div>
         </div>
       </section>
@@ -610,7 +654,7 @@ export default function Landing() {
             <span className={`flex items-center gap-2 text-sm font-medium ${annual ? "text-[#0F2448]" : "text-gray-400"}`}>
               Anual
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                2 meses grátis
+                Economize 2 meses
               </span>
             </span>
           </div>
@@ -629,12 +673,14 @@ export default function Landing() {
                   <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ORANGE }} />{t}</li>
                 ))}
               </ul>
-              <Link
-                to="/auth"
+              <a
+                href={urlBasico}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl border border-[#0F2448] px-6 py-3 text-sm font-semibold text-[#0F2448] transition-colors hover:bg-[#0F2448] hover:text-white"
               >
-                Começar grátis
-              </Link>
+                Assinar Básico
+              </a>
             </div>
 
             {/* Profissional */}
@@ -653,22 +699,25 @@ export default function Landing() {
                   <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ORANGE }} />{t}</li>
                 ))}
               </ul>
-              <Link
-                to="/auth"
+              <a
+                href={urlPro}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white transition-colors"
                 style={{ backgroundColor: ORANGE }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = ORANGE_LT)}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = ORANGE)}
               >
-                Começar grátis
-              </Link>
+                Assinar Profissional
+              </a>
             </div>
 
             {/* Enterprise */}
             <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
               <div className="text-sm font-semibold uppercase tracking-wider text-gray-500">Enterprise</div>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-[#0F2448]">Sob consulta</span>
+              <div className="mt-4 flex items-baseline gap-1 transition-all duration-300">
+                <span className="text-4xl font-bold text-[#0F2448]">R$ {planoEnterprise}</span>
+                <span className="text-sm text-gray-500">/mês</span>
               </div>
               <p className="mt-2 text-sm text-gray-500">Para grupos e construtoras com múltiplas unidades</p>
               <ul className="mt-6 space-y-3 text-sm text-[#0F2448]">
@@ -677,16 +726,18 @@ export default function Landing() {
                 ))}
               </ul>
               <a
-                href="mailto:contato@gestaodeobra.online"
+                href={urlEnterprise}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center justify-center rounded-xl border border-[#0F2448] px-6 py-3 text-sm font-semibold text-[#0F2448] transition-colors hover:bg-[#0F2448] hover:text-white"
               >
-                Falar com consultor
+                Assinar Enterprise
               </a>
             </div>
           </div>
 
           <p className="mt-10 text-center text-sm text-gray-400">
-            Todos os planos incluem 14 dias grátis • Sem cartão de crédito • Cancele quando quiser
+            Pagamento seguro processado pela Cakto • Cancele quando quiser • Nota fiscal emitida automaticamente
           </p>
         </div>
       </section>
@@ -732,7 +783,7 @@ export default function Landing() {
           <Accordion type="single" collapsible className="mt-12">
             {[
               { q: "Preciso instalar alguma coisa?", a: "Não. O Gestão de Obra é 100% online. Acesse pelo navegador de qualquer computador, sem instalação." },
-              { q: "Como funciona o período grátis de 14 dias?", a: "Você cria a conta, convida sua equipe e usa o sistema completo por 14 dias sem precisar informar cartão de crédito. Ao final, escolhe o plano que faz sentido para sua empresa." },
+              { q: "Como funciona o pagamento?", a: "O pagamento é mensal ou anual, processado de forma segura pela Cakto. Aceitamos cartão de crédito, Pix e boleto. A nota fiscal é emitida automaticamente." },
               { q: "Posso migrar meus dados de planilha para o sistema?", a: "Sim. Oferecemos suporte para importação de obras e equipes via planilha Excel nos planos Profissional e Enterprise." },
               { q: "Quantos usuários posso ter?", a: "Depende do plano: Básico (3), Profissional (15), Enterprise (ilimitados). Cada usuário recebe permissões específicas por módulo." },
               { q: "O sistema é seguro? Meus dados ficam protegidos?", a: "Sim. Utilizamos infraestrutura com criptografia em repouso e em trânsito, backups automáticos diários e conformidade com a LGPD. Cada empresa tem seus dados completamente isolados." },
@@ -758,9 +809,9 @@ export default function Landing() {
             Cada semana que passa é mais uma semana de planilha, de informação perdida e de dinheiro que não fecha. Comece agora — em 5 minutos você já tem sua primeira obra cadastrada.
           </p>
           <div className="mt-10 flex justify-center">
-            <PrimaryCTA size="xl">Criar minha conta grátis <ArrowRight className="h-5 w-5" /></PrimaryCTA>
+            <PrimaryCTA size="xl" href="#precos">Assinar agora <ArrowRight className="h-5 w-5" /></PrimaryCTA>
           </div>
-          <p className="mt-4 text-sm text-gray-500">14 dias grátis · Sem cartão · Cancele quando quiser</p>
+          <p className="mt-4 text-sm text-gray-500">A partir de R$ 149/mês · Pagamento seguro · Cancele quando quiser</p>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-12 opacity-60">
             <div className="flex items-center gap-2 text-sm text-white"><Shield className="h-4 w-4" /> Dados seguros (LGPD)</div>
             <div className="flex items-center gap-2 text-sm text-white"><Zap className="h-4 w-4" /> Setup em 5 minutos</div>
