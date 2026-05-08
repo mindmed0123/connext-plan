@@ -322,7 +322,7 @@ export default function Landing() {
     meta.setAttribute("name", "description");
     meta.setAttribute(
       "content",
-      "Sistema completo para construtoras: gerencie obras, equipes e financeiro em um só lugar. Planos a partir de R$ 149/mês."
+      "Sistema completo para construtoras: gerencie obras, equipes e financeiro em um só lugar. Planos a partir de R$ 297/mês."
     );
     if (!meta.parentElement) document.head.appendChild(meta);
 
@@ -346,16 +346,16 @@ export default function Landing() {
   // Preços e links de checkout reais (Cakto)
   const PLANS = {
     basico: {
-      mensal: { preco: 149, url: "https://pay.cakto.com.br/szaqwp9" },
-      anual: { preco: 124, url: "https://pay.cakto.com.br/538xp2i_878141" },
+      mensal: { preco: 297, url: "https://pay.cakto.com.br/szaqwp9" },
+      anual: { preco: 247, url: "https://pay.cakto.com.br/538xp2i_878141" },
     },
     pro: {
-      mensal: { preco: 349, url: "https://pay.cakto.com.br/dpjuzr2" },
-      anual: { preco: 291, url: "https://pay.cakto.com.br/3fb9oe2_878148" },
+      mensal: { preco: 697, url: "https://pay.cakto.com.br/dpjuzr2" },
+      anual: { preco: 581, url: "https://pay.cakto.com.br/3fb9oe2_878148" },
     },
     enterprise: {
-      mensal: { preco: 899, url: "https://pay.cakto.com.br/rpyd2ck" },
-      anual: { preco: 749, url: "https://pay.cakto.com.br/ve4ick5_878151" },
+      mensal: { preco: 1250, url: "https://pay.cakto.com.br/rpyd2ck" },
+      anual: { preco: 1042, url: "https://pay.cakto.com.br/ve4ick5_878151" },
     },
   } as const;
   const periodo = annual ? "anual" : "mensal";
@@ -449,7 +449,7 @@ export default function Landing() {
                 </a>
               </div>
               <p className="mt-4 text-xs text-[#64748B]">
-                A partir de R$ 149/mês • Cancele quando quiser • Dados seguros (LGPD)
+                A partir de R$ 297/mês • Cancele quando quiser • Dados seguros (LGPD)
               </p>
             </Reveal>
           </div>
@@ -811,7 +811,7 @@ export default function Landing() {
           <div className="mt-10 flex justify-center">
             <PrimaryCTA size="xl" href="#precos">Assinar agora <ArrowRight className="h-5 w-5" /></PrimaryCTA>
           </div>
-          <p className="mt-4 text-sm text-gray-500">A partir de R$ 149/mês · Pagamento seguro · Cancele quando quiser</p>
+          <p className="mt-4 text-sm text-gray-500">A partir de R$ 297/mês · Pagamento seguro · Cancele quando quiser</p>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-12 opacity-60">
             <div className="flex items-center gap-2 text-sm text-white"><Shield className="h-4 w-4" /> Dados seguros (LGPD)</div>
             <div className="flex items-center gap-2 text-sm text-white"><Zap className="h-4 w-4" /> Setup em 5 minutos</div>
