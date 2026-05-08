@@ -9,12 +9,12 @@ import {
   Receipt,
   Wallet,
   LogOut,
-  Building2,
   Users,
   DollarSign,
   Shield,
   CreditCard,
 } from "lucide-react";
+import iconLogo from "@/assets/icon.png";
 import {
   Sidebar,
   SidebarContent,
@@ -93,14 +93,16 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Building2 className="h-4 w-4" />
-          </div>
+          <img
+            src={iconLogo}
+            alt="Gestão de Obra"
+            className="h-8 w-8 rounded-md object-contain"
+          />
           {!collapsed && (
             <div className="flex flex-col leading-tight overflow-hidden">
-              <span className="text-sm font-semibold truncate">{empresaNome ?? "ObraFlow"}</span>
+              <span className="text-sm font-semibold truncate">{empresaNome ?? "Gestão de Obra"}</span>
               <span className="text-[11px] text-muted-foreground truncate">
-                {empresaNome ? "Gestão de Obras" : "ERP de Obras"}
+                {empresaNome ? "Gestão de Obra" : "Gestão para construtoras"}
               </span>
             </div>
           )}
