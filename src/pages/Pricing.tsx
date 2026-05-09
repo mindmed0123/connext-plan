@@ -18,6 +18,8 @@ type Plano = {
   preco_anual: number;
   cakto_product_id_mensal: string | null;
   cakto_product_id_anual: string | null;
+  cakto_checkout_url_mensal: string | null;
+  cakto_checkout_url_anual: string | null;
   limite_obras: number | null;
   limite_usuarios: number | null;
   recursos: string[];
@@ -27,6 +29,24 @@ type Plano = {
 
 const formatPrice = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+const getCheckoutUrl = (
+  plano: Plano,
+  periodo: "mensal" | "anual",
+  user: any,
+  empresaId: string | null
+): string | null => {
+  if (!user?.email || !empresaId) return null;
+  const baseUrl =
+    periodo === "anual"
+      ? plano.cakto_checkout_url_anual
+      : plano.cakto_checkout_url_mensal;
+  if (!baseUrl) return null;
+  const url = new URL(baseUrl);
+  url.searchParams.set("email", user.email);
+  url.searchParams.set("ref", `${empresaId}|${plano.id}|${periodo}|${user.id}`);
+  return url.toString();
+};
 
 export default function Pricing() {
   const { user, empresaId } = useAuth();
@@ -136,6 +156,7 @@ export default function Pricing() {
           ) : (
             planos?.map((p) => {
               const preco = periodo === "mensal" ? p.preco_mensal : p.preco_anual / 12;
+              const checkoutUrl = getCheckoutUrl(p, periodo, user, empresaId);
               return (
                 <Card
                   key={p.id}
@@ -163,11 +184,23 @@ export default function Pricing() {
                       variant={p.destaque ? "default" : "outline"}
                       onClick={() => handleAssinar(p)}
                       disabled={loadingId === p.id}
+                      asChild={!!checkoutUrl}
                     >
-                      {loadingId === p.id ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {user ? "Assinar plano" : "Começar grátis"}
+                      {checkoutUrl ? (
+                        <a href={checkoutUrl} target="_blank" rel="noopener noreferrer">
+                          {loadingId === p.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Assinar plano
+                        </a>
+                      ) : (
+                        <>
+                          {loadingId === p.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          {user ? "Assinar plano" : "Começar grátis"}
+                        </>
+                      )}
                     </Button>
                     <ul className="mt-6 space-y-3 text-sm">
                       <li className="flex items-start gap-2">
