@@ -30,6 +30,24 @@ type Plano = {
 const formatPrice = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+const getCheckoutUrl = (
+  plano: Plano,
+  periodo: "mensal" | "anual",
+  user: any,
+  empresaId: string | null
+): string | null => {
+  if (!user?.email || !empresaId) return null;
+  const baseUrl =
+    periodo === "anual"
+      ? plano.cakto_checkout_url_anual
+      : plano.cakto_checkout_url_mensal;
+  if (!baseUrl) return null;
+  const url = new URL(baseUrl);
+  url.searchParams.set("email", user.email);
+  url.searchParams.set("ref", `${empresaId}|${plano.id}|${periodo}|${user.id}`);
+  return url.toString();
+};
+
 export default function Pricing() {
   const { user, empresaId } = useAuth();
   const navigate = useNavigate();
