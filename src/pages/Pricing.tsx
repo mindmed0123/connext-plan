@@ -18,6 +18,8 @@ type Plano = {
   preco_anual: number;
   cakto_product_id_mensal: string | null;
   cakto_product_id_anual: string | null;
+  cakto_checkout_url_mensal: string | null;
+  cakto_checkout_url_anual: string | null;
   limite_obras: number | null;
   limite_usuarios: number | null;
   recursos: string[];
