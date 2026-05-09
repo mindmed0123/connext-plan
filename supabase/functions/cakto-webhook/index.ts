@@ -59,7 +59,15 @@ Deno.serve(async (req) => {
 
   if (CAKTO_WEBHOOK_SECRET && provided !== CAKTO_WEBHOOK_SECRET) {
     console.warn("Cakto webhook: secret inválido", {
-      hasBody: !!bodySecret, hasHeader: !!headerSig, hasQuery: !!tokenQuery,
+      hasBody: !!bodySecret,
+      hasHeader: !!headerSig,
+      hasQuery: !!tokenQuery,
+      providedLen: provided.length,
+      expectedLen: CAKTO_WEBHOOK_SECRET.length,
+      providedPrefix: provided.slice(0, 4),
+      expectedPrefix: CAKTO_WEBHOOK_SECRET.slice(0, 4),
+      topLevelKeys: Object.keys(event ?? {}),
+      dataKeys: event?.data ? Object.keys(event.data) : [],
     });
     return ok({ error: "unauthorized" }, 401);
   }
