@@ -20,7 +20,6 @@ import {
   AlertTriangle,
   Banknote,
   FolderOpen,
-  Building2,
   Menu,
   X,
 } from "lucide-react";
@@ -31,6 +30,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import logoImg from "@/assets/logo.png";
+import logoDarkImg from "@/assets/logo-dark.png";
 
 // ---------- Local design tokens (kept inline so the landing is independent) ----------
 const NAVY_900 = "#0B1F42";
