@@ -110,17 +110,11 @@ function Counter({ to, prefix = "", suffix = "", decimals = 0, duration = 1500 }
 // ---------- Logo ----------
 function Logo({ light = false }: { light?: boolean }) {
   return (
-    <div className="flex items-center gap-2">
-      <div
-        className="flex h-9 w-9 items-center justify-center rounded-lg"
-        style={{ backgroundColor: ORANGE }}
-      >
-        <Building2 className="h-5 w-5 text-white" />
-      </div>
-      <span className={`text-[18px] font-bold tracking-tight ${light ? "text-white" : "text-[#0F2448]"}`}>
-        Gestão de Obra
-      </span>
-    </div>
+    <img
+      src={light ? logoDarkImg : logoImg}
+      alt="Gestão de Obra"
+      className="h-9 w-auto"
+    />
   );
 }
 
