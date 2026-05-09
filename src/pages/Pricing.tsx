@@ -156,6 +156,7 @@ export default function Pricing() {
           ) : (
             planos?.map((p) => {
               const preco = periodo === "mensal" ? p.preco_mensal : p.preco_anual / 12;
+              const checkoutUrl = getCheckoutUrl(p, periodo, user, empresaId);
               return (
                 <Card
                   key={p.id}
@@ -183,11 +184,23 @@ export default function Pricing() {
                       variant={p.destaque ? "default" : "outline"}
                       onClick={() => handleAssinar(p)}
                       disabled={loadingId === p.id}
+                      asChild={!!checkoutUrl}
                     >
-                      {loadingId === p.id ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      {user ? "Assinar plano" : "Começar grátis"}
+                      {checkoutUrl ? (
+                        <a href={checkoutUrl} target="_blank" rel="noopener noreferrer">
+                          {loadingId === p.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Assinar plano
+                        </a>
+                      ) : (
+                        <>
+                          {loadingId === p.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          {user ? "Assinar plano" : "Começar grátis"}
+                        </>
+                      )}
                     </Button>
                     <ul className="mt-6 space-y-3 text-sm">
                       <li className="flex items-start gap-2">
