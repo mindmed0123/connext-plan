@@ -30,8 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import logoImg from "@/assets/logo.png";
-import logoDarkImg from "@/assets/logo-dark.png";
+import logoIcon from "@/assets/logo-icon.png";
 
 // ---------- Local design tokens (kept inline so the landing is independent) ----------
 const NAVY_900 = "#0B1F42";
@@ -110,11 +109,12 @@ function Counter({ to, prefix = "", suffix = "", decimals = 0, duration = 1500 }
 // ---------- Logo ----------
 function Logo({ light = false }: { light?: boolean }) {
   return (
-    <img
-      src={light ? logoDarkImg : logoImg}
-      alt="Gestão de Obra"
-      className="h-9 w-auto"
-    />
+    <div className="flex items-center gap-2">
+      <img src={logoIcon} alt="Gestão de Obra" className="h-10 w-10 rounded-lg object-contain" />
+      <span className={`text-[18px] font-bold tracking-tight ${light ? "text-white" : "text-[#0F2448]"}`}>
+        Gestão de Obra
+      </span>
+    </div>
   );
 }
 
