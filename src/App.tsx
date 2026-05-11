@@ -14,6 +14,7 @@ import Obras from "./pages/Obras";
 import Etapas from "./pages/Etapas";
 import Vistorias from "./pages/Vistorias";
 import Orcamentos from "./pages/Orcamentos";
+import Servicos from "./pages/Servicos";
 import Execucoes from "./pages/Execucoes";
 import Faturamento from "./pages/Faturamento";
 import Recebimentos from "./pages/Recebimentos";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/kanban" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
               <Route path="/vistorias" element={<RequirePermission modulo="vistorias"><Vistorias /></RequirePermission>} />
               <Route path="/orcamentos" element={<RequirePermission modulo="orcamentos"><Orcamentos /></RequirePermission>} />
+              <Route path="/servicos" element={<RequirePermission modulo="servicos"><Servicos /></RequirePermission>} />
               <Route path="/execucoes" element={<RequirePermission modulo="execucoes"><Execucoes /></RequirePermission>} />
               <Route path="/financeiro" element={<RequirePermission modulo="financeiro"><Financeiro /></RequirePermission>} />
               <Route path="/faturamento" element={<RequirePermission modulo="faturamento"><Faturamento /></RequirePermission>} />

@@ -1,0 +1,1 @@
+ALTER TYPE public.app_modulo ADD VALUE IF NOT EXISTS 'servicos';
