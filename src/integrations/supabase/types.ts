@@ -797,12 +797,84 @@ export type Database = {
           },
         ]
       }
+      orcamento_itens: {
+        Row: {
+          created_at: string
+          desconto_pct: number
+          descricao: string
+          empresa_id: string
+          id: string
+          orcamento_id: string
+          ordem: number
+          preco_unitario: number
+          quantidade: number
+          servico_id: string | null
+          subtotal: number | null
+          unidade: string
+        }
+        Insert: {
+          created_at?: string
+          desconto_pct?: number
+          descricao: string
+          empresa_id: string
+          id?: string
+          orcamento_id: string
+          ordem?: number
+          preco_unitario?: number
+          quantidade?: number
+          servico_id?: string | null
+          subtotal?: number | null
+          unidade?: string
+        }
+        Update: {
+          created_at?: string
+          desconto_pct?: number
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          orcamento_id?: string
+          ordem?: number
+          preco_unitario?: number
+          quantidade?: number
+          servico_id?: string | null
+          subtotal?: number | null
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_itens_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_itens_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_itens_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orcamentos: {
         Row: {
           arquivo_path: string | null
           arquivo_url: string | null
+          cliente_cnpj: string | null
+          cliente_endereco: string | null
+          cliente_nome: string | null
+          condicoes_pagamento: string | null
           created_at: string
           data_envio: string | null
+          data_orcamento: string
           descricao: string | null
           empresa_id: string
           engenheiro_aprovador: string | null
@@ -813,14 +885,21 @@ export type Database = {
           obra_id: string
           observacoes: string | null
           status: Database["public"]["Enums"]["orcamento_status"]
+          titulo: string | null
           updated_at: string
+          validade_dias: number
           valor_orcamento: number
         }
         Insert: {
           arquivo_path?: string | null
           arquivo_url?: string | null
+          cliente_cnpj?: string | null
+          cliente_endereco?: string | null
+          cliente_nome?: string | null
+          condicoes_pagamento?: string | null
           created_at?: string
           data_envio?: string | null
+          data_orcamento?: string
           descricao?: string | null
           empresa_id?: string
           engenheiro_aprovador?: string | null
@@ -831,14 +910,21 @@ export type Database = {
           obra_id: string
           observacoes?: string | null
           status?: Database["public"]["Enums"]["orcamento_status"]
+          titulo?: string | null
           updated_at?: string
+          validade_dias?: number
           valor_orcamento?: number
         }
         Update: {
           arquivo_path?: string | null
           arquivo_url?: string | null
+          cliente_cnpj?: string | null
+          cliente_endereco?: string | null
+          cliente_nome?: string | null
+          condicoes_pagamento?: string | null
           created_at?: string
           data_envio?: string | null
+          data_orcamento?: string
           descricao?: string | null
           empresa_id?: string
           engenheiro_aprovador?: string | null
@@ -849,7 +935,9 @@ export type Database = {
           obra_id?: string
           observacoes?: string | null
           status?: Database["public"]["Enums"]["orcamento_status"]
+          titulo?: string | null
           updated_at?: string
+          validade_dias?: number
           valor_orcamento?: number
         }
         Relationships: [
@@ -1356,6 +1444,53 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servicos: {
+        Row: {
+          ativo: boolean
+          codigo: string | null
+          created_at: string
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          preco_unitario: number
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          preco_unitario?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          preco_unitario?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]
