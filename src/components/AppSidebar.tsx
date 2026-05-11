@@ -45,6 +45,7 @@ const operacionalAdmin: NavItem[] = [
 const modulosAdmin: NavItem[] = [
   { title: "Vistorias", url: "/vistorias", icon: ClipboardList, modulo: "vistorias" },
   { title: "Orçamentos", url: "/orcamentos", icon: FileText, modulo: "orcamentos" },
+  { title: "Serviços", url: "/servicos", icon: Wrench, modulo: "servicos" },
   { title: "Execuções", url: "/execucoes", icon: Hammer, modulo: "execucoes" },
 ];
 
