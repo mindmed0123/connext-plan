@@ -14,6 +14,7 @@ import Obras from "./pages/Obras";
 import Etapas from "./pages/Etapas";
 import Vistorias from "./pages/Vistorias";
 import Orcamentos from "./pages/Orcamentos";
+import Servicos from "./pages/Servicos";
 import Execucoes from "./pages/Execucoes";
 import Faturamento from "./pages/Faturamento";
 import Recebimentos from "./pages/Recebimentos";
