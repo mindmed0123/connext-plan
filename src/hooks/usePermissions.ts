@@ -11,6 +11,7 @@ export const APP_MODULOS = [
   "equipes",
   "vistorias",
   "orcamentos",
+  "servicos",
   "execucoes",
   "etapas",
 ] as const;
