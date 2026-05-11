@@ -13,6 +13,7 @@ import {
   DollarSign,
   Shield,
   CreditCard,
+  Wrench,
 } from "lucide-react";
 import iconLogo from "@/assets/icon.png";
 import {
