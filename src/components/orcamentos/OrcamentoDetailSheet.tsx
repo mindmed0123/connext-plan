@@ -54,7 +54,7 @@ export function OrcamentoDetailSheet({
     const { data: empresa } = await supabase.from("empresas").select("*").eq("id", empresaId).single();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = (empresa ?? {}) as any;
-    gerarOrcamentoPDF(data.orc, data.itens, {
+    await gerarOrcamentoPDF(data.orc, data.itens, {
       nome: e.nome ?? "Empresa",
       cnpj: e.cnpj ?? null,
       inscricao_estadual: e.inscricao_estadual ?? null,
@@ -64,6 +64,7 @@ export function OrcamentoDetailSheet({
       uf: e.uf ?? null,
       cep: e.cep ?? null,
       telefone: e.telefone ?? null,
+      logo_url: e.logo_url ?? null,
     });
     toast.success("PDF gerado!");
   };
