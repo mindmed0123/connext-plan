@@ -169,7 +169,8 @@ export function OrcamentoFormDialog({
     (async () => {
       const { data: orc } = await supabase.from("orcamentos").select("*").eq("id", orcamentoId).single();
       if (!orc) return;
-      setObraId(orc.obra_id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setChamado((orc as any).codigo_chamado ?? "");
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? format(new Date(), "yyyy-MM-dd"));
       setValidadeDias(orc.validade_dias ?? 30);
