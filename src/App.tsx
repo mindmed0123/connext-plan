@@ -80,6 +80,7 @@ const App = () => (
               <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
