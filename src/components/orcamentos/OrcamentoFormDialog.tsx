@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { UNIDADES } from "@/components/servicos/ServicoFormDialog";
@@ -60,10 +60,53 @@ export function OrcamentoFormDialog({
   const [condicoes, setCondicoes] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCnpj, setClienteCnpj] = useState("");
+  const [clienteIE, setClienteIE] = useState("");
   const [clienteEndereco, setClienteEndereco] = useState("");
+  const [clienteEmail, setClienteEmail] = useState("");
+  const [clienteTelefone, setClienteTelefone] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [itens, setItens] = useState<ItemForm[]>([newItem()]);
   const [numero, setNumero] = useState<string | null>(null);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const buscarCnpj = async () => {
+    const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
+    if (cnpjLimpo.length !== 14) {
+      toast.error("Informe um CNPJ válido (14 dígitos)");
+      return;
+    }
+    setBuscandoCnpj(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!res.ok) throw new Error("CNPJ não encontrado");
+      const d = await res.json();
+      setClienteNome(d.razao_social || d.nome_fantasia || "");
+      const endereco = [
+        `${d.logradouro || ""}${d.numero ? ", " + d.numero : ""}`,
+        d.complemento,
+        d.bairro,
+        `${d.municipio || ""}${d.uf ? " - " + d.uf : ""}`,
+        d.cep ? `CEP: ${d.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : "",
+      ].filter(Boolean).join(" - ");
+      setClienteEndereco(endereco);
+      if (d.email) setClienteEmail(d.email);
+      if (d.ddd_telefone_1) setClienteTelefone(`(${d.ddd_telefone_1.slice(0, 2)}) ${d.ddd_telefone_1.slice(2)}`);
+      toast.success("Dados do cliente carregados!");
+    } catch (e) {
+      toast.error((e as Error).message || "Erro ao buscar CNPJ");
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
 
   const { data: obras } = useQuery({
     queryKey: ["orc-obras", empresaId],
@@ -93,7 +136,8 @@ export function OrcamentoFormDialog({
     if (!orcamentoId) {
       setObraId(""); setTitulo(""); setDataOrcamento(format(new Date(), "yyyy-MM-dd"));
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
-      setClienteEndereco(""); setObservacoes(""); setItens([newItem()]); setNumero(null);
+      setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
+      setObservacoes(""); setItens([newItem()]); setNumero(null);
       return;
     }
     (async () => {
@@ -106,7 +150,13 @@ export function OrcamentoFormDialog({
       setCondicoes(orc.condicoes_pagamento ?? "");
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteIE((orc as any).cliente_inscricao_estadual ?? "");
       setClienteEndereco(orc.cliente_endereco ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteEmail((orc as any).cliente_email ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteTelefone((orc as any).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
       setNumero(orc.numero_orcamento);
       const { data: its } = await supabase.from("orcamento_itens").select("*").eq("orcamento_id", orcamentoId).order("ordem");
@@ -152,7 +202,10 @@ export function OrcamentoFormDialog({
         condicoes_pagamento: condicoes || null,
         cliente_nome: clienteNome || null,
         cliente_cnpj: clienteCnpj || null,
+        cliente_inscricao_estadual: clienteIE || null,
         cliente_endereco: clienteEndereco || null,
+        cliente_email: clienteEmail || null,
+        cliente_telefone: clienteTelefone || null,
         observacoes: observacoes || null,
         status: statusFinal,
         valor_orcamento: total,
@@ -242,21 +295,46 @@ export function OrcamentoFormDialog({
           {/* Cliente */}
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground">Dados do cliente (aparece no PDF)</h3>
+            <div className="rounded-md border bg-primary/5 p-3 mb-2">
+              <Label className="text-xs">Buscar pelo CNPJ</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={clienteCnpj}
+                  onChange={(e) => setClienteCnpj(formatCnpj(e.target.value))}
+                  placeholder="00.000.000/0000-00"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buscarCnpj(); } }}
+                />
+                <Button type="button" onClick={buscarCnpj} disabled={buscandoCnpj}>
+                  {buscandoCnpj ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  Buscar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Digite o CNPJ e clique em buscar — preenchemos os dados automaticamente.</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label>Nome do cliente</Label>
+              <div className="md:col-span-2">
+                <Label>Razão social / Nome</Label>
                 <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
               </div>
               <div>
-                <Label>CNPJ</Label>
-                <Input value={clienteCnpj} onChange={(e) => setClienteCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                <Label>Inscrição Estadual</Label>
+                <Input value={clienteIE} onChange={(e) => setClienteIE(e.target.value)} />
+              </div>
+              <div>
+                <Label>Telefone</Label>
+                <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} />
               </div>
               <div className="md:col-span-2">
-                <Label>Endereço</Label>
+                <Label>E-mail</Label>
+                <Input type="email" value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Endereço completo</Label>
                 <Input value={clienteEndereco} onChange={(e) => setClienteEndereco(e.target.value)} />
               </div>
             </div>
           </section>
+
 
           {/* Itens */}
           <section className="space-y-3 rounded-lg border bg-muted/30 p-4">

@@ -51,8 +51,20 @@ export function OrcamentoDetailSheet({
 
   const handlePDF = async () => {
     if (!data?.orc || !empresaId) return;
-    const { data: empresa } = await supabase.from("empresas").select("nome").eq("id", empresaId).single();
-    gerarOrcamentoPDF(data.orc, data.itens, { nome: empresa?.nome ?? "Empresa", cnpj: null });
+    const { data: empresa } = await supabase.from("empresas").select("*").eq("id", empresaId).single();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = (empresa ?? {}) as any;
+    gerarOrcamentoPDF(data.orc, data.itens, {
+      nome: e.nome ?? "Empresa",
+      cnpj: e.cnpj ?? null,
+      inscricao_estadual: e.inscricao_estadual ?? null,
+      endereco: e.endereco ?? null,
+      bairro: e.bairro ?? null,
+      cidade: e.cidade ?? null,
+      uf: e.uf ?? null,
+      cep: e.cep ?? null,
+      telefone: e.telefone ?? null,
+    });
     toast.success("PDF gerado!");
   };
 

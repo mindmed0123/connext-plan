@@ -61,10 +61,22 @@ export default function Orcamentos() {
     const [{ data: orc }, { data: itens }, { data: empresa }] = await Promise.all([
       supabase.from("orcamentos").select("*, obras(codigo_chamado)").eq("id", orcId).single(),
       supabase.from("orcamento_itens").select("*").eq("orcamento_id", orcId).order("ordem"),
-      supabase.from("empresas").select("nome").eq("id", empresaId).single(),
+      supabase.from("empresas").select("*").eq("id", empresaId).single(),
     ]);
     if (!orc) return;
-    gerarOrcamentoPDF(orc, itens ?? [], { nome: empresa?.nome ?? "Empresa", cnpj: null });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = (empresa ?? {}) as any;
+    gerarOrcamentoPDF(orc, itens ?? [], {
+      nome: e.nome ?? "Empresa",
+      cnpj: e.cnpj ?? null,
+      inscricao_estadual: e.inscricao_estadual ?? null,
+      endereco: e.endereco ?? null,
+      bairro: e.bairro ?? null,
+      cidade: e.cidade ?? null,
+      uf: e.uf ?? null,
+      cep: e.cep ?? null,
+      telefone: e.telefone ?? null,
+    });
     toast.success("PDF gerado!");
   };
 
