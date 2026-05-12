@@ -133,6 +133,45 @@ export type Database = {
           },
         ]
       }
+      clientes: {
+        Row: {
+          cnpj: string
+          created_at: string
+          email: string | null
+          empresa_id: string
+          endereco: string | null
+          id: string
+          inscricao_estadual: string | null
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cnpj: string
+          created_at?: string
+          email?: string | null
+          empresa_id?: string
+          endereco?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string
+          created_at?: string
+          email?: string | null
+          empresa_id?: string
+          endereco?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contratacoes_terceirizado: {
         Row: {
           created_at: string
