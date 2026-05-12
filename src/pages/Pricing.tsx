@@ -56,15 +56,6 @@ export default function Pricing() {
     },
   });
 
-  // Auto-checkout direto via link: /pricing?plano=pro&checkout=1&periodo=mensal
-  useEffect(() => {
-    if (!checkoutParam || !planoParam || !planos || planos.length === 0) return;
-    const plano = planos.find((p) => p.slug === planoParam);
-    if (plano) {
-      handleAssinar(plano);
-    }
-  }, [planos, checkoutParam, planoParam]);
-
   const handleAssinar = async (plano: Plano) => {
     if (!user) {
       navigate("/auth?redirect=/pricing");
@@ -90,6 +81,15 @@ export default function Pricing() {
       setLoadingId(null);
     }
   };
+
+  // Auto-checkout direto via link: /pricing?plano=pro&checkout=1&periodo=mensal
+  useEffect(() => {
+    if (!checkoutParam || !planoParam || !planos || planos.length === 0) return;
+    const plano = planos.find((p) => p.slug === planoParam);
+    if (plano) {
+      handleAssinar(plano);
+    }
+  }, [planos, checkoutParam, planoParam]);
 
   const economia = useMemo(() => {
     if (!planos?.[1]) return 0;
