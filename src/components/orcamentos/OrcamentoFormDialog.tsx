@@ -613,16 +613,26 @@ export function OrcamentoFormDialog({
               <Textarea rows={3} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
             </section>
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 sm:items-center flex-wrap">
               <Button variant="outline" onClick={() => setStep(1)}>
                 <ArrowLeft className="h-4 w-4" /> Voltar
               </Button>
-              <Button variant="secondary" onClick={() => save.mutate("em_elaboracao")} disabled={save.isPending}>
-                Salvar rascunho
-              </Button>
-              <Button onClick={() => save.mutate("enviado")} disabled={save.isPending}>
-                Salvar e enviar
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label className="text-xs whitespace-nowrap">Status:</Label>
+                <Select value={statusSalvar} onValueChange={(v) => setStatusSalvar(v as typeof statusSalvar)}>
+                  <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="em_elaboracao">Em elaboração</SelectItem>
+                    <SelectItem value="enviado">Enviado</SelectItem>
+                    <SelectItem value="em_negociacao">Em negociação</SelectItem>
+                    <SelectItem value="aprovado">Aprovado</SelectItem>
+                    <SelectItem value="reprovado">Reprovado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => save.mutate(statusSalvar)} disabled={save.isPending}>
+                  Salvar orçamento
+                </Button>
+              </div>
             </DialogFooter>
           </div>
         )}
