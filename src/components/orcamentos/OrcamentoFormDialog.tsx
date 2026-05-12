@@ -295,21 +295,46 @@ export function OrcamentoFormDialog({
           {/* Cliente */}
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground">Dados do cliente (aparece no PDF)</h3>
+            <div className="rounded-md border bg-primary/5 p-3 mb-2">
+              <Label className="text-xs">Buscar pelo CNPJ</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={clienteCnpj}
+                  onChange={(e) => setClienteCnpj(formatCnpj(e.target.value))}
+                  placeholder="00.000.000/0000-00"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buscarCnpj(); } }}
+                />
+                <Button type="button" onClick={buscarCnpj} disabled={buscandoCnpj}>
+                  {buscandoCnpj ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  Buscar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Digite o CNPJ e clique em buscar — preenchemos os dados automaticamente.</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label>Nome do cliente</Label>
+              <div className="md:col-span-2">
+                <Label>Razão social / Nome</Label>
                 <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
               </div>
               <div>
-                <Label>CNPJ</Label>
-                <Input value={clienteCnpj} onChange={(e) => setClienteCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                <Label>Inscrição Estadual</Label>
+                <Input value={clienteIE} onChange={(e) => setClienteIE(e.target.value)} />
+              </div>
+              <div>
+                <Label>Telefone</Label>
+                <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} />
               </div>
               <div className="md:col-span-2">
-                <Label>Endereço</Label>
+                <Label>E-mail</Label>
+                <Input type="email" value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Endereço completo</Label>
                 <Input value={clienteEndereco} onChange={(e) => setClienteEndereco(e.target.value)} />
               </div>
             </div>
           </section>
+
 
           {/* Itens */}
           <section className="space-y-3 rounded-lg border bg-muted/30 p-4">
