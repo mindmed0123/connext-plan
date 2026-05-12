@@ -816,13 +816,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_recebimento: string
-          descricao_servico: string
+          descricao_servico: string | null
           empresa_id: string
-          endereco: string
-          engenheiro_responsavel: string
+          endereco: string | null
+          engenheiro_responsavel: string | null
           id: string
           origem: string
-          regiao: Database["public"]["Enums"]["obra_regiao"]
+          regiao: Database["public"]["Enums"]["obra_regiao"] | null
           status: Database["public"]["Enums"]["obra_status"]
           updated_at: string
         }
@@ -831,13 +831,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_recebimento?: string
-          descricao_servico: string
+          descricao_servico?: string | null
           empresa_id?: string
-          endereco: string
-          engenheiro_responsavel: string
+          endereco?: string | null
+          engenheiro_responsavel?: string | null
           id?: string
           origem?: string
-          regiao: Database["public"]["Enums"]["obra_regiao"]
+          regiao?: Database["public"]["Enums"]["obra_regiao"] | null
           status?: Database["public"]["Enums"]["obra_status"]
           updated_at?: string
         }
@@ -846,13 +846,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_recebimento?: string
-          descricao_servico?: string
+          descricao_servico?: string | null
           empresa_id?: string
-          endereco?: string
-          engenheiro_responsavel?: string
+          endereco?: string | null
+          engenheiro_responsavel?: string | null
           id?: string
           origem?: string
-          regiao?: Database["public"]["Enums"]["obra_regiao"]
+          regiao?: Database["public"]["Enums"]["obra_regiao"] | null
           status?: Database["public"]["Enums"]["obra_status"]
           updated_at?: string
         }
