@@ -64,7 +64,7 @@ export function OrcamentoFormDialog({
   const [step, setStep] = useState<1 | 2>(1);
 
   // Etapa 1
-  const [obraId, setObraId] = useState<string>("");
+  const [chamado, setChamado] = useState<string>("");
   const [titulo, setTitulo] = useState("");
   const [dataOrcamento, setDataOrcamento] = useState(format(new Date(), "yyyy-MM-dd"));
   const [validadeDias, setValidadeDias] = useState(30);
@@ -84,18 +84,6 @@ export function OrcamentoFormDialog({
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
 
-  const { data: obras } = useQuery({
-    queryKey: ["orc-obras", empresaId],
-    enabled: !!empresaId && open,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("obras")
-        .select("id, codigo_chamado, descricao_servico, status")
-        .in("status", ["recebido", "em_vistoria", "aguardando_orcamento", "em_aprovacao"])
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
-  });
 
   const { data: servicos } = useQuery({
     queryKey: ["servicos-ativos", empresaId],
@@ -172,7 +160,7 @@ export function OrcamentoFormDialog({
     setStep(1);
     setServicoSearch("");
     if (!orcamentoId) {
-      setObraId(""); setTitulo(""); setDataOrcamento(format(new Date(), "yyyy-MM-dd"));
+      setChamado(""); setTitulo(""); setDataOrcamento(format(new Date(), "yyyy-MM-dd"));
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
       setObservacoes(""); setItens([]); setNumero(null);
@@ -181,7 +169,8 @@ export function OrcamentoFormDialog({
     (async () => {
       const { data: orc } = await supabase.from("orcamentos").select("*").eq("id", orcamentoId).single();
       if (!orc) return;
-      setObraId(orc.obra_id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setChamado((orc as any).codigo_chamado ?? "");
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? format(new Date(), "yyyy-MM-dd"));
       setValidadeDias(orc.validade_dias ?? 30);
@@ -229,7 +218,7 @@ export function OrcamentoFormDialog({
   const removerItem = (idx: number) => setItens(itens.filter((_, i) => i !== idx));
 
   const irParaServicos = () => {
-    if (!obraId) { toast.error("Selecione a obra"); return; }
+    if (!chamado.trim()) { toast.error("Informe o chamado"); return; }
     setStep(2);
   };
 
@@ -246,7 +235,7 @@ export function OrcamentoFormDialog({
   const save = useMutation({
     mutationFn: async (statusFinal: "em_elaboracao" | "enviado") => {
       if (!empresaId) throw new Error("Empresa não identificada");
-      if (!obraId) throw new Error("Selecione uma obra");
+      if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
       const num = numero ?? (await generateNumero(empresaId));
 
@@ -266,7 +255,8 @@ export function OrcamentoFormDialog({
 
       const payload = {
         empresa_id: empresaId,
-        obra_id: obraId,
+        obra_id: null,
+        codigo_chamado: chamado,
         numero_orcamento: num,
         titulo: titulo || null,
         data_orcamento: dataOrcamento,
@@ -318,7 +308,7 @@ export function OrcamentoFormDialog({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const obraSelecionada = obras?.find((o) => o.id === obraId);
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -347,20 +337,15 @@ export function OrcamentoFormDialog({
           <div className="space-y-5">
             {/* Cabeçalho */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground">Chamado / Obra</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">Chamado</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
-                  <Label>Obra *</Label>
-                  <Select value={obraId} onValueChange={setObraId}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o chamado / obra" /></SelectTrigger>
-                    <SelectContent>
-                      {obras?.map((o) => (
-                        <SelectItem key={o.id} value={o.id}>
-                          {o.codigo_chamado} — {o.descricao_servico?.slice(0, 60)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Chamado *</Label>
+                  <Input
+                    value={chamado}
+                    onChange={(e) => setChamado(e.target.value)}
+                    placeholder="Ex.: 12345 ou OS-2026-001"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <Label>Título</Label>
@@ -479,9 +464,9 @@ export function OrcamentoFormDialog({
 
         {step === 2 && (
           <div className="space-y-5">
-            {obraSelecionada && (
+            {chamado && (
               <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                <span className="font-semibold">{obraSelecionada.codigo_chamado}</span>
+                <span className="font-semibold">Chamado: {chamado}</span>
                 {clienteNome && <span className="text-muted-foreground"> · {clienteNome}</span>}
               </div>
             )}

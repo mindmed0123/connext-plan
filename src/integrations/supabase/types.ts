@@ -943,6 +943,7 @@ export type Database = {
           cliente_inscricao_estadual: string | null
           cliente_nome: string | null
           cliente_telefone: string | null
+          codigo_chamado: string | null
           condicoes_pagamento: string | null
           created_at: string
           data_envio: string | null
@@ -954,7 +955,7 @@ export type Database = {
           last_updated_at: string | null
           last_updated_by: string | null
           numero_orcamento: string | null
-          obra_id: string
+          obra_id: string | null
           observacoes: string | null
           status: Database["public"]["Enums"]["orcamento_status"]
           titulo: string | null
@@ -971,6 +972,7 @@ export type Database = {
           cliente_inscricao_estadual?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
+          codigo_chamado?: string | null
           condicoes_pagamento?: string | null
           created_at?: string
           data_envio?: string | null
@@ -982,7 +984,7 @@ export type Database = {
           last_updated_at?: string | null
           last_updated_by?: string | null
           numero_orcamento?: string | null
-          obra_id: string
+          obra_id?: string | null
           observacoes?: string | null
           status?: Database["public"]["Enums"]["orcamento_status"]
           titulo?: string | null
@@ -999,6 +1001,7 @@ export type Database = {
           cliente_inscricao_estadual?: string | null
           cliente_nome?: string | null
           cliente_telefone?: string | null
+          codigo_chamado?: string | null
           condicoes_pagamento?: string | null
           created_at?: string
           data_envio?: string | null
@@ -1010,7 +1013,7 @@ export type Database = {
           last_updated_at?: string | null
           last_updated_by?: string | null
           numero_orcamento?: string | null
-          obra_id?: string
+          obra_id?: string | null
           observacoes?: string | null
           status?: Database["public"]["Enums"]["orcamento_status"]
           titulo?: string | null
