@@ -19,6 +19,7 @@ export type PDFOrcamento = {
   cliente_email?: string | null;
   cliente_telefone?: string | null;
   valor_orcamento: number;
+  codigo_chamado?: string | null;
   obras: { codigo_chamado: string } | null;
 };
 
