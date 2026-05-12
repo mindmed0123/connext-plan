@@ -59,7 +59,8 @@ export default function Admin() {
           <TableHeader>
             <TableRow>
               <TableHead>Empresa</TableHead>
-              <TableHead>Slug</TableHead>
+              <TableHead>Contato Empresa</TableHead>
+              <TableHead>Admin (login)</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Cadastrada em</TableHead>
               <TableHead>Ativa</TableHead>
@@ -67,17 +68,28 @@ export default function Admin() {
           </TableHeader>
           <TableBody>
             {loadingEmp && (
-              <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
             )}
             {!loadingEmp && (empresas?.length ?? 0) === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
+              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">
                 <ShieldAlert className="inline h-4 w-4 mr-1" /> Nenhuma empresa cadastrada
               </TableCell></TableRow>
             )}
             {empresas?.map((e: any) => (
               <TableRow key={e.id}>
-                <TableCell className="font-medium">{e.nome}</TableCell>
-                <TableCell className="font-mono text-xs">{e.slug}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{e.nome}</div>
+                  <div className="font-mono text-[11px] text-muted-foreground">{e.slug}</div>
+                </TableCell>
+                <TableCell className="text-xs">
+                  <div>{e.email || <span className="text-muted-foreground">—</span>}</div>
+                  <div className="text-muted-foreground">{e.telefone || "—"}</div>
+                </TableCell>
+                <TableCell className="text-xs">
+                  <div className="font-medium">{e._admin?.admin_nome || "—"}</div>
+                  <div>{e._admin?.admin_email || <span className="text-muted-foreground">—</span>}</div>
+                  <div className="text-muted-foreground">{e._admin?.admin_telefone || ""}</div>
+                </TableCell>
                 <TableCell>
                   <Select
                     value={e.plano}
