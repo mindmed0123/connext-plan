@@ -45,10 +45,22 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route
+              path="/onboarding"
               element={
                 <ProtectedRoute>
                   <SubscriptionGate>
-                    <AppLayout />
+                    <Onboarding />
+                  </SubscriptionGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <SubscriptionGate>
+                    <OnboardingGate>
+                      <AppLayout />
+                    </OnboardingGate>
                   </SubscriptionGate>
                 </ProtectedRoute>
               }
