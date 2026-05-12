@@ -83,6 +83,7 @@ export function OrcamentoFormDialog({
   const [itens, setItens] = useState<ItemForm[]>([]);
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
+  const [statusSalvar, setStatusSalvar] = useState<"em_elaboracao" | "enviado" | "em_negociacao" | "aprovado" | "reprovado">("em_elaboracao");
 
 
   const { data: servicos } = useQuery({
