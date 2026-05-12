@@ -14,6 +14,7 @@ import {
   Shield,
   CreditCard,
   Wrench,
+  Settings,
 } from "lucide-react";
 import iconLogo from "@/assets/icon.png";
 import {
