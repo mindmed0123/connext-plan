@@ -1704,6 +1704,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      ensure_obra_for_chamado: {
+        Args: { _chamado: string; _descricao: string; _endereco: string }
+        Returns: string
+      }
       get_user_empresa_id: { Args: never; Returns: string }
       has_permission: {
         Args: {
