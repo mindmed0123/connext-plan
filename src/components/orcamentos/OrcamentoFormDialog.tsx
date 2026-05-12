@@ -8,11 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X, Search, Loader2 } from "lucide-react";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Minus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { UNIDADES } from "@/components/servicos/ServicoFormDialog";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { cn } from "@/lib/utils";
 
 type ItemForm = {
   id?: string;
@@ -23,11 +27,6 @@ type ItemForm = {
   preco_unitario: number;
   desconto_pct: number;
 };
-
-const newItem = (): ItemForm => ({
-  servico_id: null, descricao: "", unidade: "un",
-  quantidade: 1, preco_unitario: 0, desconto_pct: 0,
-});
 
 const subtotal = (i: ItemForm) =>
   Number(i.quantidade) * Number(i.preco_unitario) * (1 - Number(i.desconto_pct) / 100);
@@ -43,6 +42,15 @@ async function generateNumero(empresaId: string) {
   return `ORC-${ym}-${seq}`;
 }
 
+const formatCnpj = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+};
+
 export function OrcamentoFormDialog({
   open, onOpenChange, orcamentoId,
 }: {
@@ -53,6 +61,9 @@ export function OrcamentoFormDialog({
   const { empresaId } = useAuth();
   const qc = useQueryClient();
 
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Etapa 1
   const [obraId, setObraId] = useState<string>("");
   const [titulo, setTitulo] = useState("");
   const [dataOrcamento, setDataOrcamento] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -65,48 +76,13 @@ export function OrcamentoFormDialog({
   const [clienteEmail, setClienteEmail] = useState("");
   const [clienteTelefone, setClienteTelefone] = useState("");
   const [observacoes, setObservacoes] = useState("");
-  const [itens, setItens] = useState<ItemForm[]>([newItem()]);
-  const [numero, setNumero] = useState<string | null>(null);
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [clientePopoverOpen, setClientePopoverOpen] = useState(false);
 
-  const formatCnpj = (v: string) => {
-    const d = v.replace(/\D/g, "").slice(0, 14);
-    return d
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2");
-  };
-
-  const buscarCnpj = async () => {
-    const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
-    if (cnpjLimpo.length !== 14) {
-      toast.error("Informe um CNPJ válido (14 dígitos)");
-      return;
-    }
-    setBuscandoCnpj(true);
-    try {
-      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
-      if (!res.ok) throw new Error("CNPJ não encontrado");
-      const d = await res.json();
-      setClienteNome(d.razao_social || d.nome_fantasia || "");
-      const endereco = [
-        `${d.logradouro || ""}${d.numero ? ", " + d.numero : ""}`,
-        d.complemento,
-        d.bairro,
-        `${d.municipio || ""}${d.uf ? " - " + d.uf : ""}`,
-        d.cep ? `CEP: ${d.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : "",
-      ].filter(Boolean).join(" - ");
-      setClienteEndereco(endereco);
-      if (d.email) setClienteEmail(d.email);
-      if (d.ddd_telefone_1) setClienteTelefone(`(${d.ddd_telefone_1.slice(0, 2)}) ${d.ddd_telefone_1.slice(2)}`);
-      toast.success("Dados do cliente carregados!");
-    } catch (e) {
-      toast.error((e as Error).message || "Erro ao buscar CNPJ");
-    } finally {
-      setBuscandoCnpj(false);
-    }
-  };
+  // Etapa 2
+  const [itens, setItens] = useState<ItemForm[]>([]);
+  const [numero, setNumero] = useState<string | null>(null);
+  const [servicoSearch, setServicoSearch] = useState("");
 
   const { data: obras } = useQuery({
     queryKey: ["orc-obras", empresaId],
@@ -130,14 +106,76 @@ export function OrcamentoFormDialog({
     },
   });
 
+  const { data: clientes } = useQuery({
+    queryKey: ["clientes", empresaId],
+    enabled: !!empresaId && open,
+    queryFn: async () => {
+      const { data } = await supabase.from("clientes").select("*").order("nome");
+      return data ?? [];
+    },
+  });
+
+  const aplicarCliente = (c: {
+    nome: string; cnpj: string;
+    inscricao_estadual: string | null; endereco: string | null;
+    email: string | null; telefone: string | null;
+  }) => {
+    setClienteNome(c.nome ?? "");
+    setClienteCnpj(formatCnpj(c.cnpj ?? ""));
+    setClienteIE(c.inscricao_estadual ?? "");
+    setClienteEndereco(c.endereco ?? "");
+    setClienteEmail(c.email ?? "");
+    setClienteTelefone(c.telefone ?? "");
+    setClientePopoverOpen(false);
+  };
+
+  const buscarCnpj = async () => {
+    const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
+    if (cnpjLimpo.length !== 14) {
+      toast.error("Informe um CNPJ válido (14 dígitos)");
+      return;
+    }
+    setBuscandoCnpj(true);
+    try {
+      // 1) Já existe localmente?
+      const existente = clientes?.find((c) => c.cnpj.replace(/\D/g, "") === cnpjLimpo);
+      if (existente) {
+        aplicarCliente(existente);
+        toast.success("Cliente já cadastrado — dados carregados!");
+        return;
+      }
+      // 2) Busca BrasilAPI
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!res.ok) throw new Error("CNPJ não encontrado");
+      const d = await res.json();
+      setClienteNome(d.razao_social || d.nome_fantasia || "");
+      const endereco = [
+        `${d.logradouro || ""}${d.numero ? ", " + d.numero : ""}`,
+        d.complemento, d.bairro,
+        `${d.municipio || ""}${d.uf ? " - " + d.uf : ""}`,
+        d.cep ? `CEP: ${d.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : "",
+      ].filter(Boolean).join(" - ");
+      setClienteEndereco(endereco);
+      if (d.email) setClienteEmail(d.email);
+      if (d.ddd_telefone_1) setClienteTelefone(`(${d.ddd_telefone_1.slice(0, 2)}) ${d.ddd_telefone_1.slice(2)}`);
+      toast.success("Dados carregados — serão salvos ao concluir o orçamento.");
+    } catch (e) {
+      toast.error((e as Error).message || "Erro ao buscar CNPJ");
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
+
   // Carregar orçamento existente
   useEffect(() => {
     if (!open) return;
+    setStep(1);
+    setServicoSearch("");
     if (!orcamentoId) {
       setObraId(""); setTitulo(""); setDataOrcamento(format(new Date(), "yyyy-MM-dd"));
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
-      setObservacoes(""); setItens([newItem()]); setNumero(null);
+      setObservacoes(""); setItens([]); setNumero(null);
       return;
     }
     (async () => {
@@ -164,7 +202,7 @@ export function OrcamentoFormDialog({
         id: i.id, servico_id: i.servico_id, descricao: i.descricao, unidade: i.unidade,
         quantidade: Number(i.quantidade), preco_unitario: Number(i.preco_unitario),
         desconto_pct: Number(i.desconto_pct),
-      })) || [newItem()]);
+      })));
     })();
   }, [open, orcamentoId]);
 
@@ -174,23 +212,57 @@ export function OrcamentoFormDialog({
     setItens((arr) => arr.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   };
 
-  const onSelectServico = (idx: number, sid: string) => {
-    const s = servicos?.find((x) => x.id === sid);
+  const adicionarServico = (servicoId: string) => {
+    const s = servicos?.find((x) => x.id === servicoId);
     if (!s) return;
-    updateItem(idx, {
-      servico_id: s.id, descricao: s.nome,
-      unidade: s.unidade, preco_unitario: Number(s.preco_unitario),
-    });
+    const existIdx = itens.findIndex((i) => i.servico_id === servicoId);
+    if (existIdx >= 0) {
+      updateItem(existIdx, { quantidade: Number(itens[existIdx].quantidade) + 1 });
+    } else {
+      setItens([...itens, {
+        servico_id: s.id, descricao: s.nome, unidade: s.unidade,
+        quantidade: 1, preco_unitario: Number(s.preco_unitario), desconto_pct: 0,
+      }]);
+    }
   };
+
+  const removerItem = (idx: number) => setItens(itens.filter((_, i) => i !== idx));
+
+  const irParaServicos = () => {
+    if (!obraId) { toast.error("Selecione a obra"); return; }
+    setStep(2);
+  };
+
+  const servicosFiltrados = useMemo(() => {
+    const q = servicoSearch.trim().toLowerCase();
+    if (!q) return servicos ?? [];
+    return (servicos ?? []).filter((s) =>
+      s.nome.toLowerCase().includes(q) ||
+      (s.codigo ?? "").toLowerCase().includes(q) ||
+      (s.descricao ?? "").toLowerCase().includes(q)
+    );
+  }, [servicos, servicoSearch]);
 
   const save = useMutation({
     mutationFn: async (statusFinal: "em_elaboracao" | "enviado") => {
       if (!empresaId) throw new Error("Empresa não identificada");
       if (!obraId) throw new Error("Selecione uma obra");
-      if (itens.length === 0 || !itens.some((i) => i.descricao.trim())) {
-        throw new Error("Adicione pelo menos um item");
-      }
+      if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
       const num = numero ?? (await generateNumero(empresaId));
+
+      // Persiste/atualiza cliente se tiver CNPJ
+      const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
+      if (cnpjLimpo.length === 14 && clienteNome.trim()) {
+        await supabase.from("clientes").upsert({
+          empresa_id: empresaId,
+          cnpj: clienteCnpj,
+          nome: clienteNome,
+          inscricao_estadual: clienteIE || null,
+          endereco: clienteEndereco || null,
+          email: clienteEmail || null,
+          telefone: clienteTelefone || null,
+        }, { onConflict: "empresa_id,cnpj" });
+      }
 
       const payload = {
         empresa_id: empresaId,
@@ -223,215 +295,328 @@ export function OrcamentoFormDialog({
         id = data.id;
       }
 
-      const itensValidos = itens.filter((i) => i.descricao.trim());
-      if (itensValidos.length > 0) {
-        const { error } = await supabase.from("orcamento_itens").insert(
-          itensValidos.map((it, idx) => ({
-            orcamento_id: id!, empresa_id: empresaId,
-            servico_id: it.servico_id || null,
-            descricao: it.descricao, unidade: it.unidade,
-            quantidade: Number(it.quantidade) || 0,
-            preco_unitario: Number(it.preco_unitario) || 0,
-            desconto_pct: Number(it.desconto_pct) || 0,
-            ordem: idx,
-          }))
-        );
-        if (error) throw error;
-      }
+      const { error } = await supabase.from("orcamento_itens").insert(
+        itens.map((it, idx) => ({
+          orcamento_id: id!, empresa_id: empresaId,
+          servico_id: it.servico_id || null,
+          descricao: it.descricao, unidade: it.unidade,
+          quantidade: Number(it.quantidade) || 0,
+          preco_unitario: Number(it.preco_unitario) || 0,
+          desconto_pct: Number(it.desconto_pct) || 0,
+          ordem: idx,
+        }))
+      );
+      if (error) throw error;
     },
     onSuccess: (_d, status) => {
       toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
+      qc.invalidateQueries({ queryKey: ["clientes", empresaId] });
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const obraSelecionada = obras?.find((o) => o.id === obraId);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{orcamentoId ? "Editar orçamento" : "Novo orçamento"}{numero ? ` — ${numero}` : ""}</DialogTitle>
+          <DialogTitle>
+            {orcamentoId ? "Editar orçamento" : "Novo orçamento"}{numero ? ` — ${numero}` : ""}
+          </DialogTitle>
+          {/* Stepper */}
+          <div className="flex items-center gap-2 pt-2">
+            <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
+              step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+              <span className="h-5 w-5 rounded-full bg-background/20 flex items-center justify-center">1</span>
+              Dados & cliente
+            </div>
+            <div className="h-px flex-1 bg-border" />
+            <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
+              step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+              <span className="h-5 w-5 rounded-full bg-background/20 flex items-center justify-center">2</span>
+              Serviços
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-5">
-          {/* Cabeçalho */}
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">Cabeçalho</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="md:col-span-2">
-                <Label>Obra *</Label>
-                <Select value={obraId} onValueChange={setObraId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione a obra" /></SelectTrigger>
-                  <SelectContent>
-                    {obras?.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.codigo_chamado} — {o.descricao_servico?.slice(0, 60)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Cabeçalho */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground">Chamado / Obra</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="md:col-span-2">
+                  <Label>Obra *</Label>
+                  <Select value={obraId} onValueChange={setObraId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o chamado / obra" /></SelectTrigger>
+                    <SelectContent>
+                      {obras?.map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.codigo_chamado} — {o.descricao_servico?.slice(0, 60)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Título</Label>
+                  <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: Orçamento de reparo hidráulico" />
+                </div>
+                <div>
+                  <Label>Data do orçamento *</Label>
+                  <Input type="date" value={dataOrcamento} onChange={(e) => setDataOrcamento(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Validade (dias) *</Label>
+                  <Input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(Number(e.target.value))} />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Condições de pagamento</Label>
+                  <Input value={condicoes} onChange={(e) => setCondicoes(e.target.value)} placeholder="Ex.: 30/60/90 dias" />
+                </div>
               </div>
-              <div className="md:col-span-2">
-                <Label>Título</Label>
-                <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: Orçamento de reparo hidráulico" />
-              </div>
-              <div>
-                <Label>Data do orçamento *</Label>
-                <Input type="date" value={dataOrcamento} onChange={(e) => setDataOrcamento(e.target.value)} />
-              </div>
-              <div>
-                <Label>Validade (dias) *</Label>
-                <Input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(Number(e.target.value))} />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Condições de pagamento</Label>
-                <Input value={condicoes} onChange={(e) => setCondicoes(e.target.value)} placeholder="Ex.: 30/60/90 dias" />
-              </div>
-            </div>
-          </section>
+            </section>
 
-          {/* Cliente */}
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">Dados do cliente (aparece no PDF)</h3>
-            <div className="rounded-md border bg-primary/5 p-3 mb-2">
-              <Label className="text-xs">Buscar pelo CNPJ</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  value={clienteCnpj}
-                  onChange={(e) => setClienteCnpj(formatCnpj(e.target.value))}
-                  placeholder="00.000.000/0000-00"
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buscarCnpj(); } }}
-                />
-                <Button type="button" onClick={buscarCnpj} disabled={buscandoCnpj}>
-                  {buscandoCnpj ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                  Buscar
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Digite o CNPJ e clique em buscar — preenchemos os dados automaticamente.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="md:col-span-2">
-                <Label>Razão social / Nome</Label>
-                <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
-              </div>
-              <div>
-                <Label>Inscrição Estadual</Label>
-                <Input value={clienteIE} onChange={(e) => setClienteIE(e.target.value)} />
-              </div>
-              <div>
-                <Label>Telefone</Label>
-                <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} />
-              </div>
-              <div className="md:col-span-2">
-                <Label>E-mail</Label>
-                <Input type="email" value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Endereço completo</Label>
-                <Input value={clienteEndereco} onChange={(e) => setClienteEndereco(e.target.value)} />
-              </div>
-            </div>
-          </section>
+            {/* Cliente */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground">Cliente</h3>
 
-
-          {/* Itens */}
-          <section className="space-y-3 rounded-lg border bg-muted/30 p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Itens</h3>
-              <Button size="sm" type="button" variant="outline" onClick={() => setItens([...itens, newItem()])}>
-                <Plus className="h-4 w-4" /> Adicionar item
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {itens.map((item, idx) => (
-                <div key={idx} className="rounded-md border bg-background p-3 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 grid grid-cols-12 gap-2">
-                      <div className="col-span-12 md:col-span-4">
-                        <Label className="text-xs">Buscar serviço</Label>
-                        <Select value={item.servico_id ?? ""} onValueChange={(v) => onSelectServico(idx, v)}>
-                          <SelectTrigger><SelectValue placeholder="(opcional)" /></SelectTrigger>
-                          <SelectContent>
-                            {servicos?.map((s) => (
-                              <SelectItem key={s.id} value={s.id}>{s.nome} — {formatCurrency(Number(s.preco_unitario))}/{s.unidade}</SelectItem>
+              <div className="rounded-md border bg-primary/5 p-3 space-y-3">
+                <div>
+                  <Label className="text-xs">Selecionar cliente cadastrado</Label>
+                  <Popover open={clientePopoverOpen} onOpenChange={setClientePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                        {clienteNome || "Buscar cliente já cadastrado..."}
+                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar por nome ou CNPJ..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente cadastrado ainda.</CommandEmpty>
+                          <CommandGroup>
+                            {clientes?.map((c) => (
+                              <CommandItem
+                                key={c.id}
+                                value={`${c.nome} ${c.cnpj}`}
+                                onSelect={() => aplicarCliente(c)}
+                              >
+                                <Check className={cn("h-4 w-4 mr-2",
+                                  clienteCnpj.replace(/\D/g, "") === c.cnpj.replace(/\D/g, "") ? "opacity-100" : "opacity-0")} />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{c.nome}</span>
+                                  <span className="text-xs text-muted-foreground">{c.cnpj}</span>
+                                </div>
+                              </CommandItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="text-center text-xs text-muted-foreground">— OU —</div>
+
+                <div>
+                  <Label className="text-xs">Buscar pelo CNPJ</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      value={clienteCnpj}
+                      onChange={(e) => setClienteCnpj(formatCnpj(e.target.value))}
+                      placeholder="00.000.000/0000-00"
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buscarCnpj(); } }}
+                    />
+                    <Button type="button" onClick={buscarCnpj} disabled={buscandoCnpj}>
+                      {buscandoCnpj ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      Buscar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Buscamos automaticamente; o cliente é salvo ao concluir o orçamento e nas próximas vezes aparece na lista acima.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="md:col-span-2">
+                  <Label>Razão social / Nome</Label>
+                  <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Inscrição Estadual</Label>
+                  <Input value={clienteIE} onChange={(e) => setClienteIE(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Telefone</Label>
+                  <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>E-mail</Label>
+                  <Input type="email" value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Endereço completo</Label>
+                  <Input value={clienteEndereco} onChange={(e) => setClienteEndereco(e.target.value)} />
+                </div>
+              </div>
+            </section>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button onClick={irParaServicos}>
+                Avançar para serviços <ArrowRight className="h-4 w-4" />
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-5">
+            {obraSelecionada && (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <span className="font-semibold">{obraSelecionada.codigo_chamado}</span>
+                {clienteNome && <span className="text-muted-foreground"> · {clienteNome}</span>}
+              </div>
+            )}
+
+            {/* Catálogo de serviços */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold">Adicionar serviços do catálogo</h3>
+              </div>
+              <Input
+                placeholder="Buscar serviço por nome, código ou descrição..."
+                value={servicoSearch}
+                onChange={(e) => setServicoSearch(e.target.value)}
+              />
+              <div className="rounded-md border max-h-64 overflow-y-auto divide-y">
+                {(servicosFiltrados.length === 0) ? (
+                  <div className="p-6 text-center text-sm text-muted-foreground">
+                    {(servicos?.length ?? 0) === 0
+                      ? "Nenhum serviço cadastrado. Cadastre na aba Serviços."
+                      : "Nenhum serviço encontrado."}
+                  </div>
+                ) : servicosFiltrados.map((s) => {
+                  const jaIncluido = itens.some((i) => i.servico_id === s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => adicionarServico(s.id)}
+                      className="w-full flex items-center justify-between gap-3 p-3 text-left hover:bg-accent transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm flex items-center gap-2">
+                          {s.nome}
+                          {jaIncluido && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded">incluído</span>}
+                        </div>
+                        {s.descricao && <div className="text-xs text-muted-foreground truncate">{s.descricao}</div>}
                       </div>
-                      <div className="col-span-12 md:col-span-8">
-                        <Label className="text-xs">Descrição *</Label>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-semibold">{formatCurrency(Number(s.preco_unitario))}</div>
+                        <div className="text-[11px] text-muted-foreground">por {s.unidade}</div>
+                      </div>
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Itens selecionados */}
+            <section className="space-y-3 rounded-lg border bg-muted/20 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Itens do orçamento ({itens.length})</h3>
+              </div>
+
+              {itens.length === 0 ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">
+                  Nenhum item ainda. Clique nos serviços acima para adicionar.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {itens.map((item, idx) => (
+                    <div key={idx} className="rounded-md border bg-background p-3 grid grid-cols-12 gap-2 items-end">
+                      <div className="col-span-12 md:col-span-5">
+                        <Label className="text-xs">Descrição</Label>
                         <Input value={item.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} />
                       </div>
                       <div className="col-span-4 md:col-span-2">
-                        <Label className="text-xs">Unidade *</Label>
-                        <Select value={item.unidade} onValueChange={(v) => updateItem(idx, { unidade: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-xs">Qtd</Label>
+                        <div className="flex">
+                          <Button type="button" size="icon" variant="outline" className="rounded-r-none h-10 w-9"
+                            onClick={() => updateItem(idx, { quantidade: Math.max(0, Number(item.quantidade) - 1) })}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <Input type="number" step="0.01" className="rounded-none text-center"
+                            value={item.quantidade}
+                            onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) })} />
+                          <Button type="button" size="icon" variant="outline" className="rounded-l-none h-10 w-9"
+                            onClick={() => updateItem(idx, { quantidade: Number(item.quantidade) + 1 })}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="col-span-4 md:col-span-2">
-                        <Label className="text-xs">Qtd *</Label>
-                        <Input type="number" step="0.0001" value={item.quantidade}
-                          onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) })} />
-                      </div>
-                      <div className="col-span-4 md:col-span-3">
-                        <Label className="text-xs">Preço unit. (R$) *</Label>
+                        <Label className="text-xs">Preço un. (R$)</Label>
                         <Input type="number" step="0.01" value={item.preco_unitario}
                           onChange={(e) => updateItem(idx, { preco_unitario: Number(e.target.value) })} />
                       </div>
-                      <div className="col-span-6 md:col-span-2">
-                        <Label className="text-xs">Desc. %</Label>
-                        <Input type="number" step="0.01" min={0} max={100} value={item.desconto_pct}
+                      <div className="col-span-4 md:col-span-1">
+                        <Label className="text-xs">Desc%</Label>
+                        <Input type="number" step="1" min={0} max={100} value={item.desconto_pct}
                           onChange={(e) => updateItem(idx, { desconto_pct: Number(e.target.value) })} />
                       </div>
-                      <div className="col-span-6 md:col-span-3 flex flex-col">
+                      <div className="col-span-10 md:col-span-1">
                         <Label className="text-xs">Subtotal</Label>
-                        <div className="h-10 flex items-center px-3 rounded-md border bg-muted/50 text-sm font-semibold">
+                        <div className="h-10 flex items-center px-2 rounded-md border bg-muted/50 text-sm font-semibold">
                           {formatCurrency(subtotal(item))}
                         </div>
                       </div>
+                      <div className="col-span-2 md:col-span-1 flex justify-end">
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removerItem(idx)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button type="button" size="icon" variant="ghost"
-                      onClick={() => setItens(itens.filter((_, i) => i !== idx))}>
-                      <X className="h-4 w-4" />
-                    </Button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-2 border-t">
+                <div className="text-right">
+                  <div className="text-lg font-bold">
+                    TOTAL: <span className="text-primary">{formatCurrency(total)}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-2 border-t">
-              <div className="text-right space-y-1">
-                <div className="text-sm text-muted-foreground">
-                  Subtotal: <span className="font-medium text-foreground">{formatCurrency(itens.reduce((s, i) => s + Number(i.quantidade) * Number(i.preco_unitario), 0))}</span>
-                </div>
-                <div className="text-lg font-bold">
-                  TOTAL: <span className="text-primary">{formatCurrency(total)}</span>
-                </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          {/* Observações */}
-          <section>
-            <Label>Observações / Escopo de serviços</Label>
-            <Textarea rows={4} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
-          </section>
-        </div>
+            <section>
+              <Label>Observações / Escopo de serviços</Label>
+              <Textarea rows={3} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+            </section>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button variant="secondary" onClick={() => save.mutate("em_elaboracao")} disabled={save.isPending}>
-            Salvar rascunho
-          </Button>
-          <Button onClick={() => save.mutate("enviado")} disabled={save.isPending}>
-            Salvar e enviar
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4" /> Voltar
+              </Button>
+              <Button variant="secondary" onClick={() => save.mutate("em_elaboracao")} disabled={save.isPending}>
+                Salvar rascunho
+              </Button>
+              <Button onClick={() => save.mutate("enviado")} disabled={save.isPending}>
+                Salvar e enviar
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
