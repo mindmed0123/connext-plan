@@ -344,35 +344,62 @@ export type Database = {
       empresas: {
         Row: {
           ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
           created_at: string
+          email: string | null
+          endereco: string | null
           id: string
+          inscricao_estadual: string | null
           logo_url: string | null
           nome: string
           onboarding_completo: boolean
           plano: string
           slug: string
+          telefone: string | null
+          uf: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
           created_at?: string
+          email?: string | null
+          endereco?: string | null
           id?: string
+          inscricao_estadual?: string | null
           logo_url?: string | null
           nome: string
           onboarding_completo?: boolean
           plano?: string
           slug: string
+          telefone?: string | null
+          uf?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
           created_at?: string
+          email?: string | null
+          endereco?: string | null
           id?: string
+          inscricao_estadual?: string | null
           logo_url?: string | null
           nome?: string
           onboarding_completo?: boolean
           plano?: string
           slug?: string
+          telefone?: string | null
+          uf?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -872,8 +899,11 @@ export type Database = {
           arquivo_path: string | null
           arquivo_url: string | null
           cliente_cnpj: string | null
+          cliente_email: string | null
           cliente_endereco: string | null
+          cliente_inscricao_estadual: string | null
           cliente_nome: string | null
+          cliente_telefone: string | null
           condicoes_pagamento: string | null
           created_at: string
           data_envio: string | null
@@ -897,8 +927,11 @@ export type Database = {
           arquivo_path?: string | null
           arquivo_url?: string | null
           cliente_cnpj?: string | null
+          cliente_email?: string | null
           cliente_endereco?: string | null
+          cliente_inscricao_estadual?: string | null
           cliente_nome?: string | null
+          cliente_telefone?: string | null
           condicoes_pagamento?: string | null
           created_at?: string
           data_envio?: string | null
@@ -922,8 +955,11 @@ export type Database = {
           arquivo_path?: string | null
           arquivo_url?: string | null
           cliente_cnpj?: string | null
+          cliente_email?: string | null
           cliente_endereco?: string | null
+          cliente_inscricao_estadual?: string | null
           cliente_nome?: string | null
+          cliente_telefone?: string | null
           condicoes_pagamento?: string | null
           created_at?: string
           data_envio?: string | null
