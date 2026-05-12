@@ -235,7 +235,7 @@ export function OrcamentoFormDialog({
   const save = useMutation({
     mutationFn: async (statusFinal: "em_elaboracao" | "enviado") => {
       if (!empresaId) throw new Error("Empresa não identificada");
-      if (!obraId) throw new Error("Selecione uma obra");
+      if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
       const num = numero ?? (await generateNumero(empresaId));
 
