@@ -495,20 +495,20 @@ export function OrcamentoFormDialog({
                       key={s.id}
                       type="button"
                       onClick={() => adicionarServico(s.id)}
-                      className="w-full flex items-center justify-between gap-3 p-3 text-left hover:bg-accent transition-colors"
+                      className="w-full grid grid-cols-[1fr_140px_32px] items-center gap-3 p-3 text-left hover:bg-accent transition-colors"
                     >
                       <div className="min-w-0">
-                        <div className="font-medium text-sm flex items-center gap-2">
-                          {s.nome}
-                          {jaIncluido && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded">incluído</span>}
+                        <div className="font-medium text-sm flex items-center gap-2 truncate">
+                          <span className="truncate">{s.nome}</span>
+                          {jaIncluido && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded shrink-0">incluído</span>}
                         </div>
                         {s.descricao && <div className="text-xs text-muted-foreground truncate">{s.descricao}</div>}
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right tabular-nums">
                         <div className="text-sm font-semibold">{formatCurrency(Number(s.preco_unitario))}</div>
                         <div className="text-[11px] text-muted-foreground">por {s.unidade}</div>
                       </div>
-                      <Plus className="h-4 w-4 text-muted-foreground" />
+                      <Plus className="h-4 w-4 text-muted-foreground justify-self-end" />
                     </button>
                   );
                 })}
