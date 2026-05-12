@@ -236,9 +236,9 @@ export async function gerarOrcamentoPDF(
   doc.setTextColor(...TEXT);
   doc.text("Vencimentos", margin, y);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   const vencW = doc.getTextWidth("Vencimentos");
-  doc.text(orc.condicoes_pagamento || "A Vista", margin + vencW + 3, y);
+  doc.text(orc.condicoes_pagamento || "A Vista", margin + vencW + 4, y - 0.5);
   y += 4;
 
   const dataVenc = format(addDays(parseISO(orc.data_orcamento), orc.validade_dias || 0), "dd/MM/yyyy", { locale: ptBR });
