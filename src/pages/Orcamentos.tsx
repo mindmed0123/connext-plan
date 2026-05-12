@@ -154,11 +154,9 @@ export default function Orcamentos() {
                       <Button size="icon" variant="ghost" onClick={() => handlePDF(o.id)} title="Gerar PDF">
                         <FileDown className="h-4 w-4" />
                       </Button>
-                      {deletable && (
-                        <Button size="icon" variant="ghost" onClick={() => setDeleteId(o.id)} title="Excluir">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
+                      <Button size="icon" variant="ghost" onClick={() => setDeleteId(o.id)} title="Excluir">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
