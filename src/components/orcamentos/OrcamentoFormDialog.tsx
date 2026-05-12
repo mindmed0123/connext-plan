@@ -233,7 +233,7 @@ export function OrcamentoFormDialog({
   }, [servicos, servicoSearch]);
 
   const save = useMutation({
-    mutationFn: async (statusFinal: "em_elaboracao" | "enviado") => {
+    mutationFn: async (statusFinal: "em_elaboracao" | "enviado" | "aprovado" | "reprovado" | "em_negociacao") => {
       if (!empresaId) throw new Error("Empresa não identificada");
       if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
@@ -253,9 +253,31 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
+      // Mapeia status do orçamento -> status da obra
+      const obraStatusMap: Record<string, string> = {
+        em_elaboracao: "aguardando_orcamento",
+        enviado: "em_aprovacao",
+        em_negociacao: "em_aprovacao",
+        aprovado: "aprovado",
+        reprovado: "aguardando_orcamento",
+      };
+      const novoObraStatus = obraStatusMap[statusFinal] ?? "aguardando_orcamento";
+
+      // Cria/atualiza obra automaticamente com base no chamado
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: obraRow, error: obraErr } = await (supabase.from("obras") as any).upsert({
+        empresa_id: empresaId,
+        codigo_chamado: chamado,
+        status: novoObraStatus,
+        descricao_servico: titulo || clienteNome || chamado,
+        endereco: clienteEndereco || null,
+      }, { onConflict: "empresa_id,codigo_chamado" }).select("id").single();
+      if (obraErr) throw obraErr;
+      const obraId = obraRow?.id ?? null;
+
       const payload = {
         empresa_id: empresaId,
-        obra_id: null,
+        obra_id: obraId,
         codigo_chamado: chamado,
         numero_orcamento: num,
         titulo: titulo || null,
@@ -271,7 +293,7 @@ export function OrcamentoFormDialog({
         observacoes: observacoes || null,
         status: statusFinal,
         valor_orcamento: total,
-        data_envio: statusFinal === "enviado" ? format(new Date(), "yyyy-MM-dd") : null,
+        data_envio: null,
       };
 
       let id = orcamentoId;
@@ -298,10 +320,12 @@ export function OrcamentoFormDialog({
       );
       if (error) throw error;
     },
-    onSuccess: (_d, status) => {
-      toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
+    onSuccess: () => {
+      toast.success("Orçamento salvo!");
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["clientes", empresaId] });
       onOpenChange(false);
     },
