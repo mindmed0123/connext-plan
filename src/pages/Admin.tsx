@@ -19,9 +19,13 @@ export default function Admin() {
     queryKey: ["admin-empresas"],
     enabled: isSuperAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase.from("empresas").select("*").order("created_at", { ascending: false });
+      const [{ data, error }, { data: contatos }] = await Promise.all([
+        supabase.from("empresas").select("*").order("created_at", { ascending: false }),
+        supabase.rpc("admin_list_empresas_contatos"),
+      ]);
       if (error) throw error;
-      return data;
+      const map = new Map((contatos ?? []).map((c: any) => [c.empresa_id, c]));
+      return (data ?? []).map((e: any) => ({ ...e, _admin: map.get(e.id) }));
     },
   });
 
