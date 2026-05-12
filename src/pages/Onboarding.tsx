@@ -195,6 +195,7 @@ export default function Onboarding() {
     try {
       await supabase.from("empresas").update({ onboarding_completo: true }).eq("id", empresaId);
       await refreshEmpresa();
+      qc.invalidateQueries({ queryKey: ["empresa-onboarding"] });
       toast.success("Tudo pronto! Bem-vindo à Gestão de Obra 🎉");
       navigate("/dashboard", { replace: true });
     } catch (e: any) {
@@ -202,6 +203,14 @@ export default function Onboarding() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function skipAll() {
+    if (!empresaId) return;
+    await supabase.from("empresas").update({ onboarding_completo: true }).eq("id", empresaId);
+    await refreshEmpresa();
+    qc.invalidateQueries({ queryKey: ["empresa-onboarding"] });
+    navigate("/dashboard", { replace: true });
   }
 
   async function skipAll() {
