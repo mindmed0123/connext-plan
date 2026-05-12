@@ -46,6 +46,8 @@ export default function Onboarding() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [empresaNomeEdit, setEmpresaNomeEdit] = useState(empresaNome ?? "");
+  const [empresaEmail, setEmpresaEmail] = useState("");
+  const [empresaTelefone, setEmpresaTelefone] = useState("");
 
   const [obraEndereco, setObraEndereco] = useState("");
   const [obraCodigo, setObraCodigo] = useState("");
