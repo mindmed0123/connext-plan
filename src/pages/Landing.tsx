@@ -394,7 +394,7 @@ export default function Landing() {
             >
               Entrar
             </Link>
-            <PrimaryCTA size="md" href="#precos">Assinar agora</PrimaryCTA>
+            <PrimaryCTA size="md" href="/auth">Teste grátis</PrimaryCTA>
           </div>
           <button className="md:hidden" onClick={() => setMobileMenu((v) => !v)} aria-label="Menu">
             {mobileMenu ? <X className={scrolled ? "text-[#0F2448]" : "text-white"} /> : <Menu className={scrolled ? "text-[#0F2448]" : "text-white"} />}
@@ -407,7 +407,7 @@ export default function Landing() {
               <a href="#precos" onClick={() => setMobileMenu(false)}>Preços</a>
               <a href="#suporte" onClick={() => setMobileMenu(false)}>Suporte</a>
               <Link to="/auth" className="border-t border-white/10 pt-3">Entrar</Link>
-              <PrimaryCTA size="md" href="#precos">Assinar agora</PrimaryCTA>
+              <PrimaryCTA size="md" href="/auth">Teste grátis</PrimaryCTA>
             </nav>
           </div>
         )}
@@ -436,12 +436,12 @@ export default function Landing() {
                 <PrimaryCTA size="lg" href="#precos">
                   Ver planos e assinar <ArrowRight className="h-5 w-5" />
                 </PrimaryCTA>
-                <a
-                  href="#funcionalidades"
+                <Link
+                  to="/auth"
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-white/10"
                 >
-                  Ver demonstração
-                </a>
+                  Teste grátis
+                </Link>
               </div>
               <p className="mt-4 text-xs text-[#64748B]">
                 A partir de R$ 297/mês • Cancele quando quiser • Dados seguros (LGPD)
