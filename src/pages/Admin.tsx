@@ -19,9 +19,13 @@ export default function Admin() {
     queryKey: ["admin-empresas"],
     enabled: isSuperAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase.from("empresas").select("*").order("created_at", { ascending: false });
+      const [{ data, error }, { data: contatos }] = await Promise.all([
+        supabase.from("empresas").select("*").order("created_at", { ascending: false }),
+        supabase.rpc("admin_list_empresas_contatos"),
+      ]);
       if (error) throw error;
-      return data;
+      const map = new Map((contatos ?? []).map((c: any) => [c.empresa_id, c]));
+      return (data ?? []).map((e: any) => ({ ...e, _admin: map.get(e.id) }));
     },
   });
 
@@ -55,7 +59,8 @@ export default function Admin() {
           <TableHeader>
             <TableRow>
               <TableHead>Empresa</TableHead>
-              <TableHead>Slug</TableHead>
+              <TableHead>Contato Empresa</TableHead>
+              <TableHead>Admin (login)</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Cadastrada em</TableHead>
               <TableHead>Ativa</TableHead>
@@ -63,17 +68,28 @@ export default function Admin() {
           </TableHeader>
           <TableBody>
             {loadingEmp && (
-              <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
             )}
             {!loadingEmp && (empresas?.length ?? 0) === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
+              <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">
                 <ShieldAlert className="inline h-4 w-4 mr-1" /> Nenhuma empresa cadastrada
               </TableCell></TableRow>
             )}
             {empresas?.map((e: any) => (
               <TableRow key={e.id}>
-                <TableCell className="font-medium">{e.nome}</TableCell>
-                <TableCell className="font-mono text-xs">{e.slug}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{e.nome}</div>
+                  <div className="font-mono text-[11px] text-muted-foreground">{e.slug}</div>
+                </TableCell>
+                <TableCell className="text-xs">
+                  <div>{e.email || <span className="text-muted-foreground">—</span>}</div>
+                  <div className="text-muted-foreground">{e.telefone || "—"}</div>
+                </TableCell>
+                <TableCell className="text-xs">
+                  <div className="font-medium">{e._admin?.admin_nome || "—"}</div>
+                  <div>{e._admin?.admin_email || <span className="text-muted-foreground">—</span>}</div>
+                  <div className="text-muted-foreground">{e._admin?.admin_telefone || ""}</div>
+                </TableCell>
                 <TableCell>
                   <Select
                     value={e.plano}
