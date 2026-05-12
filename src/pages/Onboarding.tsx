@@ -67,18 +67,31 @@ export default function Onboarding() {
     queryKey: ["onboarding-init", user?.id, empresaId],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("nome, telefone")
-        .eq("user_id", user!.id)
-        .maybeSingle();
+      const [{ data: prof }, { data: emp }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("nome, telefone")
+          .eq("user_id", user!.id)
+          .maybeSingle(),
+        supabase
+          .from("empresas")
+          .select("nome, email, telefone")
+          .eq("id", empresaId!)
+          .maybeSingle(),
+      ]);
       if (prof) {
         setNome(prof.nome ?? "");
         setTelefone(prof.telefone ?? "");
       } else {
         setNome((user?.user_metadata as any)?.nome ?? "");
       }
-      setEmpresaNomeEdit(empresaNome ?? "");
+      if (emp) {
+        setEmpresaNomeEdit(emp.nome ?? "");
+        setEmpresaEmail(emp.email ?? "");
+        setEmpresaTelefone(emp.telefone ?? "");
+      } else {
+        setEmpresaNomeEdit(empresaNome ?? "");
+      }
       return true;
     },
   });
