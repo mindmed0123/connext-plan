@@ -22,6 +22,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+      <TrialPopup />
     </SidebarProvider>
   );
 }
