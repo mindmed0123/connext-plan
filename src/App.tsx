@@ -26,6 +26,7 @@ import Billing from "./pages/Billing";
 import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
