@@ -1688,6 +1688,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_empresas_contatos: {
+        Args: never
+        Returns: {
+          admin_email: string
+          admin_nome: string
+          admin_telefone: string
+          empresa_id: string
+        }[]
+      }
       can_access_obra: {
         Args: { _obra_id: string; _uid: string }
         Returns: boolean
