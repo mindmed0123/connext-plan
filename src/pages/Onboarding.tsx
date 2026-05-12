@@ -46,6 +46,8 @@ export default function Onboarding() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [empresaNomeEdit, setEmpresaNomeEdit] = useState(empresaNome ?? "");
+  const [empresaEmail, setEmpresaEmail] = useState("");
+  const [empresaTelefone, setEmpresaTelefone] = useState("");
 
   const [obraEndereco, setObraEndereco] = useState("");
   const [obraCodigo, setObraCodigo] = useState("");
@@ -65,18 +67,31 @@ export default function Onboarding() {
     queryKey: ["onboarding-init", user?.id, empresaId],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("nome, telefone")
-        .eq("user_id", user!.id)
-        .maybeSingle();
+      const [{ data: prof }, { data: emp }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("nome, telefone")
+          .eq("user_id", user!.id)
+          .maybeSingle(),
+        supabase
+          .from("empresas")
+          .select("nome, email, telefone")
+          .eq("id", empresaId!)
+          .maybeSingle(),
+      ]);
       if (prof) {
         setNome(prof.nome ?? "");
         setTelefone(prof.telefone ?? "");
       } else {
         setNome((user?.user_metadata as any)?.nome ?? "");
       }
-      setEmpresaNomeEdit(empresaNome ?? "");
+      if (emp) {
+        setEmpresaNomeEdit(emp.nome ?? "");
+        setEmpresaEmail(emp.email ?? "");
+        setEmpresaTelefone(emp.telefone ?? "");
+      } else {
+        setEmpresaNomeEdit(empresaNome ?? "");
+      }
       return true;
     },
   });
@@ -89,6 +104,18 @@ export default function Onboarding() {
 
   async function saveProfile() {
     if (!user?.id) return;
+    if (!empresaNomeEdit.trim()) {
+      toast.error("Informe o nome da empresa");
+      return;
+    }
+    if (!empresaEmail.trim()) {
+      toast.error("Informe o e-mail da empresa");
+      return;
+    }
+    if (!empresaTelefone.trim()) {
+      toast.error("Informe o telefone da empresa");
+      return;
+    }
     setBusy(true);
     try {
       const { data: existing } = await supabase
@@ -106,8 +133,15 @@ export default function Onboarding() {
           .from("profiles")
           .insert({ user_id: user.id, nome: nome || "Usuário", telefone: telefone || null });
       }
-      if (empresaNomeEdit && empresaNomeEdit !== empresaNome && empresaId) {
-        await supabase.from("empresas").update({ nome: empresaNomeEdit }).eq("id", empresaId);
+      if (empresaId) {
+        await supabase
+          .from("empresas")
+          .update({
+            nome: empresaNomeEdit.trim(),
+            email: empresaEmail.trim(),
+            telefone: empresaTelefone.trim(),
+          })
+          .eq("id", empresaId);
         await refreshEmpresa();
       }
       next();
@@ -311,7 +345,7 @@ export default function Onboarding() {
               <p className="mb-6 text-sm text-muted-foreground">Confirme as informações para personalizar o sistema.</p>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <Label htmlFor="empresa-nome">Nome da empresa</Label>
+                  <Label htmlFor="empresa-nome">Nome da empresa *</Label>
                   <Input
                     id="empresa-nome"
                     value={empresaNomeEdit}
@@ -320,11 +354,30 @@ export default function Onboarding() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="empresa-email">E-mail da empresa *</Label>
+                  <Input
+                    id="empresa-email"
+                    type="email"
+                    value={empresaEmail}
+                    onChange={(e) => setEmpresaEmail(e.target.value)}
+                    placeholder="contato@empresa.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="empresa-tel">Telefone da empresa *</Label>
+                  <Input
+                    id="empresa-tel"
+                    value={empresaTelefone}
+                    onChange={(e) => setEmpresaTelefone(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="profile-nome">Seu nome</Label>
                   <Input id="profile-nome" value={nome} onChange={(e) => setNome(e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="profile-tel">Telefone (opcional)</Label>
+                  <Label htmlFor="profile-tel">Seu telefone</Label>
                   <Input
                     id="profile-tel"
                     value={telefone}
