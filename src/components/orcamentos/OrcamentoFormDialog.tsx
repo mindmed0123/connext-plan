@@ -218,7 +218,7 @@ export function OrcamentoFormDialog({
   const removerItem = (idx: number) => setItens(itens.filter((_, i) => i !== idx));
 
   const irParaServicos = () => {
-    if (!obraId) { toast.error("Selecione a obra"); return; }
+    if (!chamado.trim()) { toast.error("Informe o chamado"); return; }
     setStep(2);
   };
 
