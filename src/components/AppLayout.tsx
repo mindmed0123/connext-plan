@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TrialBanner } from "./TrialBanner";
+import { TrialPopup } from "./TrialPopup";
 
 export function AppLayout() {
   return (
@@ -21,6 +22,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+      <TrialPopup />
     </SidebarProvider>
   );
 }

@@ -1658,6 +1658,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      signup_create_company: {
+        Args: { _nome_empresa: string }
+        Returns: string
+      }
       tenant_match: { Args: { _empresa_id: string }; Returns: boolean }
     }
     Enums: {
