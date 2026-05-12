@@ -135,7 +135,7 @@ export default function Orcamentos() {
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{o.numero_orcamento || "—"}</TableCell>
                   <TableCell className="max-w-xs truncate">{o.titulo || "—"}</TableCell>
-                  <TableCell className="font-medium">{o.obras?.codigo_chamado}</TableCell>
+                  <TableCell className="font-medium">{(o as { codigo_chamado?: string | null }).codigo_chamado || o.obras?.codigo_chamado || "—"}</TableCell>
                   <TableCell className="text-sm">{o.data_orcamento ? format(parseISO(o.data_orcamento), "dd/MM/yyyy") : "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{validUntil}</TableCell>
                   <TableCell className="text-right font-semibold">{formatCurrency(Number(o.valor_orcamento))}</TableCell>
