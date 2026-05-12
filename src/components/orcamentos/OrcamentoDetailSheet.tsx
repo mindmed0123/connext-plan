@@ -87,7 +87,7 @@ export function OrcamentoDetailSheet({
         ) : (
           <div className="space-y-5 py-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-muted-foreground">Obra:</span> <span className="font-medium">{orc.obras?.codigo_chamado}</span></div>
+              <div><span className="text-muted-foreground">Chamado:</span> <span className="font-medium">{(orc as { codigo_chamado?: string | null }).codigo_chamado || orc.obras?.codigo_chamado || "—"}</span></div>
               <div><span className="text-muted-foreground">Data:</span> {format(parseISO(orc.data_orcamento), "dd/MM/yyyy")}</div>
               <div><span className="text-muted-foreground">Validade:</span> {orc.validade_dias} dias (até {format(addDays(parseISO(orc.data_orcamento), orc.validade_dias), "dd/MM/yyyy")})</div>
               <div><span className="text-muted-foreground">Pagamento:</span> {orc.condicoes_pagamento || "—"}</div>
