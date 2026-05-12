@@ -26,6 +26,7 @@ import Billing from "./pages/Billing";
 import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 
