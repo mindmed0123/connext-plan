@@ -64,7 +64,7 @@ export function OrcamentoFormDialog({
   const [step, setStep] = useState<1 | 2>(1);
 
   // Etapa 1
-  const [obraId, setObraId] = useState<string>("");
+  const [chamado, setChamado] = useState<string>("");
   const [titulo, setTitulo] = useState("");
   const [dataOrcamento, setDataOrcamento] = useState(format(new Date(), "yyyy-MM-dd"));
   const [validadeDias, setValidadeDias] = useState(30);
