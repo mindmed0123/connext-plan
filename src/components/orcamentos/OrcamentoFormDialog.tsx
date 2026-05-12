@@ -308,7 +308,7 @@ export function OrcamentoFormDialog({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const obraSelecionada = obras?.find((o) => o.id === obraId);
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
