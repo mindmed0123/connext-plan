@@ -236,9 +236,9 @@ export async function gerarOrcamentoPDF(
   doc.setTextColor(...TEXT);
   doc.text("Vencimentos", margin, y);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   const vencW = doc.getTextWidth("Vencimentos");
-  doc.text(orc.condicoes_pagamento || "A Vista", margin + vencW + 3, y);
+  doc.text(orc.condicoes_pagamento || "A Vista", margin + vencW + 4, y - 0.5);
   y += 4;
 
   const dataVenc = format(addDays(parseISO(orc.data_orcamento), orc.validade_dias || 0), "dd/MM/yyyy", { locale: ptBR });
@@ -271,22 +271,26 @@ export async function gerarOrcamentoPDF(
   const dataIncl = format(parseISO(orc.data_orcamento), "dd/MM/yyyy", { locale: ptBR });
   const horaIncl = format(new Date(), "HH:mm:ss", { locale: ptBR });
   doc.setFontSize(9);
+  const labelCol = margin;
+  const valueCol = margin + 55;
+
   doc.setFont("helvetica", "bold");
-  doc.text("Orçamento - incluído em:", margin, y);
+  doc.text("Orçamento - incluído em:", labelCol, y);
   doc.setFont("helvetica", "normal");
-  doc.text(`${dataIncl} às ${horaIncl}`, margin + 50, y);
+  doc.text(`${dataIncl} às ${horaIncl}`, valueCol, y);
   y += 5;
   doc.setFont("helvetica", "bold");
-  doc.text("Previsão de Faturamento:", margin, y);
+  doc.text("Previsão de Faturamento:", labelCol, y);
   doc.setFont("helvetica", "normal");
-  doc.text(dataVenc, margin + 50, y);
+  doc.text(dataVenc, valueCol, y);
   y += 8;
 
   const chamadoLabel = orc.codigo_chamado || orc.obras?.codigo_chamado || "";
   if (chamadoLabel) {
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "bold");
     doc.text("CHAMADOS:", margin, y);
     y += 5;
+    doc.setFont("helvetica", "normal");
     const linhaChamado = orc.titulo ? `${chamadoLabel} - ${orc.titulo}` : chamadoLabel;
     const linhas = doc.splitTextToSize(linhaChamado, pageW - margin * 2);
     doc.text(linhas, margin, y);
