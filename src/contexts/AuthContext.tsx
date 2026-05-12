@@ -59,7 +59,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setEmpresaNome(null);
       return;
     }
-    const { empresaId, empresaNome, empresaAtivo } = await fetchEmpresa(uid);
+    let { empresaId, empresaNome, empresaAtivo } = await fetchEmpresa(uid);
+
+    // Fallback: se o usuário não tem empresa (signup com confirmação por email pendente
+    // ou cadastro antigo), cria empresa + trial automaticamente.
+    if (!empresaId) {
+      const pendingNome =
+        (typeof window !== "undefined" && sessionStorage.getItem("pending_empresa_nome")) || "Minha Empresa";
+      const { data: novoId, error } = await supabase.rpc("signup_create_company", {
+        _nome_empresa: pendingNome,
+      });
+      if (!error && novoId) {
+        if (typeof window !== "undefined") sessionStorage.removeItem("pending_empresa_nome");
+        const refetched = await fetchEmpresa(uid);
+        empresaId = refetched.empresaId;
+        empresaNome = refetched.empresaNome;
+        empresaAtivo = refetched.empresaAtivo;
+      }
+    }
+
     // Bloqueia login se empresa estiver inativa (super_admin é exceção)
     if (empresaId && empresaAtivo === false) {
       const superAdmin = await isSuperAdmin(uid);
