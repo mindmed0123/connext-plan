@@ -464,9 +464,9 @@ export function OrcamentoFormDialog({
 
         {step === 2 && (
           <div className="space-y-5">
-            {obraSelecionada && (
+            {chamado && (
               <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                <span className="font-semibold">{obraSelecionada.codigo_chamado}</span>
+                <span className="font-semibold">Chamado: {chamado}</span>
                 {clienteNome && <span className="text-muted-foreground"> · {clienteNome}</span>}
               </div>
             )}
