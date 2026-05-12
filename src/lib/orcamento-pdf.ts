@@ -282,13 +282,12 @@ export async function gerarOrcamentoPDF(
   doc.text(dataVenc, margin + 50, y);
   y += 8;
 
-  if (orc.obras?.codigo_chamado) {
+  const chamadoLabel = orc.codigo_chamado || orc.obras?.codigo_chamado || "";
+  if (chamadoLabel) {
     doc.setFont("helvetica", "normal");
     doc.text("CHAMADOS:", margin, y);
     y += 5;
-    const linhaChamado = orc.titulo
-      ? `${orc.obras.codigo_chamado} - ${orc.titulo}`
-      : orc.obras.codigo_chamado;
+    const linhaChamado = orc.titulo ? `${chamadoLabel} - ${orc.titulo}` : chamadoLabel;
     const linhas = doc.splitTextToSize(linhaChamado, pageW - margin * 2);
     doc.text(linhas, margin, y);
     y += linhas.length * 5 + 2;
