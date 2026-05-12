@@ -148,6 +148,14 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.startsWith("/configuracoes")}>
+                      <NavLink to="/configuracoes">
+                        <Settings className="h-4 w-4" />
+                        {!collapsed && <span>Configurações</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={location.pathname.startsWith("/billing")}>
                       <NavLink to="/billing">
                         <CreditCard className="h-4 w-4" />
