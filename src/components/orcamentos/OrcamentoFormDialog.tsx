@@ -136,7 +136,8 @@ export function OrcamentoFormDialog({
     if (!orcamentoId) {
       setObraId(""); setTitulo(""); setDataOrcamento(format(new Date(), "yyyy-MM-dd"));
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
-      setClienteEndereco(""); setObservacoes(""); setItens([newItem()]); setNumero(null);
+      setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
+      setObservacoes(""); setItens([newItem()]); setNumero(null);
       return;
     }
     (async () => {
@@ -149,7 +150,13 @@ export function OrcamentoFormDialog({
       setCondicoes(orc.condicoes_pagamento ?? "");
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteIE((orc as any).cliente_inscricao_estadual ?? "");
       setClienteEndereco(orc.cliente_endereco ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteEmail((orc as any).cliente_email ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteTelefone((orc as any).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
       setNumero(orc.numero_orcamento);
       const { data: its } = await supabase.from("orcamento_itens").select("*").eq("orcamento_id", orcamentoId).order("ordem");
