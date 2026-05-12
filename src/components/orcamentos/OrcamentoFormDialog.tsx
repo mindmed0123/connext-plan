@@ -60,10 +60,53 @@ export function OrcamentoFormDialog({
   const [condicoes, setCondicoes] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCnpj, setClienteCnpj] = useState("");
+  const [clienteIE, setClienteIE] = useState("");
   const [clienteEndereco, setClienteEndereco] = useState("");
+  const [clienteEmail, setClienteEmail] = useState("");
+  const [clienteTelefone, setClienteTelefone] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [itens, setItens] = useState<ItemForm[]>([newItem()]);
   const [numero, setNumero] = useState<string | null>(null);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const buscarCnpj = async () => {
+    const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
+    if (cnpjLimpo.length !== 14) {
+      toast.error("Informe um CNPJ válido (14 dígitos)");
+      return;
+    }
+    setBuscandoCnpj(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!res.ok) throw new Error("CNPJ não encontrado");
+      const d = await res.json();
+      setClienteNome(d.razao_social || d.nome_fantasia || "");
+      const endereco = [
+        `${d.logradouro || ""}${d.numero ? ", " + d.numero : ""}`,
+        d.complemento,
+        d.bairro,
+        `${d.municipio || ""}${d.uf ? " - " + d.uf : ""}`,
+        d.cep ? `CEP: ${d.cep.replace(/(\d{5})(\d{3})/, "$1-$2")}` : "",
+      ].filter(Boolean).join(" - ");
+      setClienteEndereco(endereco);
+      if (d.email) setClienteEmail(d.email);
+      if (d.ddd_telefone_1) setClienteTelefone(`(${d.ddd_telefone_1.slice(0, 2)}) ${d.ddd_telefone_1.slice(2)}`);
+      toast.success("Dados do cliente carregados!");
+    } catch (e) {
+      toast.error((e as Error).message || "Erro ao buscar CNPJ");
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
 
   const { data: obras } = useQuery({
     queryKey: ["orc-obras", empresaId],
