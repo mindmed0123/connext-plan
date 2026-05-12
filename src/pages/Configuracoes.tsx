@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Loader2, Save } from "lucide-react";
+import { Search, Loader2, Save, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const formatCnpj = (v: string) => {
@@ -37,6 +37,44 @@ export default function Configuracoes() {
     bairro: "", cidade: "", uf: "", cep: "", telefone: "", email: "",
   });
   const [buscando, setBuscando] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoUrl = (empresa as any)?.logo_url as string | null | undefined;
+
+  const handleLogoUpload = async (file: File) => {
+    if (!empresaId) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem (PNG, JPG, etc.)");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Logo muito grande (máx. 2MB)");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `${empresaId}/logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("empresa-logos").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("empresa-logos").getPublicUrl(path);
+      const { error: updErr } = await supabase.from("empresas").update({ logo_url: pub.publicUrl }).eq("id", empresaId);
+      if (updErr) throw updErr;
+      toast.success("Logo atualizada!");
+      qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] });
+    } catch (e) {
+      toast.error((e as Error).message || "Erro ao enviar logo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const removerLogo = async () => {
+    if (!empresaId) return;
+    const { error } = await supabase.from("empresas").update({ logo_url: null }).eq("id", empresaId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Logo removida");
+    qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] });
+  };
 
   useEffect(() => {
     if (!empresa) return;
@@ -111,6 +149,47 @@ export default function Configuracoes() {
           Esses dados aparecem no cabeçalho dos PDFs de orçamento.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Logo da empresa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="h-24 w-24 rounded-md border bg-muted/30 flex items-center justify-center overflow-hidden">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+              ) : (
+                <span className="text-xs text-muted-foreground text-center px-2">Sem logo</span>
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                A logo aparece no canto superior esquerdo dos PDFs de orçamento. PNG/JPG, até 2MB.
+              </p>
+              <div className="flex gap-2">
+                <Button asChild variant="outline" size="sm" disabled={uploadingLogo}>
+                  <label className="cursor-pointer">
+                    {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {logoUrl ? "Trocar logo" : "Enviar logo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }}
+                    />
+                  </label>
+                </Button>
+                {logoUrl && (
+                  <Button variant="ghost" size="sm" onClick={removerLogo}>
+                    <Trash2 className="h-4 w-4" /> Remover
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
