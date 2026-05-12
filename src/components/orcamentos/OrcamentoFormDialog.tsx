@@ -234,7 +234,7 @@ export function OrcamentoFormDialog({
   }, [servicos, servicoSearch]);
 
   const save = useMutation({
-    mutationFn: async (statusFinal: "em_elaboracao" | "enviado" | "aprovado" | "reprovado" | "em_negociacao") => {
+    mutationFn: async () => {
       if (!empresaId) throw new Error("Empresa não identificada");
       if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
@@ -254,27 +254,34 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // Mapeia status do orçamento -> status da obra
-      const obraStatusMap: Record<string, string> = {
-        em_elaboracao: "aguardando_orcamento",
-        enviado: "em_aprovacao",
-        em_negociacao: "em_aprovacao",
-        aprovado: "aprovado",
-        reprovado: "aguardando_orcamento",
-      };
-      const novoObraStatus = obraStatusMap[statusFinal] ?? "aguardando_orcamento";
+      // Garante uma obra correspondente ao chamado (sem sobrescrever status existente)
+      let obraId: string | null = null;
+      const { data: obraExistente } = await supabase
+        .from("obras")
+        .select("id")
+        .eq("empresa_id", empresaId)
+        .eq("codigo_chamado", chamado)
+        .maybeSingle();
 
-      // Cria/atualiza obra automaticamente com base no chamado
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: obraRow, error: obraErr } = await (supabase.from("obras") as any).upsert({
-        empresa_id: empresaId,
-        codigo_chamado: chamado,
-        status: novoObraStatus,
-        descricao_servico: titulo || clienteNome || chamado,
-        endereco: clienteEndereco || null,
-      }, { onConflict: "empresa_id,codigo_chamado" }).select("id").single();
-      if (obraErr) throw obraErr;
-      const obraId = obraRow?.id ?? null;
+      if (obraExistente?.id) {
+        obraId = obraExistente.id;
+        // Atualiza apenas dados descritivos, NUNCA o status (gerenciado em Obras)
+        await supabase.from("obras").update({
+          descricao_servico: titulo || clienteNome || chamado,
+          endereco: clienteEndereco || null,
+        }).eq("id", obraId);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: novaObra, error: obraErr } = await (supabase.from("obras") as any).insert({
+          empresa_id: empresaId,
+          codigo_chamado: chamado,
+          status: "aguardando_orcamento",
+          descricao_servico: titulo || clienteNome || chamado,
+          endereco: clienteEndereco || null,
+        }).select("id").single();
+        if (obraErr) throw obraErr;
+        obraId = novaObra?.id ?? null;
+      }
 
       const payload = {
         empresa_id: empresaId,
@@ -292,7 +299,7 @@ export function OrcamentoFormDialog({
         cliente_email: clienteEmail || null,
         cliente_telefone: clienteTelefone || null,
         observacoes: observacoes || null,
-        status: statusFinal,
+        status: "em_elaboracao" as const,
         valor_orcamento: total,
         data_envio: null,
       };
