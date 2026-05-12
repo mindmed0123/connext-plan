@@ -213,12 +213,6 @@ export default function Onboarding() {
     navigate("/dashboard", { replace: true });
   }
 
-  async function skipAll() {
-    if (!empresaId) return;
-    await supabase.from("empresas").update({ onboarding_completo: true }).eq("id", empresaId);
-    await refreshEmpresa();
-    navigate("/dashboard", { replace: true });
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface via-background to-primary/5 px-4 py-10">
