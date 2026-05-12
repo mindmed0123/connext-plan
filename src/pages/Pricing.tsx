@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,12 @@ const formatPrice = (v: number) =>
 export default function Pricing() {
   const { user, empresaId } = useAuth();
   const navigate = useNavigate();
-  const [periodo, setPeriodo] = useState<"mensal" | "anual">("mensal");
+  const [searchParams] = useSearchParams();
+  const planoParam = searchParams.get("plano") ?? "";
+  const checkoutParam = searchParams.get("checkout") === "1";
+  const periodoParam = searchParams.get("periodo") === "anual" ? "anual" : "mensal";
+
+  const [periodo, setPeriodo] = useState<"mensal" | "anual">(periodoParam);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -76,6 +81,15 @@ export default function Pricing() {
       setLoadingId(null);
     }
   };
+
+  // Auto-checkout direto via link: /pricing?plano=pro&checkout=1&periodo=mensal
+  useEffect(() => {
+    if (!checkoutParam || !planoParam || !planos || planos.length === 0) return;
+    const plano = planos.find((p) => p.slug === planoParam);
+    if (plano) {
+      handleAssinar(plano);
+    }
+  }, [planos, checkoutParam, planoParam]);
 
   const economia = useMemo(() => {
     if (!planos?.[1]) return 0;
