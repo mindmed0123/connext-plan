@@ -31,7 +31,31 @@ export type PDFItem = {
   subtotal: number;
 };
 
-export function gerarOrcamentoPDF(
+async function loadImageDataUrl(url: string): Promise<{ dataUrl: string; w: number; h: number; format: string } | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.width, h: img.height });
+      img.onerror = () => resolve({ w: 0, h: 0 });
+      img.src = dataUrl;
+    });
+    const fmt = blob.type.includes("png") ? "PNG" : blob.type.includes("webp") ? "WEBP" : "JPEG";
+    return { dataUrl, w: dims.w, h: dims.h, format: fmt };
+  } catch {
+    return null;
+  }
+}
+
+export async function gerarOrcamentoPDF(
   orc: PDFOrcamento,
   itens: PDFItem[],
   empresa: {
@@ -44,6 +68,7 @@ export function gerarOrcamentoPDF(
     uf?: string | null;
     cep?: string | null;
     telefone?: string | null;
+    logo_url?: string | null;
   }
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -52,13 +77,31 @@ export function gerarOrcamentoPDF(
   const margin = 15;
 
   // Cores estilo do modelo
-  const TEAL: [number, number, number] = [82, 196, 184]; // header tabela
-  const TEAL_LIGHT: [number, number, number] = [225, 244, 241]; // linhas alt
+  const TEAL: [number, number, number] = [82, 196, 184];
+  const TEAL_LIGHT: [number, number, number] = [225, 244, 241];
   const TEXT: [number, number, number] = [40, 40, 40];
   const MUTED: [number, number, number] = [110, 110, 110];
 
   // ====== CABEÇALHO ======
   let y = margin;
+
+  // Logo (esquerda)
+  let logoBottom = y;
+  if (empresa.logo_url) {
+    const logo = await loadImageDataUrl(empresa.logo_url);
+    if (logo && logo.w > 0) {
+      const maxW = 45;
+      const maxH = 25;
+      const ratio = logo.w / logo.h;
+      let w = maxW;
+      let h = w / ratio;
+      if (h > maxH) { h = maxH; w = h * ratio; }
+      try {
+        doc.addImage(logo.dataUrl, logo.format, margin, y, w, h);
+        logoBottom = y + h;
+      } catch { /* ignore */ }
+    }
+  }
 
   // Nome da empresa (direita, bold)
   doc.setFont("helvetica", "bold");
@@ -80,8 +123,7 @@ export function gerarOrcamentoPDF(
   if (cidLinha.trim()) { doc.text(cidLinha, pageW - margin, yh, { align: "right" }); yh += 4; }
   if (empresa.telefone) { doc.text(`Telefone: ${empresa.telefone}`, pageW - margin, yh, { align: "right" }); yh += 4; }
 
-  // Espaço para logo (se quiser, fica em branco — o app pode não ter logo)
-  y = Math.max(yh, y + 28) + 4;
+  y = Math.max(yh, logoBottom, y + 28) + 4;
 
   // ====== TÍTULO ORÇAMENTO ======
   doc.setFont("helvetica", "bold");
