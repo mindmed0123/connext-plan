@@ -255,7 +255,8 @@ export function OrcamentoFormDialog({
 
       const payload = {
         empresa_id: empresaId,
-        obra_id: obraId,
+        obra_id: null,
+        codigo_chamado: chamado,
         numero_orcamento: num,
         titulo: titulo || null,
         data_orcamento: dataOrcamento,
