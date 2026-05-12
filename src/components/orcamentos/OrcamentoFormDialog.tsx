@@ -254,7 +254,7 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // Garante uma obra correspondente ao chamado (sem sobrescrever status existente)
+      // Garante uma obra correspondente ao chamado e coloca no fluxo de aprovação
       let obraId: string | null = null;
       const { data: obraExistente } = await supabase
         .from("obras")
@@ -265,8 +265,8 @@ export function OrcamentoFormDialog({
 
       if (obraExistente?.id) {
         obraId = obraExistente.id;
-        // Atualiza apenas dados descritivos, NUNCA o status (gerenciado em Obras)
         await supabase.from("obras").update({
+          status: "em_aprovacao",
           descricao_servico: titulo || clienteNome || chamado,
           endereco: clienteEndereco || null,
         }).eq("id", obraId);
@@ -275,7 +275,7 @@ export function OrcamentoFormDialog({
         const { data: novaObra, error: obraErr } = await (supabase.from("obras") as any).insert({
           empresa_id: empresaId,
           codigo_chamado: chamado,
-          status: "aguardando_orcamento",
+          status: "em_aprovacao",
           descricao_servico: titulo || clienteNome || chamado,
           endereco: clienteEndereco || null,
         }).select("id").single();
@@ -333,7 +333,7 @@ export function OrcamentoFormDialog({
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
       qc.invalidateQueries({ queryKey: ["obras"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-data"] });
       qc.invalidateQueries({ queryKey: ["clientes", empresaId] });
       onOpenChange(false);
     },
