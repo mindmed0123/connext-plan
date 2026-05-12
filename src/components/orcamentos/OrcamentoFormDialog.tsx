@@ -83,6 +83,7 @@ export function OrcamentoFormDialog({
   const [itens, setItens] = useState<ItemForm[]>([]);
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
+  const [statusSalvar, setStatusSalvar] = useState<"em_elaboracao" | "enviado" | "em_negociacao" | "aprovado" | "reprovado">("em_elaboracao");
 
 
   const { data: servicos } = useQuery({
@@ -233,7 +234,7 @@ export function OrcamentoFormDialog({
   }, [servicos, servicoSearch]);
 
   const save = useMutation({
-    mutationFn: async (statusFinal: "em_elaboracao" | "enviado") => {
+    mutationFn: async (statusFinal: "em_elaboracao" | "enviado" | "aprovado" | "reprovado" | "em_negociacao") => {
       if (!empresaId) throw new Error("Empresa não identificada");
       if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
@@ -253,9 +254,31 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
+      // Mapeia status do orçamento -> status da obra
+      const obraStatusMap: Record<string, string> = {
+        em_elaboracao: "aguardando_orcamento",
+        enviado: "em_aprovacao",
+        em_negociacao: "em_aprovacao",
+        aprovado: "aprovado",
+        reprovado: "aguardando_orcamento",
+      };
+      const novoObraStatus = obraStatusMap[statusFinal] ?? "aguardando_orcamento";
+
+      // Cria/atualiza obra automaticamente com base no chamado
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: obraRow, error: obraErr } = await (supabase.from("obras") as any).upsert({
+        empresa_id: empresaId,
+        codigo_chamado: chamado,
+        status: novoObraStatus,
+        descricao_servico: titulo || clienteNome || chamado,
+        endereco: clienteEndereco || null,
+      }, { onConflict: "empresa_id,codigo_chamado" }).select("id").single();
+      if (obraErr) throw obraErr;
+      const obraId = obraRow?.id ?? null;
+
       const payload = {
         empresa_id: empresaId,
-        obra_id: null,
+        obra_id: obraId,
         codigo_chamado: chamado,
         numero_orcamento: num,
         titulo: titulo || null,
@@ -271,7 +294,7 @@ export function OrcamentoFormDialog({
         observacoes: observacoes || null,
         status: statusFinal,
         valor_orcamento: total,
-        data_envio: statusFinal === "enviado" ? format(new Date(), "yyyy-MM-dd") : null,
+        data_envio: null,
       };
 
       let id = orcamentoId;
@@ -298,10 +321,12 @@ export function OrcamentoFormDialog({
       );
       if (error) throw error;
     },
-    onSuccess: (_d, status) => {
-      toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
+    onSuccess: () => {
+      toast.success("Orçamento salvo!");
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["clientes", empresaId] });
       onOpenChange(false);
     },
@@ -589,16 +614,26 @@ export function OrcamentoFormDialog({
               <Textarea rows={3} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
             </section>
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 sm:items-center flex-wrap">
               <Button variant="outline" onClick={() => setStep(1)}>
                 <ArrowLeft className="h-4 w-4" /> Voltar
               </Button>
-              <Button variant="secondary" onClick={() => save.mutate("em_elaboracao")} disabled={save.isPending}>
-                Salvar rascunho
-              </Button>
-              <Button onClick={() => save.mutate("enviado")} disabled={save.isPending}>
-                Salvar e enviar
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label className="text-xs whitespace-nowrap">Status:</Label>
+                <Select value={statusSalvar} onValueChange={(v) => setStatusSalvar(v as typeof statusSalvar)}>
+                  <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="em_elaboracao">Em elaboração</SelectItem>
+                    <SelectItem value="enviado">Enviado</SelectItem>
+                    <SelectItem value="em_negociacao">Em negociação</SelectItem>
+                    <SelectItem value="aprovado">Aprovado</SelectItem>
+                    <SelectItem value="reprovado">Reprovado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => save.mutate(statusSalvar)} disabled={save.isPending}>
+                  Salvar orçamento
+                </Button>
+              </div>
             </DialogFooter>
           </div>
         )}
