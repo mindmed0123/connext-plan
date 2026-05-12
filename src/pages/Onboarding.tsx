@@ -104,6 +104,18 @@ export default function Onboarding() {
 
   async function saveProfile() {
     if (!user?.id) return;
+    if (!empresaNomeEdit.trim()) {
+      toast.error("Informe o nome da empresa");
+      return;
+    }
+    if (!empresaEmail.trim()) {
+      toast.error("Informe o e-mail da empresa");
+      return;
+    }
+    if (!empresaTelefone.trim()) {
+      toast.error("Informe o telefone da empresa");
+      return;
+    }
     setBusy(true);
     try {
       const { data: existing } = await supabase
@@ -121,8 +133,15 @@ export default function Onboarding() {
           .from("profiles")
           .insert({ user_id: user.id, nome: nome || "Usuário", telefone: telefone || null });
       }
-      if (empresaNomeEdit && empresaNomeEdit !== empresaNome && empresaId) {
-        await supabase.from("empresas").update({ nome: empresaNomeEdit }).eq("id", empresaId);
+      if (empresaId) {
+        await supabase
+          .from("empresas")
+          .update({
+            nome: empresaNomeEdit.trim(),
+            email: empresaEmail.trim(),
+            telefone: empresaTelefone.trim(),
+          })
+          .eq("id", empresaId);
         await refreshEmpresa();
       }
       next();
