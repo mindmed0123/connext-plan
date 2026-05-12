@@ -4,7 +4,7 @@ import { format, addDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const BRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace("R$", "").trim();
 
 export type PDFOrcamento = {
   numero_orcamento: string | null;
@@ -16,6 +16,8 @@ export type PDFOrcamento = {
   cliente_nome: string | null;
   cliente_cnpj: string | null;
   cliente_endereco: string | null;
+  cliente_email?: string | null;
+  cliente_telefone?: string | null;
   valor_orcamento: number;
   obras: { codigo_chamado: string } | null;
 };
@@ -32,187 +34,237 @@ export type PDFItem = {
 export function gerarOrcamentoPDF(
   orc: PDFOrcamento,
   itens: PDFItem[],
-  empresa: { nome: string; cnpj: string | null }
+  empresa: {
+    nome: string;
+    cnpj: string | null;
+    inscricao_estadual?: string | null;
+    endereco?: string | null;
+    bairro?: string | null;
+    cidade?: string | null;
+    uf?: string | null;
+    cep?: string | null;
+    telefone?: string | null;
+  }
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margin = 15;
+
+  // Cores estilo do modelo
+  const TEAL: [number, number, number] = [82, 196, 184]; // header tabela
+  const TEAL_LIGHT: [number, number, number] = [225, 244, 241]; // linhas alt
+  const TEXT: [number, number, number] = [40, 40, 40];
+  const MUTED: [number, number, number] = [110, 110, 110];
+
+  // ====== CABEÇALHO ======
   let y = margin;
 
-  const NAVY: [number, number, number] = [11, 31, 66];
-  const ORANGE: [number, number, number] = [238, 102, 22];
-  const LIGHT_GRAY: [number, number, number] = [245, 245, 245];
-
-  doc.setFillColor(...NAVY);
-  doc.rect(0, 0, pageW, 28, "F");
+  // Nome da empresa (direita, bold)
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.setTextColor(255, 255, 255);
-  doc.text(empresa.nome, margin, 12);
-  doc.setFontSize(8);
+  doc.setFontSize(13);
+  doc.setTextColor(...TEXT);
+  doc.text((empresa.nome || "").toUpperCase(), pageW - margin, y + 2, { align: "right" });
+
+  // Dados empresa (direita, normais)
   doc.setFont("helvetica", "normal");
-  if (empresa.cnpj) doc.text(`CNPJ: ${empresa.cnpj}`, margin, 18);
-  doc.text("Gestão de Obra — Software de Gestão de Obras", margin, 23);
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, 28, pageW, 3, "F");
-  y = 38;
+  doc.setFontSize(9);
+  doc.setTextColor(...TEXT);
+  let yh = y + 8;
+  if (empresa.cnpj) { doc.text(`CNPJ: ${empresa.cnpj}`, pageW - margin, yh, { align: "right" }); yh += 4; }
+  if (empresa.inscricao_estadual) { doc.text(`Inscrição Estadual: ${empresa.inscricao_estadual}`, pageW - margin, yh, { align: "right" }); yh += 4; }
+  yh += 1;
+  if (empresa.endereco) { doc.text(empresa.endereco, pageW - margin, yh, { align: "right" }); yh += 4; }
+  if (empresa.bairro) { doc.text(empresa.bairro, pageW - margin, yh, { align: "right" }); yh += 4; }
+  const cidLinha = [empresa.cidade, empresa.uf].filter(Boolean).join(" - ") + (empresa.cep ? ` - CEP: ${empresa.cep}` : "");
+  if (cidLinha.trim()) { doc.text(cidLinha, pageW - margin, yh, { align: "right" }); yh += 4; }
+  if (empresa.telefone) { doc.text(`Telefone: ${empresa.telefone}`, pageW - margin, yh, { align: "right" }); yh += 4; }
 
-  doc.setTextColor(...NAVY);
+  // Espaço para logo (se quiser, fica em branco — o app pode não ter logo)
+  y = Math.max(yh, y + 28) + 4;
+
+  // ====== TÍTULO ORÇAMENTO ======
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("PROPOSTA COMERCIAL", margin, y);
+  doc.setFontSize(18);
+  doc.setTextColor(...TEXT);
+  const numero = orc.numero_orcamento ? orc.numero_orcamento.replace(/^ORC-?/i, "") : "—";
+  doc.text(`Orçamento Nº ${numero}`, margin, y);
+  y += 8;
+
+  // ====== INFORMAÇÕES DO CLIENTE ======
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Informações do Cliente", margin, y);
   y += 7;
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(80, 80, 80);
-  const numOrc = orc.numero_orcamento ? `Nº ${orc.numero_orcamento}` : "";
-  const dataFormatada = format(parseISO(orc.data_orcamento), "dd/MM/yyyy", { locale: ptBR });
-  const dataValidade = format(addDays(parseISO(orc.data_orcamento), orc.validade_dias), "dd/MM/yyyy", { locale: ptBR });
-  doc.text(`${numOrc}   Data: ${dataFormatada}   Válido até: ${dataValidade}`, margin, y);
-  y += 4;
-  if (orc.titulo) {
-    doc.setFont("helvetica", "italic");
-    doc.text(orc.titulo, margin, y);
-    y += 4;
-  }
-  y += 4;
 
-  doc.setDrawColor(...ORANGE);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageW - margin, y);
-  y += 5;
-
-  if (orc.cliente_nome || orc.obras?.codigo_chamado) {
+  if (orc.cliente_nome) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...NAVY);
-    doc.text("PARA:", margin, y);
-    y += 5;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    if (orc.cliente_nome) { doc.text(orc.cliente_nome, margin, y); y += 4; }
-    if (orc.cliente_cnpj) { doc.text(`CNPJ: ${orc.cliente_cnpj}`, margin, y); y += 4; }
-    if (orc.cliente_endereco) { doc.text(orc.cliente_endereco, margin, y); y += 4; }
-    if (orc.obras?.codigo_chamado) { doc.text(`Referência: Obra ${orc.obras.codigo_chamado}`, margin, y); y += 4; }
-    y += 3;
-    doc.setDrawColor(220, 220, 220);
-    doc.line(margin, y, pageW - margin, y);
-    y += 5;
+    doc.setFontSize(10);
+    doc.text(orc.cliente_nome.toUpperCase(), margin, y);
+    y += 6;
   }
 
-  doc.setFont("helvetica", "bold");
+  // Duas colunas: esquerda CNPJ/email, direita endereço/telefone
+  const colL = margin;
+  const colR = pageW / 2 + 5;
+  let yL = y;
+  let yR = y;
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...NAVY);
-  doc.text("ITENS DE SERVIÇO", margin, y);
-  y += 3;
+  doc.setTextColor(...TEXT);
+
+  if (orc.cliente_cnpj) { doc.text(`CNPJ: ${orc.cliente_cnpj}`, colL, yL); yL += 5; }
+  if (orc.cliente_email) {
+    yL += 2;
+    doc.setFont("helvetica", "bold");
+    doc.text(orc.cliente_email, colL, yL);
+    doc.setFont("helvetica", "normal");
+    yL += 5;
+  }
+
+  if (orc.cliente_endereco) {
+    const enderecoLines = doc.splitTextToSize(orc.cliente_endereco, pageW / 2 - margin - 5);
+    doc.text(enderecoLines, colR, yR);
+    yR += enderecoLines.length * 5;
+  }
+  if (orc.cliente_telefone) {
+    doc.setFont("helvetica", "bold");
+    doc.text(`Telefone: ${orc.cliente_telefone}`, colR, yR);
+    doc.setFont("helvetica", "normal");
+    yR += 5;
+  }
+
+  y = Math.max(yL, yR) + 6;
+
+  // ====== LISTA DE SERVIÇOS ======
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...TEXT);
+  doc.text("Lista dos Serviços", margin, y);
+  y += 4;
+
+  const totalBruto = itens.reduce((s, i) => s + Number(i.quantidade) * Number(i.preco_unitario), 0);
+  const totalDesc = totalBruto - Number(orc.valor_orcamento);
 
   autoTable(doc, {
     startY: y,
-    head: [["Descrição", "Un.", "Qtd.", "P. Unit.", "Desc.", "Total"]],
+    head: [["Descrição do Serviço", "Quantidade", "Valor Unit. (R$)", "Valor Total (R$)"]],
     body: itens.map((item) => [
       item.descricao,
-      item.unidade,
-      Number(item.quantidade).toLocaleString("pt-BR"),
+      Number(item.quantidade).toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
       BRL(Number(item.preco_unitario)),
-      Number(item.desconto_pct) > 0 ? `${item.desconto_pct}%` : "—",
       BRL(Number(item.subtotal)),
     ]),
-    theme: "striped",
-    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
-    bodyStyles: { fontSize: 8, textColor: [50, 50, 50] },
-    columnStyles: {
-      0: { cellWidth: "auto" },
-      1: { cellWidth: 14, halign: "center" },
-      2: { cellWidth: 18, halign: "right" },
-      3: { cellWidth: 28, halign: "right" },
-      4: { cellWidth: 16, halign: "center" },
-      5: { cellWidth: 30, halign: "right", fontStyle: "bold" },
+    foot: [
+      [
+        { content: "Total:", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: BRL(Number(orc.valor_orcamento)), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+      ],
+      [
+        { content: "Total do ISS:", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: BRL(0), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+      ],
+    ],
+    theme: "plain",
+    headStyles: {
+      fillColor: TEAL,
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 9,
+      halign: "left",
     },
-    alternateRowStyles: { fillColor: LIGHT_GRAY },
+    bodyStyles: { fontSize: 9, textColor: TEXT, fillColor: [255, 255, 255] },
+    alternateRowStyles: { fillColor: TEAL_LIGHT },
+    columnStyles: {
+      0: { cellWidth: "auto", halign: "left" },
+      1: { cellWidth: 28, halign: "right" },
+      2: { cellWidth: 32, halign: "right" },
+      3: { cellWidth: 32, halign: "right" },
+    },
     margin: { left: margin, right: margin },
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  y = (doc as any).lastAutoTable.finalY + 5;
+  y = (doc as any).lastAutoTable.finalY + 12;
 
-  const totalBruto = itens.reduce((s, i) => s + Number(i.quantidade) * Number(i.preco_unitario), 0);
-  const totalDesc = totalBruto - Number(orc.valor_orcamento);
-  const colRight = pageW - margin;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(80, 80, 80);
-  doc.text("Subtotal:", colRight - 60, y, { align: "right" });
-  doc.text(BRL(totalBruto), colRight, y, { align: "right" });
-  y += 5;
-  if (totalDesc > 0.01) {
-    doc.text("Desconto:", colRight - 60, y, { align: "right" });
-    doc.setTextColor(238, 102, 22);
-    doc.text(`- ${BRL(totalDesc)}`, colRight, y, { align: "right" });
-    doc.setTextColor(80, 80, 80);
-    y += 5;
-  }
-  doc.setDrawColor(...NAVY);
-  doc.setLineWidth(0.5);
-  doc.line(colRight - 80, y, colRight, y);
-  y += 4;
+  // ====== VENCIMENTOS ======
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...TEXT);
+  doc.text("Vencimentos", margin, y);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.setTextColor(...NAVY);
-  doc.text("TOTAL:", colRight - 60, y, { align: "right" });
-  doc.setTextColor(...ORANGE);
-  doc.text(BRL(Number(orc.valor_orcamento)), colRight, y, { align: "right" });
+  const vencW = doc.getTextWidth("Vencimentos");
+  doc.text(orc.condicoes_pagamento || "A Vista", margin + vencW + 3, y);
+  y += 4;
+
+  const dataVenc = format(addDays(parseISO(orc.data_orcamento), orc.validade_dias || 0), "dd/MM/yyyy", { locale: ptBR });
+  autoTable(doc, {
+    startY: y,
+    body: [
+      ["Parcela", "1"],
+      ["Vencimento", dataVenc],
+      ["Valor (R$)", BRL(Number(orc.valor_orcamento))],
+    ],
+    theme: "plain",
+    styles: { fontSize: 9, textColor: TEXT },
+    columnStyles: {
+      0: { cellWidth: 30, halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT },
+      1: { cellWidth: 30, halign: "right", fillColor: TEAL_LIGHT },
+    },
+    margin: { left: margin },
+    tableWidth: 60,
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // ====== OUTRAS INFORMAÇÕES ======
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Outras Informações", margin, y);
+  y += 7;
+
+  const dataIncl = format(parseISO(orc.data_orcamento), "dd/MM/yyyy", { locale: ptBR });
+  const horaIncl = format(new Date(), "HH:mm:ss", { locale: ptBR });
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("Orçamento - incluído em:", margin, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${dataIncl} às ${horaIncl}`, margin + 50, y);
+  y += 5;
+  doc.setFont("helvetica", "bold");
+  doc.text("Previsão de Faturamento:", margin, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(dataVenc, margin + 50, y);
   y += 8;
 
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageW - margin, y);
-  y += 5;
-  if (orc.condicoes_pagamento) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...NAVY);
-    doc.text("Condições de pagamento:", margin, y);
+  if (orc.obras?.codigo_chamado) {
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    doc.text(orc.condicoes_pagamento, margin + 52, y);
+    doc.text("CHAMADOS:", margin, y);
     y += 5;
-  }
-  if (orc.observacoes) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...NAVY);
-    doc.text("Observações:", margin, y);
-    y += 4;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    const lines = doc.splitTextToSize(orc.observacoes, pageW - margin * 2);
-    doc.text(lines, margin, y);
-    y += lines.length * 4 + 4;
+    const linhaChamado = orc.titulo
+      ? `${orc.obras.codigo_chamado} - ${orc.titulo}`
+      : orc.obras.codigo_chamado;
+    const linhas = doc.splitTextToSize(linhaChamado, pageW - margin * 2);
+    doc.text(linhas, margin, y);
+    y += linhas.length * 5 + 2;
   }
 
-  const pageH = doc.internal.pageSize.getHeight();
-  if (y + 35 > pageH - 20) { doc.addPage(); y = 20; } else y += 8;
-  doc.setDrawColor(80, 80, 80);
-  doc.setLineWidth(0.4);
-  const col1 = margin;
-  const col2 = pageW / 2 + 10;
-  doc.line(col1, y, col1 + 75, y);
-  doc.line(col2, y, col2 + 75, y);
-  y += 4;
+  if (orc.observacoes) {
+    y += 3;
+    const obsLines = doc.splitTextToSize(orc.observacoes, pageW - margin * 2);
+    doc.text(obsLines, margin, y);
+    y += obsLines.length * 5;
+  }
+
+  // ====== RODAPÉ ======
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  doc.text("Aprovação do cliente", col1, y);
-  doc.text(empresa.nome, col2, y);
-  y += 4;
-  doc.text("Data: ___/___/______", col1, y);
-  doc.text(dataFormatada, col2, y);
-
-  doc.setFillColor(...NAVY);
-  doc.rect(0, pageH - 10, pageW, 10, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(180, 180, 180);
-  doc.text("Gestão de Obra — Software de Gestão de Obras", pageW / 2, pageH - 4, { align: "center" });
+  doc.setTextColor(...MUTED);
+  const geradoEm = format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+  doc.text(`Gerado em ${geradoEm}`, pageW / 2, pageH - 14, { align: "center" });
+  doc.text("Página 1 de 1", pageW / 2, pageH - 9, { align: "center" });
 
   doc.save(`orcamento-${orc.numero_orcamento || "proposta"}-${format(new Date(), "yyyyMMdd")}.pdf`);
 }
