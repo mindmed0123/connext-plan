@@ -25,7 +25,9 @@ import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
+import { OnboardingGate } from "@/components/OnboardingGate";
 
 const queryClient = new QueryClient();
 
@@ -43,10 +45,22 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route
+              path="/onboarding"
               element={
                 <ProtectedRoute>
                   <SubscriptionGate>
-                    <AppLayout />
+                    <Onboarding />
+                  </SubscriptionGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <SubscriptionGate>
+                    <OnboardingGate>
+                      <AppLayout />
+                    </OnboardingGate>
                   </SubscriptionGate>
                 </ProtectedRoute>
               }

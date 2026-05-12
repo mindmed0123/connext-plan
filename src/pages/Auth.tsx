@@ -63,7 +63,7 @@ export default function Auth() {
         });
         if (rpcError) throw rpcError;
         toast.success("Conta criada! Você tem 14 dias grátis para testar.");
-        navigate("/dashboard", { replace: true });
+        navigate("/onboarding", { replace: true });
       } else {
         // Verificação por email pendente — guarda o nome da empresa para criar no primeiro login
         sessionStorage.setItem("pending_empresa_nome", empresaNome || nome || signupEmail);
