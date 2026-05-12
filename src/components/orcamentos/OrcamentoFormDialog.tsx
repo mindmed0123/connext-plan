@@ -84,18 +84,6 @@ export function OrcamentoFormDialog({
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
 
-  const { data: obras } = useQuery({
-    queryKey: ["orc-obras", empresaId],
-    enabled: !!empresaId && open,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("obras")
-        .select("id, codigo_chamado, descricao_servico, status")
-        .in("status", ["recebido", "em_vistoria", "aguardando_orcamento", "em_aprovacao"])
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
-  });
 
   const { data: servicos } = useQuery({
     queryKey: ["servicos-ativos", empresaId],
