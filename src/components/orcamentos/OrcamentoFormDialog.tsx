@@ -254,34 +254,15 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // Garante uma obra correspondente ao chamado e coloca no fluxo de aprovação
-      let obraId: string | null = null;
-      const { data: obraExistente } = await supabase
-        .from("obras")
-        .select("id")
-        .eq("empresa_id", empresaId)
-        .eq("codigo_chamado", chamado)
-        .maybeSingle();
-
-      if (obraExistente?.id) {
-        obraId = obraExistente.id;
-        await supabase.from("obras").update({
-          status: "em_aprovacao",
-          descricao_servico: titulo || clienteNome || chamado,
-          endereco: clienteEndereco || null,
-        }).eq("id", obraId);
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: novaObra, error: obraErr } = await (supabase.from("obras") as any).insert({
-          empresa_id: empresaId,
-          codigo_chamado: chamado,
-          status: "em_aprovacao",
-          descricao_servico: titulo || clienteNome || chamado,
-          endereco: clienteEndereco || null,
-        }).select("id").single();
-        if (obraErr) throw obraErr;
-        obraId = novaObra?.id ?? null;
-      }
+      // Garante uma obra correspondente ao chamado (via RPC com privilégios elevados)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: obraIdData, error: obraErr } = await (supabase as any).rpc("ensure_obra_for_chamado", {
+        _chamado: chamado,
+        _descricao: titulo || clienteNome || chamado,
+        _endereco: clienteEndereco || null,
+      });
+      if (obraErr) throw obraErr;
+      const obraId: string | null = (obraIdData as string) ?? null;
 
       const payload = {
         empresa_id: empresaId,
