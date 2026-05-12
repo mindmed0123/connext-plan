@@ -130,7 +130,6 @@ export default function Orcamentos() {
                 ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
                 : "—";
               const editable = o.status === "em_elaboracao" || o.status === "em_negociacao";
-              const deletable = o.status === "em_elaboracao";
               return (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{o.numero_orcamento || "—"}</TableCell>
