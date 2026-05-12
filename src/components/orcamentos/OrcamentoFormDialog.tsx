@@ -337,20 +337,15 @@ export function OrcamentoFormDialog({
           <div className="space-y-5">
             {/* Cabeçalho */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground">Chamado / Obra</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">Chamado</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
-                  <Label>Obra *</Label>
-                  <Select value={obraId} onValueChange={setObraId}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o chamado / obra" /></SelectTrigger>
-                    <SelectContent>
-                      {obras?.map((o) => (
-                        <SelectItem key={o.id} value={o.id}>
-                          {o.codigo_chamado} — {o.descricao_servico?.slice(0, 60)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Chamado *</Label>
+                  <Input
+                    value={chamado}
+                    onChange={(e) => setChamado(e.target.value)}
+                    placeholder="Ex.: 12345 ou OS-2026-001"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <Label>Título</Label>
