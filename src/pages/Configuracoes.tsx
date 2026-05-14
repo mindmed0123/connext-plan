@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Loader2, Save, Upload, Trash2 } from "lucide-react";
+import { Search, Loader2, Save, Upload, Trash2, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 import { toast } from "sonner";
 
 const formatCnpj = (v: string) => {
