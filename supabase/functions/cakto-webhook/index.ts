@@ -144,6 +144,12 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Fallback: detecta período pelo recurrence_period da assinatura Cakto (>=350 dias = anual)
+  if (!periodo) {
+    const recPeriod = Number(data?.subscription?.recurrence_period ?? 0);
+    if (recPeriod >= 350) periodo = "anual";
+    else if (recPeriod > 0) periodo = "mensal";
+  }
   // Idempotência por event_id
   await supabase.from("billing_events").upsert({
     event_id: String(eventId),
