@@ -111,6 +111,14 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <strong className="text-foreground">Endereço:</strong> {obra.endereco}
               </div>
 
+              <div className="pt-3">
+                <StatusPipeline
+                  currentStatus={obra.status}
+                  onChangeStatus={(s) => updateStatus.mutate(s)}
+                  canEdit={isAdmin}
+                />
+              </div>
+
               {isAdmin && (
                 <div className="flex items-center justify-between gap-2 pt-2">
                   <div className="flex items-center gap-2">
