@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, REGIAO_LABEL, ORIGEM_LABEL } from "@/lib/obra-helpers";
+import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
 import { ObraFormDialog } from "@/components/obras/ObraFormDialog";
 import { ObraDetailSheet } from "@/components/obras/ObraDetailSheet";
 import { format } from "date-fns";
