@@ -43,7 +43,7 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
-              {Object.entries(REGIAO_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              {(regioes ?? []).map((r: any) => <SelectItem key={r.nome} value={r.nome}>{r.nome}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
