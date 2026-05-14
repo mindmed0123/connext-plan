@@ -164,9 +164,10 @@ export default function Onboarding() {
         codigo_chamado: obraCodigo || `OB-${Date.now().toString().slice(-5)}`,
         descricao_servico: obraDescricao || "—",
         engenheiro_responsavel: obraEngenheiro || nome || "—",
-        regiao: obraRegiao as any,
+        regiao: "leste" as any,
+        regiao_label: obraRegiao || null,
         origem: "Sabesp",
-      });
+      } as any);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["obras"] });
       toast.success("Obra cadastrada!");
