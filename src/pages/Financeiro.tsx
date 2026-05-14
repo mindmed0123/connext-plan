@@ -1,181 +1,612 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, AlertCircle, Clock, Search, ExternalLink, Hammer, CheckCircle2, FileText } from "lucide-react";
-import { format, addDays, isBefore } from "date-fns";
-import { formatCurrency } from "@/lib/obra-helpers";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  CONTRATACAO_STATUS_COLOR,
-  CONTRATACAO_STATUS_LABEL,
-  FORMA_PAGAMENTO_LABEL,
-} from "@/lib/financeiro-helpers";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { formatCurrency } from "@/lib/obra-helpers";
+import { format, addDays, isBefore, parseISO } from "date-fns";
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend, ReferenceLine,
+} from "recharts";
+import {
+  Wallet, TrendingUp, TrendingDown, AlertTriangle, Plus, CheckCircle2,
+  ArrowUpRight, ArrowDownRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ObraDetailSheet } from "@/components/obras/ObraDetailSheet";
+
+const fmt = formatCurrency;
+const fmtDate = (d?: string | null) => (d ? format(parseISO(d), "dd/MM/yyyy") : "—");
+
+type LancamentoForm = {
+  tipo: "receita" | "despesa";
+  status: "previsto" | "realizado" | "cancelado";
+  descricao: string;
+  valor: number;
+  data_competencia: string;
+  data_vencimento?: string | null;
+  data_realizado?: string | null;
+  fornecedor_nome?: string | null;
+  documento_num?: string | null;
+  forma_pagamento?: any;
+  observacoes?: string | null;
+  obra_id?: string | null;
+  categoria_id?: string | null;
+};
+
+const emptyForm: LancamentoForm = {
+  tipo: "despesa",
+  status: "previsto",
+  descricao: "",
+  valor: 0,
+  data_competencia: new Date().toISOString().slice(0, 10),
+  data_vencimento: null,
+  data_realizado: null,
+  fornecedor_nome: "",
+  documento_num: "",
+  forma_pagamento: null,
+  observacoes: "",
+  obra_id: null,
+  categoria_id: null,
+};
 
 export default function Financeiro() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [terceirizadoFilter, setTerceirizadoFilter] = useState<string>("all");
-  const [obraId, setObraId] = useState<string | null>(null);
+  const { empresaId } = useAuth();
+  const qc = useQueryClient();
+  const [tab, setTab] = useState("visao-geral");
+  const [openLanc, setOpenLanc] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<LancamentoForm>(emptyForm);
 
-  const { data: contratacoes } = useQuery({
-    queryKey: ["financeiro-contratacoes"],
+  const [filtroTipo, setFiltroTipo] = useState("all");
+  const [filtroStatus, setFiltroStatus] = useState("all");
+  const [filtroObra, setFiltroObra] = useState("all");
+  const [search, setSearch] = useState("");
+
+  // ── Queries ────────────────────────────────────────────────────────────
+  const { data: fluxo = [] } = useQuery({
+    queryKey: ["fluxo-caixa-mensal", empresaId],
+    enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contratacoes_terceirizado")
-        .select("*, pessoas:terceirizado_id(id, nome), obras(id, codigo_chamado, descricao_servico), parcelas_pagamento(*)")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal" as any, {
+        _empresa_id: empresaId!, _meses_atras: 5, _meses_frente: 3,
+      });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: dre = [] } = useQuery({
+    queryKey: ["dre-obras", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_dre_obra" as any, { _empresa_id: empresaId! });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: lancamentos = [] } = useQuery({
+    queryKey: ["lancamentos", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("lancamentos_financeiros")
+        .select("*, categorias_financeiras(nome, cor), obras(codigo_chamado)")
+        .order("data_vencimento", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  const { data: terceirizados } = useQuery({
-    queryKey: ["pessoas-terceirizados-list"],
+  const { data: parcelas = [] } = useQuery({
+    queryKey: ["parcelas-fin", empresaId],
+    enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await supabase.from("pessoas").select("id, nome").eq("tipo", "terceirizado").order("nome");
+      const { data } = await supabase
+        .from("parcelas_pagamento")
+        .select("*, contratacoes_terceirizado(obra_id, obras(codigo_chamado), pessoas:terceirizado_id(nome))")
+        .order("data_prevista", { ascending: true });
       return data ?? [];
     },
   });
 
-  const { data: obrasStats } = useQuery({
-    queryKey: ["financeiro-obras-stats"],
+  const { data: recebimentos = [] } = useQuery({
+    queryKey: ["recebimentos-fin", empresaId],
+    enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await supabase.from("obras").select("id, status");
+      const { data } = await supabase
+        .from("recebimentos")
+        .select("*, obras(codigo_chamado)")
+        .order("data_prevista", { ascending: true });
       return data ?? [];
     },
   });
 
-  const { data: orcamentosStats } = useQuery({
-    queryKey: ["financeiro-orcamentos-stats"],
+  const { data: obras = [] } = useQuery({
+    queryKey: ["obras-fin-select", empresaId],
+    enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await supabase.from("orcamentos").select("id, status");
+      const { data } = await supabase.from("obras").select("id, codigo_chamado").order("codigo_chamado");
       return data ?? [];
     },
   });
 
-  const operacaoStats = useMemo(() => {
-    const obras = obrasStats ?? [];
-    const orcamentos = orcamentosStats ?? [];
-    const emExecucao = obras.filter((o: any) => o.status === "em_execucao").length;
-    const finalizadas = obras.filter((o: any) => o.status === "finalizado" || o.status === "pago").length;
-    const orcamentosPendentes = orcamentos.filter((o: any) =>
-      ["em_elaboracao", "enviado", "em_negociacao"].includes(o.status)
-    ).length;
-    return { emExecucao, finalizadas, orcamentosPendentes };
-  }, [obrasStats, orcamentosStats]);
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias-fin", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("categorias_financeiras").select("*").eq("ativo", true).order("nome");
+      return (data ?? []) as any[];
+    },
+  });
 
-  const stats = useMemo(() => {
-    const list = contratacoes ?? [];
-    const totalContratado = list.reduce((s, c: any) => s + Number(c.valor_total), 0);
-    const allParcelas = list.flatMap((c: any) => c.parcelas_pagamento ?? []);
-    const totalPago = allParcelas.filter((p: any) => p.status === "pago").reduce((s, p: any) => s + Number(p.valor), 0);
-    const totalPendente = totalContratado - totalPago;
-    const limite = addDays(new Date(), 7);
-    const proximas = allParcelas.filter((p: any) => p.status === "pendente" && p.data_prevista && isBefore(new Date(p.data_prevista), limite));
-    const proximasValor = proximas.reduce((s, p: any) => s + Number(p.valor), 0);
-    const parcial = list.filter((c: any) => c.status_financeiro === "parcialmente_pago").length;
-    const pendentes = list.filter((c: any) => c.status_financeiro === "pendente").length;
-    return { totalContratado, totalPago, totalPendente, proximas: proximas.length, proximasValor, parcial, pendentes };
-  }, [contratacoes]);
+  // ── KPIs ────────────────────────────────────────────────────────────────
+  const kpis = useMemo(() => {
+    const all = lancamentos as any[];
+    const receita_real =
+      all.filter((l) => l.tipo === "receita" && l.status === "realizado").reduce((s, l) => s + Number(l.valor), 0)
+      + (recebimentos as any[]).filter((r) => r.status === "recebido").reduce((s, r) => s + Number(r.valor), 0);
 
-  const filtered = useMemo(() => {
-    return (contratacoes ?? []).filter((c: any) => {
-      if (statusFilter !== "all" && c.status_financeiro !== statusFilter) return false;
-      if (terceirizadoFilter !== "all" && c.terceirizado_id !== terceirizadoFilter) return false;
+    const despesa_real =
+      all.filter((l) => l.tipo === "despesa" && l.status === "realizado").reduce((s, l) => s + Number(l.valor), 0)
+      + (parcelas as any[]).filter((p) => p.status === "pago").reduce((s, p) => s + Number(p.valor), 0);
+
+    const receita_prev =
+      all.filter((l) => l.tipo === "receita" && l.status === "previsto").reduce((s, l) => s + Number(l.valor), 0)
+      + (recebimentos as any[]).filter((r) => r.status === "a_receber").reduce((s, r) => s + Number(r.valor), 0);
+
+    const despesa_prev =
+      all.filter((l) => l.tipo === "despesa" && l.status === "previsto").reduce((s, l) => s + Number(l.valor), 0)
+      + (parcelas as any[]).filter((p) => p.status === "pendente").reduce((s, p) => s + Number(p.valor), 0);
+
+    const margem = receita_real - despesa_real;
+    const margem_pct = receita_real > 0 ? (margem / receita_real) * 100 : 0;
+
+    const hoje = new Date();
+    const limite7 = addDays(hoje, 7);
+    const vencendo = (parcelas as any[])
+      .filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), limite7))
+      .reduce((s, p) => s + Number(p.valor), 0);
+    const vencidos =
+      (parcelas as any[]).filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), hoje)).length
+      + all.filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.data_vencimento && isBefore(parseISO(l.data_vencimento), hoje)).length;
+
+    return { receita_real, despesa_real, receita_prev, despesa_prev, margem, margem_pct, vencendo, vencidos };
+  }, [lancamentos, parcelas, recebimentos]);
+
+  const lancFiltrados = useMemo(() => {
+    return (lancamentos as any[]).filter((l) => {
+      if (filtroTipo !== "all" && l.tipo !== filtroTipo) return false;
+      if (filtroStatus !== "all" && l.status !== filtroStatus) return false;
+      if (filtroObra !== "all" && l.obra_id !== filtroObra) return false;
       if (search) {
         const s = search.toLowerCase();
-        const match =
-          c.obras?.codigo_chamado?.toLowerCase().includes(s) ||
-          c.obras?.descricao_servico?.toLowerCase().includes(s) ||
-          c.pessoas?.nome?.toLowerCase().includes(s);
-        if (!match) return false;
+        const ok = l.descricao?.toLowerCase().includes(s)
+          || (l.fornecedor_nome ?? "").toLowerCase().includes(s)
+          || (l.obras?.codigo_chamado ?? "").toLowerCase().includes(s);
+        if (!ok) return false;
       }
       return true;
     });
-  }, [contratacoes, statusFilter, terceirizadoFilter, search]);
+  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, search]);
 
-  const proximasParcelas = useMemo(() => {
-    const limite = addDays(new Date(), 14);
-    return (contratacoes ?? [])
-      .flatMap((c: any) => (c.parcelas_pagamento ?? []).map((p: any) => ({ ...p, contratacao: c })))
-      .filter((p: any) => p.status === "pendente" && p.data_prevista && isBefore(new Date(p.data_prevista), limite))
-      .sort((a: any, b: any) => new Date(a.data_prevista).getTime() - new Date(b.data_prevista).getTime());
-  }, [contratacoes]);
+  const proximosVenc = useMemo(() => {
+    const hoje = new Date();
+    const limite = addDays(hoje, 30);
+    const itens: Array<{ data: Date; descricao: string; valor: number; tipo: string; vencido: boolean }> = [];
+
+    (parcelas as any[]).filter((p) => p.status === "pendente" && p.data_prevista).forEach((p) => {
+      const d = parseISO(p.data_prevista);
+      if (isBefore(d, limite)) {
+        itens.push({
+          data: d,
+          descricao: `${p.contratacoes_terceirizado?.pessoas?.nome ?? "Terceirizado"} — ${p.contratacoes_terceirizado?.obras?.codigo_chamado ?? ""}`,
+          valor: Number(p.valor),
+          tipo: "Parcela",
+          vencido: isBefore(d, hoje),
+        });
+      }
+    });
+
+    (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.data_vencimento).forEach((l) => {
+      const d = parseISO(l.data_vencimento);
+      if (isBefore(d, limite)) {
+        itens.push({
+          data: d,
+          descricao: l.descricao + (l.fornecedor_nome ? ` — ${l.fornecedor_nome}` : ""),
+          valor: Number(l.valor),
+          tipo: "Despesa",
+          vencido: isBefore(d, hoje),
+        });
+      }
+    });
+
+    return itens.sort((a, b) => a.data.getTime() - b.data.getTime());
+  }, [parcelas, lancamentos]);
+
+  // ── Mutations ──────────────────────────────────────────────────────────
+  const salvar = useMutation({
+    mutationFn: async () => {
+      const payload: any = { ...form, valor: Number(form.valor) || 0 };
+      if (!payload.data_vencimento) payload.data_vencimento = null;
+      if (!payload.data_realizado) payload.data_realizado = null;
+      if (!payload.obra_id) payload.obra_id = null;
+      if (!payload.categoria_id) payload.categoria_id = null;
+      if (!payload.forma_pagamento) payload.forma_pagamento = null;
+
+      if (editId) {
+        const { error } = await (supabase as any)
+          .from("lancamentos_financeiros").update(payload).eq("id", editId);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any)
+          .from("lancamentos_financeiros").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(editId ? "Lançamento atualizado" : "Lançamento criado");
+      qc.invalidateQueries({ queryKey: ["lancamentos"] });
+      qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
+      qc.invalidateQueries({ queryKey: ["dre-obras"] });
+      setOpenLanc(false); setEditId(null); setForm(emptyForm);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
+  });
+
+  const realizar = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("lancamentos_financeiros")
+        .update({ status: "realizado", data_realizado: new Date().toISOString().slice(0, 10) })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Marcado como realizado");
+      qc.invalidateQueries({ queryKey: ["lancamentos"] });
+      qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
+      qc.invalidateQueries({ queryKey: ["dre-obras"] });
+    },
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("lancamentos_financeiros").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Lançamento excluído");
+      qc.invalidateQueries({ queryKey: ["lancamentos"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const openNovo = () => { setEditId(null); setForm(emptyForm); setOpenLanc(true); };
+  const openEditar = (l: any) => {
+    setEditId(l.id);
+    setForm({
+      tipo: l.tipo, status: l.status, descricao: l.descricao, valor: Number(l.valor),
+      data_competencia: l.data_competencia, data_vencimento: l.data_vencimento,
+      data_realizado: l.data_realizado, fornecedor_nome: l.fornecedor_nome,
+      documento_num: l.documento_num, forma_pagamento: l.forma_pagamento,
+      observacoes: l.observacoes, obra_id: l.obra_id, categoria_id: l.categoria_id,
+    });
+    setOpenLanc(true);
+  };
+
+  const categoriasFiltradas = (categorias as any[]).filter((c) => c.tipo === form.tipo);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Financeiro</h1>
-        <p className="text-sm text-muted-foreground">Pagamentos a terceirizados, parcelas e pendências por obra</p>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold">Financeiro</h1>
+          <p className="text-sm text-muted-foreground">
+            Fluxo de caixa · DRE por obra · Contas a pagar/receber · Lançamentos
+          </p>
+        </div>
+        <Button onClick={openNovo}>
+          <Plus className="h-4 w-4 mr-1" /> Novo lançamento
+        </Button>
       </div>
 
+      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total contratado" value={formatCurrency(stats.totalContratado)} icon={Wallet} tone="muted" />
-        <StatCard label="Total pago" value={formatCurrency(stats.totalPago)} icon={TrendingUp} tone="emerald" />
-        <StatCard label="Total pendente" value={formatCurrency(stats.totalPendente)} icon={AlertCircle} tone="amber" />
-        <StatCard
-          label="Próximos 7 dias"
-          value={formatCurrency(stats.proximasValor)}
-          sub={`${stats.proximas} parcela${stats.proximas !== 1 ? "s" : ""}`}
-          icon={Clock}
-          tone="blue"
+        <Kpi label="Receita realizada" value={fmt(kpis.receita_real)} sub={`Previsto: ${fmt(kpis.receita_prev)}`} icon={ArrowUpRight} tone="emerald" />
+        <Kpi label="Despesa realizada" value={fmt(kpis.despesa_real)} sub={`Previsto: ${fmt(kpis.despesa_prev)}`} icon={ArrowDownRight} tone="red" />
+        <Kpi
+          label="Margem bruta"
+          value={fmt(kpis.margem)}
+          sub={`${kpis.margem_pct.toFixed(1)}% de margem`}
+          icon={kpis.margem >= 0 ? TrendingUp : TrendingDown}
+          tone={kpis.margem >= 0 ? "emerald" : "red"}
+        />
+        <Kpi
+          label="Vencendo (7 dias)"
+          value={fmt(kpis.vencendo)}
+          sub={kpis.vencidos > 0 ? `${kpis.vencidos} vencido(s)` : "Em dia"}
+          icon={AlertTriangle}
+          tone={kpis.vencidos > 0 ? "red" : "amber"}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <StatCard
-          label="Obras em execução"
-          value={String(operacaoStats.emExecucao)}
-          sub={`${operacaoStats.emExecucao === 1 ? "obra ativa" : "obras ativas"}`}
-          icon={Hammer}
-          tone="blue"
-        />
-        <StatCard
-          label="Obras finalizadas"
-          value={String(operacaoStats.finalizadas)}
-          sub="concluídas ou pagas"
-          icon={CheckCircle2}
-          tone="emerald"
-        />
-        <StatCard
-          label="Orçamentos pendentes"
-          value={String(operacaoStats.orcamentosPendentes)}
-          sub="aguardando aprovação"
-          icon={FileText}
-          tone="amber"
-        />
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="visao-geral">Visão geral</TabsTrigger>
+          <TabsTrigger value="fluxo">Fluxo de caixa</TabsTrigger>
+          <TabsTrigger value="dre">DRE por obra</TabsTrigger>
+          <TabsTrigger value="contas">Contas a pagar</TabsTrigger>
+          <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
+        </TabsList>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 space-y-3">
+        {/* Visão Geral */}
+        <TabsContent value="visao-geral" className="space-y-4">
+          <div className="grid lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3"><CardTitle className="text-base">Receitas × Despesas</CardTitle></CardHeader>
+              <CardContent>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={fluxo}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ fontSize: 12 }} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="receitas_real" name="Receitas" fill="hsl(var(--primary))" />
+                      <Bar dataKey="despesas_real" name="Despesas" fill="hsl(var(--destructive))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" /> Próximos vencimentos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 max-h-80 overflow-auto">
+                {proximosVenc.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Nenhum vencimento nos próximos 30 dias
+                  </p>
+                )}
+                {proximosVenc.slice(0, 15).map((it, i) => (
+                  <div key={i} className={cn("rounded-md border p-2", it.vencido && "border-red-300 bg-red-50/50 dark:bg-red-950/20")}>
+                    <div className="flex justify-between items-start gap-2">
+                      <p className="text-xs font-medium truncate flex-1">{it.descricao}</p>
+                      <p className="text-xs font-semibold whitespace-nowrap">{fmt(it.valor)}</p>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <Badge variant="outline" className="text-[10px]">{it.tipo}</Badge>
+                      <span className={cn("text-[10px] text-muted-foreground", it.vencido && "text-red-600 font-medium")}>
+                        {format(it.data, "dd/MM/yyyy")}{it.vencido ? " ⚠ vencido" : ""}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-base">Saldo acumulado</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={fluxo}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ fontSize: 12 }} />
+                    <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" />
+                    <Line type="monotone" dataKey="saldo_acumulado" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="Saldo acumulado" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Fluxo de caixa */}
+        <TabsContent value="fluxo" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-base">Previsto vs realizado</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={fluxo}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="receitas_prev" name="Rec. previstas" fill="#86efac" />
+                    <Bar dataKey="receitas_real" name="Rec. realizadas" fill="#16a34a" />
+                    <Bar dataKey="despesas_prev" name="Desp. previstas" fill="#fca5a5" />
+                    <Bar dataKey="despesas_real" name="Desp. realizadas" fill="#dc2626" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mês</TableHead>
+                  <TableHead className="text-right">Rec. prev.</TableHead>
+                  <TableHead className="text-right">Rec. real</TableHead>
+                  <TableHead className="text-right">Desp. prev.</TableHead>
+                  <TableHead className="text-right">Desp. real</TableHead>
+                  <TableHead className="text-right">Saldo prev.</TableHead>
+                  <TableHead className="text-right">Saldo real</TableHead>
+                  <TableHead className="text-right">Acumulado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(fluxo as any[]).map((m) => (
+                  <TableRow key={`${m.ano}-${m.mes_num}`}>
+                    <TableCell className="font-medium">{m.mes}</TableCell>
+                    <TableCell className="text-right">{fmt(m.receitas_prev)}</TableCell>
+                    <TableCell className="text-right text-emerald-700">{fmt(m.receitas_real)}</TableCell>
+                    <TableCell className="text-right">{fmt(m.despesas_prev)}</TableCell>
+                    <TableCell className="text-right text-red-700">{fmt(m.despesas_real)}</TableCell>
+                    <TableCell className={cn("text-right", Number(m.saldo_prev) >= 0 ? "text-emerald-700" : "text-red-700")}>{fmt(m.saldo_prev)}</TableCell>
+                    <TableCell className={cn("text-right font-medium", Number(m.saldo_real) >= 0 ? "text-emerald-700" : "text-red-700")}>{fmt(m.saldo_real)}</TableCell>
+                    <TableCell className={cn("text-right font-semibold", Number(m.saldo_acumulado) >= 0 ? "text-emerald-700" : "text-red-700")}>{fmt(m.saldo_acumulado)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        {/* DRE por obra */}
+        <TabsContent value="dre">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Obra</TableHead>
+                  <TableHead className="text-right">Rec. contratada</TableHead>
+                  <TableHead className="text-right">Rec. medida</TableHead>
+                  <TableHead className="text-right">Rec. recebida</TableHead>
+                  <TableHead className="text-right">Custo subcont.</TableHead>
+                  <TableHead className="text-right">Materiais</TableHead>
+                  <TableHead className="text-right">Custo total</TableHead>
+                  <TableHead className="text-right">Margem bruta</TableHead>
+                  <TableHead className="text-right">Margem %</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(dre as any[]).length === 0 && (
+                  <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-8">Sem dados de DRE ainda</TableCell></TableRow>
+                )}
+                {(dre as any[]).map((row) => (
+                  <TableRow key={row.obra_id}>
+                    <TableCell className="font-medium">{row.obra_codigo}</TableCell>
+                    <TableCell className="text-right">{fmt(row.receita_contratada)}</TableCell>
+                    <TableCell className="text-right">{fmt(row.receita_medida)}</TableCell>
+                    <TableCell className="text-right text-emerald-700">{fmt(row.receita_recebida)}</TableCell>
+                    <TableCell className="text-right">{fmt(row.custo_subcontratado)}</TableCell>
+                    <TableCell className="text-right">{fmt(row.custo_materiais)}</TableCell>
+                    <TableCell className="text-right text-red-700">{fmt(row.custo_total_real)}</TableCell>
+                    <TableCell className={cn("text-right font-medium", Number(row.margem_bruta) >= 0 ? "text-emerald-700" : "text-red-700")}>{fmt(row.margem_bruta)}</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline" className={cn(
+                        "text-[10px]",
+                        Number(row.margem_pct) >= 20 ? "border-emerald-500 text-emerald-700 bg-emerald-50"
+                          : Number(row.margem_pct) >= 0 ? "border-amber-500 text-amber-700 bg-amber-50"
+                          : "border-red-500 text-red-700 bg-red-50"
+                      )}>
+                        {Number(row.margem_pct ?? 0).toFixed(1)}%
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        {/* Contas a pagar */}
+        <TabsContent value="contas">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Obra</TableHead>
+                  <TableHead>Terceirizado</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Forma</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(parcelas as any[]).length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">Sem parcelas</TableCell></TableRow>
+                )}
+                {(parcelas as any[]).map((p) => {
+                  const venc = p.data_prevista ? parseISO(p.data_prevista) : null;
+                  const vencido = p.status === "pendente" && venc && isBefore(venc, new Date());
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-sm">{p.contratacoes_terceirizado?.obras?.codigo_chamado ?? "—"}</TableCell>
+                      <TableCell className="text-sm">{p.contratacoes_terceirizado?.pessoas?.nome ?? "—"}</TableCell>
+                      <TableCell className="text-right font-medium">{fmt(p.valor)}</TableCell>
+                      <TableCell className={cn("text-sm", vencido && "text-red-600 font-medium")}>
+                        {fmtDate(p.data_prevista)}{vencido ? " ⚠" : ""}
+                      </TableCell>
+                      <TableCell className="text-sm">{p.forma_pagamento ?? "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={cn(
+                          "text-[10px]",
+                          p.status === "pago" ? "border-emerald-500 text-emerald-700 bg-emerald-50"
+                            : vencido ? "border-red-500 text-red-700 bg-red-50"
+                            : "border-amber-500 text-amber-700 bg-amber-50"
+                        )}>
+                          {p.status === "pago" ? "✓ Pago" : vencido ? "Vencido" : "Pendente"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        {/* Lançamentos */}
+        <TabsContent value="lancamentos" className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <Input className="pl-8 h-9" placeholder="Buscar por obra ou terceirizado" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-[220px]" />
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="parcialmente_pago">Parcialmente pago</SelectItem>
-                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="receita">Receita</SelectItem>
+                <SelectItem value="despesa">Despesa</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger className="h-9 w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos status</SelectItem>
+                <SelectItem value="previsto">Previsto</SelectItem>
+                <SelectItem value="realizado">Realizado</SelectItem>
                 <SelectItem value="cancelado">Cancelado</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={terceirizadoFilter} onValueChange={setTerceirizadoFilter}>
+            <Select value={filtroObra} onValueChange={setFiltroObra}>
               <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos terceirizados</SelectItem>
-                {terceirizados?.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                <SelectItem value="all">Todas as obras</SelectItem>
+                {(obras as any[]).map((o) => (
+                  <SelectItem key={o.id} value={o.id}>{o.codigo_chamado}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -184,89 +615,193 @@ export default function Financeiro() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Obra</TableHead>
-                  <TableHead>Terceirizado</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Pago</TableHead>
-                  <TableHead className="text-right">Saldo</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">Nenhuma contratação encontrada</TableCell></TableRow>
+                {lancFiltrados.length === 0 && (
+                  <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">Nenhum lançamento</TableCell></TableRow>
                 )}
-                {filtered.map((c: any) => {
-                  const pago = (c.parcelas_pagamento ?? []).filter((p: any) => p.status === "pago").reduce((s: number, p: any) => s + Number(p.valor), 0);
-                  const saldo = Number(c.valor_total) - pago;
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        <div className="font-medium text-sm">{c.obras?.codigo_chamado}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">{c.obras?.descricao_servico}</div>
-                      </TableCell>
-                      <TableCell className="text-sm">{c.pessoas?.nome}</TableCell>
-                      <TableCell className="text-right text-sm font-medium">{formatCurrency(c.valor_total)}</TableCell>
-                      <TableCell className="text-right text-sm text-emerald-700 dark:text-emerald-300">{formatCurrency(pago)}</TableCell>
-                      <TableCell className="text-right text-sm text-amber-700 dark:text-amber-300">{formatCurrency(saldo)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={cn("text-[10px]", CONTRATACAO_STATUS_COLOR[c.status_financeiro as keyof typeof CONTRATACAO_STATUS_COLOR])}>
-                          {CONTRATACAO_STATUS_LABEL[c.status_financeiro as keyof typeof CONTRATACAO_STATUS_LABEL]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setObraId(c.obra_id)} title="Abrir obra">
-                          <ExternalLink className="h-3.5 w-3.5" />
+                {lancFiltrados.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{l.descricao}</div>
+                      {l.fornecedor_nome && <div className="text-xs text-muted-foreground">{l.fornecedor_nome}</div>}
+                    </TableCell>
+                    <TableCell className="text-xs">{l.categorias_financeiras?.nome ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{l.obras?.codigo_chamado ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{fmtDate(l.data_vencimento)}</TableCell>
+                    <TableCell className={cn("text-right font-medium", l.tipo === "receita" ? "text-emerald-700" : "text-red-700")}>
+                      {l.tipo === "receita" ? "+" : "-"} {fmt(l.valor)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px]",
+                        l.tipo === "receita" ? "border-emerald-500 text-emerald-700" : "border-red-500 text-red-700"
+                      )}>
+                        {l.tipo}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px]",
+                        l.status === "realizado" ? "border-emerald-500 text-emerald-700 bg-emerald-50"
+                          : l.status === "cancelado" ? "border-muted text-muted-foreground"
+                          : "border-amber-500 text-amber-700 bg-amber-50"
+                      )}>
+                        {l.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-1">
+                      {l.status === "previsto" && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-emerald-700"
+                                onClick={() => realizar.mutate(l.id)} title="Marcar como realizado">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                      )}
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEditar(l)}>
+                        Editar
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
+                              onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l.id); }}>
+                        Excluir
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
-        </div>
+        </TabsContent>
+      </Tabs>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Próximas parcelas (14 dias)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {proximasParcelas.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma parcela vencendo nos próximos 14 dias.</p>
-            )}
-            {proximasParcelas.slice(0, 12).map((p: any) => (
-              <button
-                key={p.id}
-                onClick={() => setObraId(p.contratacao.obra_id)}
-                className="w-full text-left rounded-md border p-2 hover:bg-muted/50 transition"
-              >
-                <div className="flex justify-between items-start gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium truncate">{p.contratacao.obras?.codigo_chamado}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{p.contratacao.pessoas?.nome}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xs font-semibold">{formatCurrency(p.valor)}</p>
-                    <p className="text-[10px] text-muted-foreground">{format(new Date(p.data_prevista), "dd/MM")}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <ObraDetailSheet obraId={obraId} onClose={() => setObraId(null)} />
+      {/* Dialog Lançamento */}
+      <Dialog open={openLanc} onOpenChange={(o) => { setOpenLanc(o); if (!o) { setEditId(null); setForm(emptyForm); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar lançamento" : "Novo lançamento"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Tipo</Label>
+              <Select value={form.tipo} onValueChange={(v: any) => setForm({ ...form, tipo: v, categoria_id: null })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="receita">Receita</SelectItem>
+                  <SelectItem value="despesa">Despesa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v: any) => setForm({ ...form, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="previsto">Previsto</SelectItem>
+                  <SelectItem value="realizado">Realizado</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Descrição *</Label>
+              <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+            </div>
+            <div>
+              <Label>Valor (R$) *</Label>
+              <Input type="number" step="0.01" value={form.valor}
+                     onChange={(e) => setForm({ ...form, valor: parseFloat(e.target.value) || 0 })} />
+            </div>
+            <div>
+              <Label>Categoria</Label>
+              <Select value={form.categoria_id ?? ""} onValueChange={(v) => setForm({ ...form, categoria_id: v || null })}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {categoriasFiltradas.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Data competência *</Label>
+              <Input type="date" value={form.data_competencia}
+                     onChange={(e) => setForm({ ...form, data_competencia: e.target.value })} />
+            </div>
+            <div>
+              <Label>Vencimento</Label>
+              <Input type="date" value={form.data_vencimento ?? ""}
+                     onChange={(e) => setForm({ ...form, data_vencimento: e.target.value || null })} />
+            </div>
+            <div>
+              <Label>Data realizado</Label>
+              <Input type="date" value={form.data_realizado ?? ""}
+                     onChange={(e) => setForm({ ...form, data_realizado: e.target.value || null })} />
+            </div>
+            <div>
+              <Label>Forma de pagamento</Label>
+              <Select value={form.forma_pagamento ?? ""} onValueChange={(v) => setForm({ ...form, forma_pagamento: v || null })}>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="boleto">Boleto</SelectItem>
+                  <SelectItem value="transferencia">Transferência</SelectItem>
+                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="cartao">Cartão</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Obra</Label>
+              <Select value={form.obra_id ?? ""} onValueChange={(v) => setForm({ ...form, obra_id: v || null })}>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  {(obras as any[]).map((o) => (
+                    <SelectItem key={o.id} value={o.id}>{o.codigo_chamado}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Fornecedor / cliente</Label>
+              <Input value={form.fornecedor_nome ?? ""}
+                     onChange={(e) => setForm({ ...form, fornecedor_nome: e.target.value })} />
+            </div>
+            <div>
+              <Label>Documento (NF, boleto, etc)</Label>
+              <Input value={form.documento_num ?? ""}
+                     onChange={(e) => setForm({ ...form, documento_num: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <Label>Observações</Label>
+              <Textarea rows={2} value={form.observacoes ?? ""}
+                        onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenLanc(false)}>Cancelar</Button>
+            <Button onClick={() => salvar.mutate()} disabled={!form.descricao || !form.valor || salvar.isPending}>
+              {salvar.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function StatCard({ label, value, sub, icon: Icon, tone }: { label: string; value: string; sub?: string; icon: any; tone: "muted" | "emerald" | "amber" | "blue" }) {
-  const toneCls = {
-    muted: "bg-muted/50 text-muted-foreground",
+function Kpi({ label, value, sub, icon: Icon, tone }: { label: string; value: string; sub?: string; icon: any; tone: "emerald" | "red" | "amber" | "blue" }) {
+  const cls = {
     emerald: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    red: "bg-red-500/15 text-red-700 dark:text-red-300",
     amber: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
     blue: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
   }[tone];
@@ -279,7 +814,7 @@ function StatCard({ label, value, sub, icon: Icon, tone }: { label: string; valu
             <p className="text-xl font-semibold mt-1">{value}</p>
             {sub && <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
           </div>
-          <div className={cn("h-8 w-8 rounded-md flex items-center justify-center", toneCls)}>
+          <div className={cn("h-8 w-8 rounded-md flex items-center justify-center", cls)}>
             <Icon className="h-4 w-4" />
           </div>
         </div>
