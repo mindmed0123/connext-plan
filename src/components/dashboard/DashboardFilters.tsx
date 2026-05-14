@@ -1,8 +1,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST, REGIAO_LABEL } from "@/lib/obra-helpers";
+import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST } from "@/lib/obra-helpers";
 import { RotateCcw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { DashboardFilters as F } from "@/hooks/useDashboardData";
 
 interface Props {
