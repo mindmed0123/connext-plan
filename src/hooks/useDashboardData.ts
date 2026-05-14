@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { ObraStatus, ObraRegiao } from "@/lib/obra-helpers";
+import type { ObraStatus } from "@/lib/obra-helpers";
+import { REGIAO_LABEL } from "@/lib/obra-helpers";
 import {
   STATUS_EM_ORCAMENTO,
   STATUS_EM_EXECUCAO,
@@ -8,9 +9,9 @@ import {
 } from "@/lib/dashboard-helpers";
 
 export interface DashboardFilters {
-  from?: string; // ISO date
-  to?: string; // ISO date
-  regiao?: ObraRegiao | "todas";
+  from?: string;
+  to?: string;
+  regiao?: string | "todas";
   engenheiro?: string | "todos";
   status?: ObraStatus | "todas";
   responsavelId?: string | "todos";
