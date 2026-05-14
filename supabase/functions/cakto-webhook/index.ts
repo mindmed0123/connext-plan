@@ -106,9 +106,21 @@ Deno.serve(async (req) => {
 
   // Fallback: parametro `ref` que enviamos no link de checkout
   // Formato: empresa_id|plano_id|periodo|user_id
-  const refRaw: string | null =
+  // A Cakto pode devolver o ref em data.ref OU embutido em data.checkoutUrl como query string.
+  let refRaw: string | null =
     data?.ref ?? data?.utm?.ref ?? metadata?.ref ??
     data?.checkout?.ref ?? data?.tracking?.ref ?? null;
+  if (!refRaw) {
+    const checkoutUrl: string | null =
+      data?.checkoutUrl ?? data?.checkout_url ?? data?.checkout?.url ?? null;
+    if (checkoutUrl && typeof checkoutUrl === "string") {
+      try {
+        const u = new URL(checkoutUrl);
+        const r = u.searchParams.get("ref");
+        if (r) refRaw = r;
+      } catch { /* ignore */ }
+    }
+  }
   if (refRaw && typeof refRaw === "string" && refRaw.includes("|")) {
     const [r_empresa, r_plano, r_periodo, r_user] = refRaw.split("|");
     empresa_id = empresa_id ?? r_empresa ?? null;
@@ -132,6 +144,12 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Fallback: detecta período pelo recurrence_period da assinatura Cakto (>=350 dias = anual)
+  if (!periodo) {
+    const recPeriod = Number(data?.subscription?.recurrence_period ?? 0);
+    if (recPeriod >= 350) periodo = "anual";
+    else if (recPeriod > 0) periodo = "mensal";
+  }
   // Idempotência por event_id
   await supabase.from("billing_events").upsert({
     event_id: String(eventId),
@@ -216,20 +234,26 @@ Deno.serve(async (req) => {
         .maybeSingle();
       target = existing as any;
     }
-    // Fallback: localizar empresa pelo email do cliente
+    // Fallback: localizar empresa pelo email do cliente (pessoas OU admin via auth.users)
     if (!target && customerEmail) {
+      let emp: string | null = null;
       const { data: pessoa } = await supabase
-        .from("pessoas")
-        .select("empresa_id")
-        .ilike("email", customerEmail)
-        .maybeSingle();
-      const emp = (pessoa as any)?.empresa_id;
+        .from("pessoas").select("empresa_id").ilike("email", customerEmail).maybeSingle();
+      emp = (pessoa as any)?.empresa_id ?? null;
+      if (!emp) {
+        // procura admin/owner pelo auth.users.email -> user_roles.empresa_id
+        const { data: usr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const u = (usr?.users ?? []).find((x: any) => (x.email ?? "").toLowerCase() === customerEmail);
+        if (u) {
+          const { data: ur } = await supabase
+            .from("user_roles").select("empresa_id")
+            .eq("user_id", u.id).not("empresa_id", "is", null).maybeSingle();
+          emp = (ur as any)?.empresa_id ?? null;
+        }
+      }
       if (emp) {
         const { data: existing } = await supabase
-          .from("assinaturas")
-          .select("id, empresa_id")
-          .eq("empresa_id", emp)
-          .maybeSingle();
+          .from("assinaturas").select("id, empresa_id").eq("empresa_id", emp).maybeSingle();
         target = existing as any;
       }
     }
