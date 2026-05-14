@@ -84,8 +84,8 @@ export default function Obras() {
           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Região" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            {Object.entries(REGIAO_LABEL).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            {(regioes ?? []).map((r: any) => (
+              <SelectItem key={r.id} value={r.nome}>{r.nome}</SelectItem>
             ))}
           </SelectContent>
         </Select>
