@@ -126,7 +126,7 @@ export default function Obras() {
                 <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => setSelectedId(o.id)}>
                   <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
                   <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
-                  <TableCell className="text-sm">{REGIAO_LABEL[o.regiao]}</TableCell>
+                  <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
                   <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
                   <TableCell className="text-sm">{format(new Date(o.data_recebimento), "dd/MM/yyyy")}</TableCell>
                   <TableCell className={`text-right text-sm font-medium tabular-nums ${valor == null ? "text-muted-foreground" : isAprovado ? "text-success" : "text-foreground"}`}>
