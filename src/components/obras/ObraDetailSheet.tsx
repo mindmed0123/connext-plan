@@ -103,7 +103,7 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
               <SheetDescription>{obra.descricao_servico}</SheetDescription>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground pt-2">
                 <span><strong className="text-foreground">Origem:</strong> {ORIGEM_LABEL[obra.origem]}</span>
-                <span><strong className="text-foreground">Região:</strong> {REGIAO_LABEL[obra.regiao]}</span>
+                <span><strong className="text-foreground">Região:</strong> {getRegiaoLabel(obra as any)}</span>
                 <span><strong className="text-foreground">Engenheiro:</strong> {obra.engenheiro_responsavel}</span>
                 <span><strong className="text-foreground">Recebido:</strong> {format(new Date(obra.data_recebimento), "dd/MM/yyyy")}</span>
               </div>
