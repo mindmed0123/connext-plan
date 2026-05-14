@@ -23,6 +23,32 @@ const formatCnpj = (v: string) => {
 export default function Configuracoes() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
+  const { data: regioes } = useQuery({
+    queryKey: ["regioes-obra"],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data } = await supabase.from("regioes_obra").select("*").order("nome");
+      return data ?? [];
+    },
+  });
+  const [novaRegiaoCfg, setNovaRegiaoCfg] = useState("");
+  const addRegiaoCfg = async () => {
+    if (!novaRegiaoCfg.trim()) return;
+    const { error } = await supabase.from("regioes_obra").insert({ nome: novaRegiaoCfg.trim() } as any);
+    if (error) return toast.error(error.message);
+    setNovaRegiaoCfg("");
+    qc.invalidateQueries({ queryKey: ["regioes-obra"] });
+    toast.success("Região adicionada");
+  };
+  const removeRegiaoCfg = async (id: string) => {
+    const { error } = await supabase.from("regioes_obra").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["regioes-obra"] });
+  };
+
+  const { config: cardsVisiveis, saveConfig, TODOS_OS_CARDS } = useDashboardConfig();
+  const [selectedCards, setSelectedCards] = useState<string[]>(cardsVisiveis);
+  useEffect(() => { setSelectedCards(cardsVisiveis); }, [cardsVisiveis]);
 
   const { data: empresa, isLoading } = useQuery({
     queryKey: ["empresa-config", empresaId],
