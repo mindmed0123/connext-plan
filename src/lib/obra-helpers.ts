@@ -75,3 +75,11 @@ export function formatCurrency(value: number | string | null | undefined) {
     currency: "BRL",
   }).format(n || 0);
 }
+
+// Retorna o label de região de uma obra. Prefere regiao_label (texto livre);
+// cai no enum legado para obras antigas.
+export function getRegiaoLabel(obra: { regiao?: string | null; regiao_label?: string | null }): string {
+  if (obra?.regiao_label) return obra.regiao_label;
+  if (!obra?.regiao) return "—";
+  return (REGIAO_LABEL as Record<string, string>)[obra.regiao] ?? obra.regiao;
+}
