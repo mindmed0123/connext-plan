@@ -17,6 +17,7 @@ import { AgendaPagamentos } from "@/components/dashboard/AgendaPagamentos";
 import { RankingTerceirizados, RankingResponsaveis } from "@/components/dashboard/Rankings";
 import { ChartsBlock } from "@/components/dashboard/ChartsBlock";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
