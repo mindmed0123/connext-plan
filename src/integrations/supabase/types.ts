@@ -133,6 +133,47 @@ export type Database = {
           },
         ]
       }
+      categorias_financeiras: {
+        Row: {
+          ativo: boolean
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          grupo: Database["public"]["Enums"]["categoria_grupo"]
+          id: string
+          nome: string
+          tipo: Database["public"]["Enums"]["lancamento_tipo"]
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          grupo: Database["public"]["Enums"]["categoria_grupo"]
+          id?: string
+          nome: string
+          tipo: Database["public"]["Enums"]["lancamento_tipo"]
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          grupo?: Database["public"]["Enums"]["categoria_grupo"]
+          id?: string
+          nome?: string
+          tipo?: Database["public"]["Enums"]["lancamento_tipo"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_financeiras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cnpj: string
@@ -241,6 +282,85 @@ export type Database = {
             columns: ["terceirizado_id"]
             isOneToOne: false
             referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos_clientes: {
+        Row: {
+          cliente_id: string | null
+          condicoes_pgto: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          documento_url: string | null
+          empresa_id: string
+          id: string
+          numero_contrato: string | null
+          objeto: string
+          obra_id: string | null
+          observacoes: string | null
+          status: Database["public"]["Enums"]["contrato_cliente_status"]
+          updated_at: string
+          valor_global: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          condicoes_pgto?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          documento_url?: string | null
+          empresa_id: string
+          id?: string
+          numero_contrato?: string | null
+          objeto: string
+          obra_id?: string | null
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["contrato_cliente_status"]
+          updated_at?: string
+          valor_global?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          condicoes_pgto?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          documento_url?: string | null
+          empresa_id?: string
+          id?: string
+          numero_contrato?: string | null
+          objeto?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["contrato_cliente_status"]
+          updated_at?: string
+          valor_global?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_clientes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
         ]
@@ -600,6 +720,117 @@ export type Database = {
           },
         ]
       }
+      lancamentos_financeiros: {
+        Row: {
+          categoria_id: string | null
+          comprovante_path: string | null
+          comprovante_url: string | null
+          created_at: string
+          created_by: string | null
+          data_competencia: string
+          data_realizado: string | null
+          data_vencimento: string | null
+          descricao: string
+          documento_num: string | null
+          empresa_id: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          fornecedor_nome: string | null
+          id: string
+          obra_id: string | null
+          observacoes: string | null
+          origem: string | null
+          origem_id: string | null
+          pessoa_id: string | null
+          status: Database["public"]["Enums"]["lancamento_status"]
+          tipo: Database["public"]["Enums"]["lancamento_tipo"]
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          comprovante_path?: string | null
+          comprovante_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_competencia: string
+          data_realizado?: string | null
+          data_vencimento?: string | null
+          descricao: string
+          documento_num?: string | null
+          empresa_id: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          fornecedor_nome?: string | null
+          id?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          origem_id?: string | null
+          pessoa_id?: string | null
+          status?: Database["public"]["Enums"]["lancamento_status"]
+          tipo: Database["public"]["Enums"]["lancamento_tipo"]
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          categoria_id?: string | null
+          comprovante_path?: string | null
+          comprovante_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_competencia?: string
+          data_realizado?: string | null
+          data_vencimento?: string | null
+          descricao?: string
+          documento_num?: string | null
+          empresa_id?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          fornecedor_nome?: string | null
+          id?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          origem_id?: string | null
+          pessoa_id?: string | null
+          status?: Database["public"]["Enums"]["lancamento_status"]
+          tipo?: Database["public"]["Enums"]["lancamento_tipo"]
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_financeiros_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materiais_obra: {
         Row: {
           anexo_path: string | null
@@ -675,6 +906,88 @@ export type Database = {
           },
           {
             foreignKeyName: "materiais_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medicoes: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          contrato_id: string | null
+          created_at: string
+          created_by: string | null
+          data_medicao: string
+          empresa_id: string
+          id: string
+          numero_medicao: number
+          obra_id: string | null
+          observacoes: string | null
+          percentual: number | null
+          referencia: string | null
+          status: Database["public"]["Enums"]["medicao_status"]
+          updated_at: string
+          valor_acumulado: number
+          valor_medido: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_medicao: string
+          empresa_id: string
+          id?: string
+          numero_medicao: number
+          obra_id?: string | null
+          observacoes?: string | null
+          percentual?: number | null
+          referencia?: string | null
+          status?: Database["public"]["Enums"]["medicao_status"]
+          updated_at?: string
+          valor_acumulado?: number
+          valor_medido?: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_medicao?: string
+          empresa_id?: string
+          id?: string
+          numero_medicao?: number
+          obra_id?: string | null
+          observacoes?: string | null
+          percentual?: number | null
+          referencia?: string | null
+          status?: Database["public"]["Enums"]["medicao_status"]
+          updated_at?: string
+          valor_acumulado?: number
+          valor_medido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicoes_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -1775,6 +2088,40 @@ export type Database = {
         Args: { _chamado: string; _descricao: string; _endereco: string }
         Returns: string
       }
+      get_dre_obra: {
+        Args: { _empresa_id: string; _obra_id?: string }
+        Returns: {
+          custo_materiais: number
+          custo_subcontratado: number
+          custo_total_real: number
+          margem_bruta: number
+          margem_pct: number
+          obra_codigo: string
+          obra_id: string
+          receita_contratada: number
+          receita_medida: number
+          receita_recebida: number
+        }[]
+      }
+      get_fluxo_caixa_mensal: {
+        Args: {
+          _empresa_id: string
+          _meses_atras?: number
+          _meses_frente?: number
+        }
+        Returns: {
+          ano: number
+          despesas_prev: number
+          despesas_real: number
+          mes: string
+          mes_num: number
+          receitas_prev: number
+          receitas_real: number
+          saldo_acumulado: number
+          saldo_prev: number
+          saldo_real: number
+        }[]
+      }
       get_user_empresa_id: { Args: never; Returns: string }
       has_permission: {
         Args: {
@@ -1810,6 +2157,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      seed_categorias_financeiras: {
+        Args: { _empresa_id: string }
+        Returns: undefined
+      }
       signup_create_company: {
         Args: { _nome_empresa: string }
         Returns: string
@@ -1844,16 +2195,36 @@ export type Database = {
         | "paused"
         | "canceled"
         | "expired"
+      categoria_grupo:
+        | "receita_servico"
+        | "receita_material"
+        | "receita_outro"
+        | "custo_mao_obra_direta"
+        | "custo_mao_obra_indireta"
+        | "custo_material"
+        | "custo_equipamento"
+        | "custo_subcontratado"
+        | "custo_administrativo"
+        | "custo_imposto"
+        | "custo_outro"
       contratacao_status:
         | "pendente"
         | "parcialmente_pago"
         | "pago"
         | "cancelado"
+      contrato_cliente_status:
+        | "ativo"
+        | "suspenso"
+        | "encerrado"
+        | "em_negociacao"
       diario_status: "enviado" | "aprovado" | "reprovado"
       execucao_status: "nao_iniciada" | "em_execucao" | "pausada" | "finalizada"
       execucao_tipo: "equipe_propria" | "terceirizado"
       forma_pagamento: "pix" | "dinheiro" | "transferencia" | "boleto" | "outro"
       foto_tipo: "antes" | "durante" | "depois"
+      lancamento_status: "previsto" | "realizado" | "cancelado"
+      lancamento_tipo: "receita" | "despesa"
+      medicao_status: "rascunho" | "enviada" | "aprovada" | "rejeitada"
       obra_origem: "veman" | "sabesp"
       obra_papel:
         | "responsavel_administrativo"
@@ -2043,17 +2414,39 @@ export const Constants = {
         "canceled",
         "expired",
       ],
+      categoria_grupo: [
+        "receita_servico",
+        "receita_material",
+        "receita_outro",
+        "custo_mao_obra_direta",
+        "custo_mao_obra_indireta",
+        "custo_material",
+        "custo_equipamento",
+        "custo_subcontratado",
+        "custo_administrativo",
+        "custo_imposto",
+        "custo_outro",
+      ],
       contratacao_status: [
         "pendente",
         "parcialmente_pago",
         "pago",
         "cancelado",
       ],
+      contrato_cliente_status: [
+        "ativo",
+        "suspenso",
+        "encerrado",
+        "em_negociacao",
+      ],
       diario_status: ["enviado", "aprovado", "reprovado"],
       execucao_status: ["nao_iniciada", "em_execucao", "pausada", "finalizada"],
       execucao_tipo: ["equipe_propria", "terceirizado"],
       forma_pagamento: ["pix", "dinheiro", "transferencia", "boleto", "outro"],
       foto_tipo: ["antes", "durante", "depois"],
+      lancamento_status: ["previsto", "realizado", "cancelado"],
+      lancamento_tipo: ["receita", "despesa"],
+      medicao_status: ["rascunho", "enviada", "aprovada", "rejeitada"],
       obra_origem: ["veman", "sabesp"],
       obra_papel: [
         "responsavel_administrativo",
