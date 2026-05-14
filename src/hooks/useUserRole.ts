@@ -27,7 +27,7 @@ export function useUserRole() {
 
   const role = data?.role;
   const isSuperAdmin = role === "super_admin";
-  const isAdmin = isSuperAdmin || role === "admin" || role === "gestor";
+  const isAdmin = role === "admin" || role === "gestor";
   const isOperacional = role === "operacional" || role === "engenheiro" || role === "financeiro";
 
   return { role, roles: data?.roles ?? [], empresaId: data?.empresaId ?? null, isSuperAdmin, isAdmin, isOperacional, isLoading };
