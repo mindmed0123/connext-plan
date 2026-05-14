@@ -30,7 +30,7 @@ export default function Obras() {
         .select("*, orcamentos(valor_orcamento, status, created_at)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
-      if (regiaoFilter !== "all") q = q.eq("regiao", regiaoFilter as any);
+      if (regiaoFilter !== "all") q = q.eq("regiao_label", regiaoFilter);
       if (search.trim()) q = q.ilike("codigo_chamado", `%${search.trim()}%`);
       const { data, error } = await q;
       if (error) throw error;
