@@ -25,6 +25,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function Dashboard() {
   const { isOperacional, isSuperAdmin, isAdmin } = useUserRole();
+  const { config: cardsVisiveis } = useDashboardConfig();
+  const showCard = (id: string) => cardsVisiveis.includes(id);
   const [filters, setFilters] = useState<TFilters>({
     regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos",
   });
