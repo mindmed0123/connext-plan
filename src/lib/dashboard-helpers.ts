@@ -23,11 +23,8 @@ export const ETAPA_FINANCEIRA_LABEL: Record<EtapaFinanceira, string> = {
   recebido: "Recebido",
 };
 
-export const STATUS_EM_ORCAMENTO: ObraStatus[] = [
-  "aguardando_orcamento",
-  "em_aprovacao",
-];
-export const STATUS_EM_EXECUCAO: ObraStatus[] = ["aprovado", "em_execucao"];
+export const STATUS_EM_ORCAMENTO: ObraStatus[] = ["em_aprovacao"];
+export const STATUS_EM_EXECUCAO: ObraStatus[] = ["em_execucao"];
 export const STATUS_FINALIZADAS_AGUARD: ObraStatus[] = [
   "finalizado",
   "aguardando_rc",
