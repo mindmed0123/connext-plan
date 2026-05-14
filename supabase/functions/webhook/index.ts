@@ -153,9 +153,19 @@ Deno.serve(async (req) => {
       target = existing as any;
     }
     if (!target && customerEmail) {
+      let emp: string | null = null;
       const { data: pessoa } = await supabase.from("pessoas")
         .select("empresa_id").ilike("email", customerEmail).maybeSingle();
-      const emp = (pessoa as any)?.empresa_id;
+      emp = (pessoa as any)?.empresa_id ?? null;
+      if (!emp) {
+        const { data: usr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const u = (usr?.users ?? []).find((x: any) => (x.email ?? "").toLowerCase() === customerEmail);
+        if (u) {
+          const { data: ur } = await supabase.from("user_roles")
+            .select("empresa_id").eq("user_id", u.id).not("empresa_id", "is", null).maybeSingle();
+          emp = (ur as any)?.empresa_id ?? null;
+        }
+      }
       if (emp) {
         const { data: existing } = await supabase.from("assinaturas")
           .select("id, empresa_id").eq("empresa_id", emp).maybeSingle();
