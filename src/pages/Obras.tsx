@@ -38,6 +38,14 @@ export default function Obras() {
     },
   });
 
+  const { data: regioes } = useQuery({
+    queryKey: ["regioes-obra"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regioes_obra").select("*").order("nome");
+      return data ?? [];
+    },
+  });
+
   const formatBRL = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
