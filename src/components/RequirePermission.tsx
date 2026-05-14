@@ -1,4 +1,5 @@
 import { ShieldAlert } from "lucide-react";
+import { Navigate } from "react-router-dom";
 import { AppModulo, usePermissions } from "@/hooks/usePermissions";
 import { useObrasVinculadas } from "@/hooks/useObrasVinculadas";
 
@@ -9,7 +10,7 @@ export function RequirePermission({
   modulo: AppModulo;
   children: React.ReactNode;
 }) {
-  const { can, isLoading } = usePermissions();
+  const { can, isLoading, isSuperAdmin } = usePermissions();
   const { temVinculo, isLoading: vincLoading } = useObrasVinculadas();
 
   if (isLoading || vincLoading) {
@@ -22,6 +23,10 @@ export function RequirePermission({
 
   // Operacional / terceirizado vinculado a alguma obra pode acessar /obras
   const liberadoPorVinculo = modulo === "obras" && temVinculo;
+
+  if (isSuperAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
 
   if (!can(modulo, "view") && !liberadoPorVinculo) {
     return (

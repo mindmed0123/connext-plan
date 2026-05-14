@@ -73,9 +73,9 @@ export function AppSidebar() {
   const { isAdmin, isSuperAdmin, isLoading } = useUserRole();
   const { can, isLoading: permLoading } = usePermissions();
 
-  // super_admin/admin/gestor veem tudo. Administrativo "comum" filtra por permissão.
+  // admin/gestor veem tudo na própria empresa. Super admin vê somente o painel do sistema.
   const filtra = (items: NavItem[]) =>
-    isSuperAdmin || isAdmin ? items : items.filter((i) => can(i.modulo, "view"));
+    isAdmin ? items : items.filter((i) => can(i.modulo, "view"));
 
   const renderItems = (items: NavItem[]) =>
     items.map((item) => {
@@ -113,7 +113,23 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {isLoading || permLoading ? null : (isAdmin || isSuperAdmin) ? (
+        {isLoading || permLoading ? null : isSuperAdmin ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith("/admin")}>
+                    <NavLink to="/admin">
+                      <Shield className="h-4 w-4" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : isAdmin ? (
           <>
             <SidebarGroup>
               <SidebarGroupLabel>Operacional</SidebarGroupLabel>

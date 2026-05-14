@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ export default function Auth() {
   const motivo = searchParams.get("motivo");
   const tabParam = searchParams.get("tab") === "signup" ? "signup" : "login";
   const { user, loading } = useAuth();
+  const { isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +31,10 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState("");
 
   useEffect(() => {
-    if (!loading && user) navigate("/dashboard", { replace: true });
-  }, [user, loading, navigate]);
+    if (!loading && !roleLoading && user) {
+      navigate(isSuperAdmin ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [user, loading, roleLoading, isSuperAdmin, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
