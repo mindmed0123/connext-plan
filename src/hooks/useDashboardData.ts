@@ -96,8 +96,10 @@ export function useDashboardData(filters: DashboardFilters) {
 
       const obrasFiltered = obras.filter((o) => {
         if (!inRange(o.created_at)) return false;
-        if (filters.regiao && filters.regiao !== "todas" && o.regiao !== filters.regiao)
-          return false;
+        if (filters.regiao && filters.regiao !== "todas") {
+          const label = (o as any).regiao_label ?? (REGIAO_LABEL as any)[o.regiao] ?? o.regiao;
+          if (label !== filters.regiao) return false;
+        }
         if (
           filters.engenheiro &&
           filters.engenheiro !== "todos" &&
