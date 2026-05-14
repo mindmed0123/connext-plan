@@ -106,9 +106,21 @@ Deno.serve(async (req) => {
 
   // Fallback: parametro `ref` que enviamos no link de checkout
   // Formato: empresa_id|plano_id|periodo|user_id
-  const refRaw: string | null =
+  // A Cakto pode devolver o ref em data.ref OU embutido em data.checkoutUrl como query string.
+  let refRaw: string | null =
     data?.ref ?? data?.utm?.ref ?? metadata?.ref ??
     data?.checkout?.ref ?? data?.tracking?.ref ?? null;
+  if (!refRaw) {
+    const checkoutUrl: string | null =
+      data?.checkoutUrl ?? data?.checkout_url ?? data?.checkout?.url ?? null;
+    if (checkoutUrl && typeof checkoutUrl === "string") {
+      try {
+        const u = new URL(checkoutUrl);
+        const r = u.searchParams.get("ref");
+        if (r) refRaw = r;
+      } catch { /* ignore */ }
+    }
+  }
   if (refRaw && typeof refRaw === "string" && refRaw.includes("|")) {
     const [r_empresa, r_plano, r_periodo, r_user] = refRaw.split("|");
     empresa_id = empresa_id ?? r_empresa ?? null;
