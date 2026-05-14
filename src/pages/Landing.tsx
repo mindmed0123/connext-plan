@@ -690,7 +690,7 @@ export default function Landing() {
               </div>
               <p className="mt-2 text-sm text-gray-500">Controle total para empresas em crescimento</p>
               <ul className="mt-6 space-y-3 text-sm text-[#0F2448]">
-                {["15 usuários", "Obras ilimitadas", "50 GB de storage", "Tudo do Básico +", "Financeiro completo, Orçamentos", "Execuções, Faturamento, Recebimentos", "Materiais, Contratos, Permissões granulares", "Suporte prioritário (8h) + Onboarding"].map((t) => (
+                {["Usuários ilimitados", "Obras ilimitadas", "50 GB de storage", "Tudo do Básico +", "Financeiro completo, Orçamentos", "Execuções, Faturamento, Recebimentos", "Materiais, Contratos, Permissões granulares", "Suporte prioritário (8h) + Onboarding"].map((t) => (
                   <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ORANGE }} />{t}</li>
                 ))}
               </ul>
@@ -716,7 +716,7 @@ export default function Landing() {
               </div>
               <p className="mt-2 text-sm text-gray-500">Para grupos e construtoras com múltiplas unidades</p>
               <ul className="mt-6 space-y-3 text-sm text-[#0F2448]">
-                {["Usuários ilimitados", "Múltiplas filiais", "Storage customizado", "Tudo do Profissional +", "Painel multi-empresa, Branding próprio", "API, SSO, Relatórios consolidados", "SLA 99.9%", "Gerente dedicado + Treinamento"].map((t) => (
+                {["Múltiplas empresas/filiais", "Painel admin multi-unidade", "Relatórios consolidados", "Branding personalizado", "Acesso à API (integrações)", "SSO / login corporativo", "Exportação avançada de dados", "SLA de disponibilidade 99,9%", "Gerente de conta dedicado", "Onboarding completo + treinamento"].map((t) => (
                   <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ORANGE }} />{t}</li>
                 ))}
               </ul>
@@ -780,7 +780,7 @@ export default function Landing() {
               { q: "Preciso instalar alguma coisa?", a: "Não. O Gestão de Obra é 100% online. Acesse pelo navegador de qualquer computador, sem instalação." },
               { q: "Como funciona o pagamento?", a: "O pagamento é mensal ou anual, processado de forma segura pela Cakto. Aceitamos cartão de crédito, Pix e boleto. A nota fiscal é emitida automaticamente." },
               { q: "Posso migrar meus dados de planilha para o sistema?", a: "Sim. Oferecemos suporte para importação de obras e equipes via planilha Excel nos planos Profissional e Enterprise." },
-              { q: "Quantos usuários posso ter?", a: "Depende do plano: Básico (3), Profissional (15), Enterprise (ilimitados). Cada usuário recebe permissões específicas por módulo." },
+              { q: "Quantos usuários posso ter?", a: "Básico tem 3 usuários. Profissional e Enterprise têm usuários e obras ilimitados. Cada usuário recebe permissões específicas por módulo." },
               { q: "O sistema é seguro? Meus dados ficam protegidos?", a: "Sim. Utilizamos infraestrutura com criptografia em repouso e em trânsito, backups automáticos diários e conformidade com a LGPD. Cada empresa tem seus dados completamente isolados." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim, sem fidelidade e sem multa. Você pode cancelar pela própria plataforma. Seus dados ficam disponíveis por 30 dias após o cancelamento." },
               { q: "O que acontece se eu precisar de ajuda?", a: "Todos os planos têm acesso à central de ajuda e tutoriais em vídeo. Plano Profissional tem suporte prioritário por e-mail em até 8h. Enterprise tem gerente de conta dedicado." },
