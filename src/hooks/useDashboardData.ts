@@ -38,7 +38,7 @@ export function useDashboardData(filters: DashboardFilters) {
         supabase
           .from("obras")
           .select(
-            "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,origem,status,data_recebimento,created_at,updated_at",
+            "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
           ),
         supabase
           .from("orcamentos")
