@@ -18,6 +18,13 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
   const reset = () => setFilters({ regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos" });
   const responsaveis = pessoas.filter((p) => p.tipo !== "terceirizado");
   const terceirizados = pessoas.filter((p) => p.tipo === "terceirizado");
+  const { data: regioes } = useQuery({
+    queryKey: ["regioes-obra"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regioes_obra").select("nome").order("nome");
+      return data ?? [];
+    },
+  });
 
   return (
     <div className="rounded-xl border bg-card p-4">
