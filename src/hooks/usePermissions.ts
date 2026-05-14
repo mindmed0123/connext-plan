@@ -41,7 +41,8 @@ export type PermissaoLinha = {
 };
 
 /**
- * Permissões do usuário logado. Super admin / admin / gestor têm tudo liberado.
+ * Permissões do usuário logado. Admin / gestor têm tudo liberado na própria empresa.
+ * Super admin acessa somente o painel administrativo do sistema.
  * Para administrativo "comum" (sem role admin), aplica granularidade da tabela pessoa_permissoes.
  */
 export function usePermissions() {
@@ -69,7 +70,8 @@ export function usePermissions() {
   });
 
   const can = (modulo: AppModulo, acao: AppAcao = "view"): boolean => {
-    if (isSuperAdmin || isAdmin) return true;
+    if (isSuperAdmin) return false;
+    if (isAdmin) return true;
     const row = data?.find((r) => r.modulo === modulo);
     if (!row) return false;
     if (acao === "view") return row.can_view;
