@@ -71,13 +71,24 @@ Deno.serve(async (req) => {
   let plano_id: string | null = metadata?.plano_id ?? null;
   let periodo: string | null = metadata?.periodo ?? null;
 
-  const refRaw: string | null =
+  let refRaw: string | null =
     data?.ref ?? data?.utm?.ref ?? metadata?.ref ?? data?.checkout?.ref ?? data?.tracking?.ref ?? null;
+  if (!refRaw) {
+    const checkoutUrl: string | null = data?.checkoutUrl ?? data?.checkout_url ?? data?.checkout?.url ?? null;
+    if (checkoutUrl && typeof checkoutUrl === "string") {
+      try { const u = new URL(checkoutUrl); const r = u.searchParams.get("ref"); if (r) refRaw = r; } catch { /* ignore */ }
+    }
+  }
   if (refRaw && typeof refRaw === "string" && refRaw.includes("|")) {
     const [r_empresa, r_plano, r_periodo] = refRaw.split("|");
     empresa_id = empresa_id ?? r_empresa ?? null;
     plano_id = plano_id ?? r_plano ?? null;
     periodo = periodo ?? r_periodo ?? null;
+  }
+  if (!periodo) {
+    const recPeriod = Number(data?.subscription?.recurrence_period ?? 0);
+    if (recPeriod >= 350) periodo = "anual";
+    else if (recPeriod > 0) periodo = "mensal";
   }
 
   if (!plano_id && productId) {
