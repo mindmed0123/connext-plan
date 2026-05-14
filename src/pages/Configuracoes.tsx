@@ -289,6 +289,65 @@ export default function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Regiões de atuação</CardTitle>
+          <p className="text-xs text-muted-foreground">Regiões que aparecem no cadastro de obras. Personalize para a sua operação.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(regioes ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhuma região cadastrada ainda.</p>
+          )}
+          <div className="space-y-2">
+            {(regioes ?? []).map((r: any) => (
+              <div key={r.id} className="flex items-center justify-between rounded-md border p-2">
+                <span className="text-sm">{r.nome}</span>
+                <Button size="sm" variant="ghost" onClick={() => removeRegiaoCfg(r.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Nome da região"
+              value={novaRegiaoCfg}
+              onChange={(e) => setNovaRegiaoCfg(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addRegiaoCfg()}
+            />
+            <Button onClick={addRegiaoCfg}><Plus className="h-4 w-4" /> Adicionar</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Personalizar dashboard</CardTitle>
+          <p className="text-xs text-muted-foreground">Escolha quais indicadores aparecem no painel executivo.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {TODOS_OS_CARDS.map((card) => (
+              <label key={card.id} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
+                <Checkbox
+                  checked={selectedCards.includes(card.id)}
+                  onCheckedChange={(v) => {
+                    if (v) setSelectedCards([...selectedCards, card.id]);
+                    else setSelectedCards(selectedCards.filter((c) => c !== card.id));
+                  }}
+                />
+                <span className="text-sm">{card.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => saveConfig.mutate(selectedCards)} disabled={saveConfig.isPending}>
+              <Save className="h-4 w-4" /> {saveConfig.isPending ? "Salvando..." : "Salvar configuração"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
