@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, REGIAO_LABEL, ORIGEM_LABEL } from "@/lib/obra-helpers";
+import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
 import { ObraFormDialog } from "@/components/obras/ObraFormDialog";
 import { ObraDetailSheet } from "@/components/obras/ObraDetailSheet";
 import { format } from "date-fns";
@@ -30,11 +30,19 @@ export default function Obras() {
         .select("*, orcamentos(valor_orcamento, status, created_at)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
-      if (regiaoFilter !== "all") q = q.eq("regiao", regiaoFilter as any);
+      if (regiaoFilter !== "all") q = q.eq("regiao_label", regiaoFilter);
       if (search.trim()) q = q.ilike("codigo_chamado", `%${search.trim()}%`);
       const { data, error } = await q;
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: regioes } = useQuery({
+    queryKey: ["regioes-obra"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regioes_obra").select("*").order("nome");
+      return data ?? [];
     },
   });
 
@@ -84,8 +92,8 @@ export default function Obras() {
           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Região" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            {Object.entries(REGIAO_LABEL).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            {(regioes ?? []).map((r: any) => (
+              <SelectItem key={r.id} value={r.nome}>{r.nome}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -118,7 +126,7 @@ export default function Obras() {
                 <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => setSelectedId(o.id)}>
                   <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
                   <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
-                  <TableCell className="text-sm">{REGIAO_LABEL[o.regiao]}</TableCell>
+                  <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
                   <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
                   <TableCell className="text-sm">{format(new Date(o.data_recebimento), "dd/MM/yyyy")}</TableCell>
                   <TableCell className={`text-right text-sm font-medium tabular-nums ${valor == null ? "text-muted-foreground" : isAprovado ? "text-success" : "text-foreground"}`}>

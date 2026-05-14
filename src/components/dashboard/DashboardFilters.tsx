@@ -1,8 +1,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST, REGIAO_LABEL } from "@/lib/obra-helpers";
+import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST } from "@/lib/obra-helpers";
 import { RotateCcw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { DashboardFilters as F } from "@/hooks/useDashboardData";
 
 interface Props {
@@ -16,6 +18,13 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
   const reset = () => setFilters({ regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos" });
   const responsaveis = pessoas.filter((p) => p.tipo !== "terceirizado");
   const terceirizados = pessoas.filter((p) => p.tipo === "terceirizado");
+  const { data: regioes } = useQuery({
+    queryKey: ["regioes-obra"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regioes_obra").select("nome").order("nome");
+      return data ?? [];
+    },
+  });
 
   return (
     <div className="rounded-xl border bg-card p-4">
@@ -34,7 +43,7 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
-              {Object.entries(REGIAO_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              {(regioes ?? []).map((r: any) => <SelectItem key={r.nome} value={r.nome}>{r.nome}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

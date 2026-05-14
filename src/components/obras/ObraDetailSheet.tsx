@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, REGIAO_LABEL } from "@/lib/obra-helpers";
+import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { StatusPipeline } from "./StatusPipeline";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,12 +103,20 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
               <SheetDescription>{obra.descricao_servico}</SheetDescription>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground pt-2">
                 <span><strong className="text-foreground">Origem:</strong> {ORIGEM_LABEL[obra.origem]}</span>
-                <span><strong className="text-foreground">Região:</strong> {REGIAO_LABEL[obra.regiao]}</span>
+                <span><strong className="text-foreground">Região:</strong> {getRegiaoLabel(obra as any)}</span>
                 <span><strong className="text-foreground">Engenheiro:</strong> {obra.engenheiro_responsavel}</span>
                 <span><strong className="text-foreground">Recebido:</strong> {format(new Date(obra.data_recebimento), "dd/MM/yyyy")}</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 <strong className="text-foreground">Endereço:</strong> {obra.endereco}
+              </div>
+
+              <div className="pt-3">
+                <StatusPipeline
+                  currentStatus={obra.status}
+                  onChangeStatus={(s) => updateStatus.mutate(s)}
+                  canEdit={isAdmin}
+                />
               </div>
 
               {isAdmin && (

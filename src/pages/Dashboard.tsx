@@ -17,6 +17,7 @@ import { AgendaPagamentos } from "@/components/dashboard/AgendaPagamentos";
 import { RankingTerceirizados, RankingResponsaveis } from "@/components/dashboard/Rankings";
 import { ChartsBlock } from "@/components/dashboard/ChartsBlock";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
@@ -24,6 +25,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function Dashboard() {
   const { isOperacional, isSuperAdmin, isAdmin } = useUserRole();
+  const { config: cardsVisiveis } = useDashboardConfig();
+  const showCard = (id: string) => cardsVisiveis.includes(id);
   const [filters, setFilters] = useState<TFilters>({
     regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos",
   });
@@ -78,14 +81,14 @@ export default function Dashboard() {
       <section>
         <SectionTitle>Resumo executivo</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard title="Obras ativas" value={String(data?.totalAtivas ?? "—")} icon={HardHat} accent="primary" to="/obras" />
-          <KpiCard title="Em orçamento" value={formatCurrency(data?.valorEmOrcamento)} hint="Aguardando aprovação" icon={FileText} accent="status-orcamento" to="/orcamentos" />
-          <KpiCard title="Em execução" value={formatCurrency(data?.valorEmExecucao)} icon={Hammer} accent="status-execucao" to="/execucoes" />
-          <KpiCard title="Finalizadas aguardando" value={formatCurrency(data?.valorFinalizadasAguard)} hint={`${data?.qtdFinalizadasAguard ?? 0} obras travadas`} icon={CheckCircle2} accent="status-finalizado" />
-          <KpiCard title="Total a receber" value={formatCurrency(data?.valorAReceber)} icon={Wallet} accent="success" to="/recebimentos" />
-          <KpiCard title="Recebimentos 15 dias" value={formatCurrency(data?.valorReceber15d)} icon={Clock} accent="info" to="/recebimentos" />
-          <KpiCard title="Pago a terceirizados" value={formatCurrency(data?.valorPagoTerc)} icon={TrendingUp} accent="status-pago" to="/financeiro" />
-          <KpiCard title="Pendente terceirizados" value={formatCurrency(data?.valorPendenteTerc)} icon={AlertCircle} accent="warning" to="/financeiro" />
+          {showCard("obras_ativas") && <KpiCard title="Obras ativas" value={String(data?.totalAtivas ?? "—")} icon={HardHat} accent="primary" to="/obras" />}
+          {showCard("em_orcamento") && <KpiCard title="Em orçamento" value={formatCurrency(data?.valorEmOrcamento)} hint="Aguardando aprovação" icon={FileText} accent="status-orcamento" to="/orcamentos" />}
+          {showCard("em_execucao") && <KpiCard title="Em execução" value={formatCurrency(data?.valorEmExecucao)} icon={Hammer} accent="status-execucao" to="/execucoes" />}
+          {showCard("finalizadas") && <KpiCard title="Finalizadas aguardando" value={formatCurrency(data?.valorFinalizadasAguard)} hint={`${data?.qtdFinalizadasAguard ?? 0} obras travadas`} icon={CheckCircle2} accent="status-finalizado" />}
+          {showCard("total_a_receber") && <KpiCard title="Total a receber" value={formatCurrency(data?.valorAReceber)} icon={Wallet} accent="success" to="/recebimentos" />}
+          {showCard("recebimentos_15d") && <KpiCard title="Recebimentos 15 dias" value={formatCurrency(data?.valorReceber15d)} icon={Clock} accent="info" to="/recebimentos" />}
+          {showCard("pago_terceirizados") && <KpiCard title="Pago a terceirizados" value={formatCurrency(data?.valorPagoTerc)} icon={TrendingUp} accent="status-pago" to="/financeiro" />}
+          {showCard("pendente_terceirizados") && <KpiCard title="Pendente terceirizados" value={formatCurrency(data?.valorPendenteTerc)} icon={AlertCircle} accent="warning" to="/financeiro" />}
         </div>
       </section>
 

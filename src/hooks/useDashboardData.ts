@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { ObraStatus, ObraRegiao } from "@/lib/obra-helpers";
+import type { ObraStatus } from "@/lib/obra-helpers";
+import { REGIAO_LABEL } from "@/lib/obra-helpers";
 import {
   STATUS_EM_ORCAMENTO,
   STATUS_EM_EXECUCAO,
@@ -8,9 +9,9 @@ import {
 } from "@/lib/dashboard-helpers";
 
 export interface DashboardFilters {
-  from?: string; // ISO date
-  to?: string; // ISO date
-  regiao?: ObraRegiao | "todas";
+  from?: string;
+  to?: string;
+  regiao?: string | "todas";
   engenheiro?: string | "todos";
   status?: ObraStatus | "todas";
   responsavelId?: string | "todos";
@@ -37,7 +38,7 @@ export function useDashboardData(filters: DashboardFilters) {
         supabase
           .from("obras")
           .select(
-            "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,origem,status,data_recebimento,created_at,updated_at",
+            "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
           ),
         supabase
           .from("orcamentos")
@@ -95,8 +96,10 @@ export function useDashboardData(filters: DashboardFilters) {
 
       const obrasFiltered = obras.filter((o) => {
         if (!inRange(o.created_at)) return false;
-        if (filters.regiao && filters.regiao !== "todas" && o.regiao !== filters.regiao)
-          return false;
+        if (filters.regiao && filters.regiao !== "todas") {
+          const label = (o as any).regiao_label ?? (REGIAO_LABEL as any)[o.regiao] ?? o.regiao;
+          if (label !== filters.regiao) return false;
+        }
         if (
           filters.engenheiro &&
           filters.engenheiro !== "todos" &&

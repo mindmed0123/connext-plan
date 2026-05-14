@@ -7,12 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { REGIAO_LABEL } from "@/lib/obra-helpers";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
-
-type Regiao = Database["public"]["Enums"]["obra_regiao"];
 
 export function ObraFormDialog({
   open, onOpenChange, onCreated,
@@ -20,10 +16,12 @@ export function ObraFormDialog({
   const qc = useQueryClient();
   const [novaOrigem, setNovaOrigem] = useState("");
   const [showAddOrigem, setShowAddOrigem] = useState(false);
+  const [novaRegiao, setNovaRegiao] = useState("");
+  const [showAddRegiao, setShowAddRegiao] = useState(false);
   const [form, setForm] = useState({
     codigo_chamado: "",
     origem: "",
-    regiao: "leste" as Regiao,
+    regiao_label: "",
     engenheiro_responsavel: "",
     descricao_servico: "",
     endereco: "",
@@ -39,9 +37,21 @@ export function ObraFormDialog({
     },
   });
 
-  // Define origem padrão quando origens carregarem
+  const { data: regioes } = useQuery({
+    queryKey: ["regioes-obra"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("regioes_obra").select("*").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Defaults
   if (origens && origens.length > 0 && !form.origem) {
     setForm((f) => ({ ...f, origem: origens[0].nome }));
+  }
+  if (regioes && regioes.length > 0 && !form.regiao_label) {
+    setForm((f) => ({ ...f, regiao_label: regioes[0].nome }));
   }
 
   const addOrigem = useMutation({
@@ -60,14 +70,37 @@ export function ObraFormDialog({
     onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar comprador"),
   });
 
+  const addRegiao = useMutation({
+    mutationFn: async (nome: string) => {
+      const { data, error } = await supabase.from("regioes_obra").insert({ nome } as any).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any) => {
+      qc.invalidateQueries({ queryKey: ["regioes-obra"] });
+      setForm((f) => ({ ...f, regiao_label: data.nome }));
+      setNovaRegiao("");
+      setShowAddRegiao(false);
+      toast.success("Região adicionada");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar região"),
+  });
+
   const mut = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("obras")
-        .insert([{ ...form, created_by: u.user?.id } as any])
-        .select()
-        .single();
+      const payload: any = {
+        codigo_chamado: form.codigo_chamado,
+        origem: form.origem,
+        engenheiro_responsavel: form.engenheiro_responsavel,
+        descricao_servico: form.descricao_servico,
+        endereco: form.endereco,
+        data_recebimento: form.data_recebimento,
+        regiao: "leste", // valor dummy para satisfazer enum legado
+        regiao_label: form.regiao_label || null,
+        created_by: u.user?.id,
+      };
+      const { data, error } = await supabase.from("obras").insert([payload]).select().single();
       if (error) throw error;
       await supabase.from("obra_timeline").insert([{
         obra_id: data.id,
@@ -111,6 +144,8 @@ export function ObraFormDialog({
               onChange={(e) => setForm({ ...form, data_recebimento: e.target.value })}
             />
           </div>
+
+          {/* Comprador */}
           <div className="space-y-2">
             <Label>Comprador</Label>
             {showAddOrigem ? (
@@ -131,6 +166,17 @@ export function ObraFormDialog({
                   <X className="h-4 w-4" />
                 </Button>
               </div>
+            ) : (origens?.length ?? 0) === 0 ? (
+              <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+                Nenhum comprador cadastrado.{" "}
+                <button
+                  type="button"
+                  className="font-medium text-primary hover:underline"
+                  onClick={() => setShowAddOrigem(true)}
+                >
+                  Adicione o primeiro
+                </button>
+              </div>
             ) : (
               <div className="flex gap-1">
                 <Select value={form.origem} onValueChange={(v) => setForm({ ...form, origem: v })}>
@@ -147,17 +193,56 @@ export function ObraFormDialog({
               </div>
             )}
           </div>
+
+          {/* Região */}
           <div className="space-y-2">
             <Label>Região</Label>
-            <Select value={form.regiao} onValueChange={(v) => setForm({ ...form, regiao: v as Regiao })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(REGIAO_LABEL).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {showAddRegiao ? (
+              <div className="flex gap-1">
+                <Input
+                  autoFocus
+                  value={novaRegiao}
+                  placeholder="Ex: Centro"
+                  onChange={(e) => setNovaRegiao(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && novaRegiao.trim()) addRegiao.mutate(novaRegiao.trim());
+                  }}
+                />
+                <Button type="button" size="icon" variant="outline" onClick={() => novaRegiao.trim() && addRegiao.mutate(novaRegiao.trim())} disabled={addRegiao.isPending}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button type="button" size="icon" variant="ghost" onClick={() => { setShowAddRegiao(false); setNovaRegiao(""); }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (regioes?.length ?? 0) === 0 ? (
+              <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+                Nenhuma região cadastrada.{" "}
+                <button
+                  type="button"
+                  className="font-medium text-primary hover:underline"
+                  onClick={() => setShowAddRegiao(true)}
+                >
+                  Adicione a primeira
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-1">
+                <Select value={form.regiao_label} onValueChange={(v) => setForm({ ...form, regiao_label: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {regioes?.map((r: any) => (
+                      <SelectItem key={r.id} value={r.nome}>{r.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="icon" variant="outline" onClick={() => setShowAddRegiao(true)} title="Adicionar região">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
+
           <div className="space-y-2 col-span-2">
             <Label>Engenheiro responsável *</Label>
             <Input

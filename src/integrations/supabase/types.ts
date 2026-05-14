@@ -380,6 +380,32 @@ export type Database = {
         }
         Relationships: []
       }
+      empresa_dashboard_config: {
+        Row: {
+          cards_visiveis: string[]
+          empresa_id: string
+          updated_at: string
+        }
+        Insert: {
+          cards_visiveis?: string[]
+          empresa_id: string
+          updated_at?: string
+        }
+        Update: {
+          cards_visiveis?: string[]
+          empresa_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_dashboard_config_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativo: boolean
@@ -823,6 +849,7 @@ export type Database = {
           id: string
           origem: string
           regiao: Database["public"]["Enums"]["obra_regiao"] | null
+          regiao_label: string | null
           status: Database["public"]["Enums"]["obra_status"]
           updated_at: string
         }
@@ -838,6 +865,7 @@ export type Database = {
           id?: string
           origem?: string
           regiao?: Database["public"]["Enums"]["obra_regiao"] | null
+          regiao_label?: string | null
           status?: Database["public"]["Enums"]["obra_status"]
           updated_at?: string
         }
@@ -853,6 +881,7 @@ export type Database = {
           id?: string
           origem?: string
           regiao?: Database["public"]["Enums"]["obra_regiao"] | null
+          regiao_label?: string | null
           status?: Database["public"]["Enums"]["obra_status"]
           updated_at?: string
         }
@@ -1525,6 +1554,35 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regioes_obra: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regioes_obra_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]
