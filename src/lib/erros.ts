@@ -1,4 +1,7 @@
+import { toast } from "sonner";
+
 const FALLBACK = "Não foi possível concluir a ação. Tente novamente.";
+let toastErrorOriginal: typeof toast.error | null = null;
 
 const hasPortugueseText = (message: string) =>
   /[áàâãéêíóôõúç]/i.test(message) ||
@@ -65,4 +68,13 @@ export function erroEmPortugues(error: unknown, fallback = FALLBACK) {
   }
 
   return fallback;
+}
+
+export function instalarErrosEmPortugues() {
+  if (toastErrorOriginal) return;
+
+  toastErrorOriginal = toast.error;
+  toast.error = ((message: unknown, data?: Parameters<typeof toast.error>[1]) => {
+    return toastErrorOriginal?.(erroEmPortugues(message), data);
+  }) as typeof toast.error;
 }

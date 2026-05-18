@@ -29,8 +29,10 @@ import Onboarding from "./pages/Onboarding";
 import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
+import { instalarErrosEmPortugues } from "@/lib/erros";
 
 const queryClient = new QueryClient();
+instalarErrosEmPortugues();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
