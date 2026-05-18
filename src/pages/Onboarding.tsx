@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { erroEmPortugues } from "@/lib/erros";
 import {
   Sparkles,
   Building2,
@@ -159,21 +160,21 @@ export default function Onboarding() {
     }
     setBusy(true);
     try {
-      const { error } = await supabase.from("obras").insert({
-        endereco: obraEndereco,
-        codigo_chamado: obraCodigo || `OB-${Date.now().toString().slice(-5)}`,
-        descricao_servico: obraDescricao || "—",
-        engenheiro_responsavel: obraEngenheiro || nome || "—",
-        regiao: "leste" as any,
-        regiao_label: obraRegiao || null,
-        origem: "Sabesp",
-      } as any);
+      const { error } = await supabase.rpc("criar_obra_segura", {
+        _codigo_chamado: obraCodigo || `OB-${Date.now().toString().slice(-5)}`,
+        _origem: "Sabesp",
+        _regiao_label: obraRegiao || "",
+        _engenheiro_responsavel: obraEngenheiro || nome || "—",
+        _descricao_servico: obraDescricao || "—",
+        _endereco: obraEndereco,
+        _data_recebimento: new Date().toISOString().slice(0, 10),
+      });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["obras"] });
       toast.success("Obra cadastrada!");
       next();
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao criar obra");
+      toast.error(erroEmPortugues(e, "Erro ao criar obra"));
     } finally {
       setBusy(false);
     }

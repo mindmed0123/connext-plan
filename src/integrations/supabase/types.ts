@@ -2072,6 +2072,39 @@ export type Database = {
         Args: { _obra_id: string; _uid: string }
         Returns: boolean
       }
+      criar_obra_segura: {
+        Args: {
+          _codigo_chamado: string
+          _data_recebimento: string
+          _descricao_servico: string
+          _endereco: string
+          _engenheiro_responsavel: string
+          _origem: string
+          _regiao_label: string
+        }
+        Returns: {
+          codigo_chamado: string
+          created_at: string
+          created_by: string | null
+          data_recebimento: string
+          descricao_servico: string | null
+          empresa_id: string
+          endereco: string | null
+          engenheiro_responsavel: string | null
+          id: string
+          origem: string
+          regiao: Database["public"]["Enums"]["obra_regiao"] | null
+          regiao_label: string | null
+          status: Database["public"]["Enums"]["obra_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "obras"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
