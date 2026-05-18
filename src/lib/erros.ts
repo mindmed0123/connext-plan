@@ -75,6 +75,11 @@ export function instalarErrosEmPortugues() {
 
   toastErrorOriginal = toast.error;
   toast.error = ((message: unknown, data?: Parameters<typeof toast.error>[1]) => {
-    return toastErrorOriginal?.(erroEmPortugues(message), data);
+    const translatedData =
+      data && typeof data.description === "string"
+        ? { ...data, description: erroEmPortugues(data.description) }
+        : data;
+
+    return toastErrorOriginal?.(erroEmPortugues(message), translatedData);
   }) as typeof toast.error;
 }
