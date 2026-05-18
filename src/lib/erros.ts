@@ -80,6 +80,6 @@ export function instalarErrosEmPortugues() {
         ? { ...data, description: erroEmPortugues(data.description) }
         : data;
 
-    return toastErrorOriginal?.(erroEmPortugues(message), translatedData);
+    return toastErrorOriginal(erroEmPortugues(message), translatedData);
   }) as typeof toast.error;
 }
