@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { erroEmPortugues } from "@/lib/erros";
 
 export function ObraFormDialog({
   open, onOpenChange, onCreated,
@@ -67,7 +68,7 @@ export function ObraFormDialog({
       setShowAddOrigem(false);
       toast.success("Comprador adicionado");
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar comprador"),
+    onError: (e: any) => toast.error(erroEmPortugues(e, "Erro ao adicionar comprador")),
   });
 
   const addRegiao = useMutation({
@@ -83,45 +84,21 @@ export function ObraFormDialog({
       setShowAddRegiao(false);
       toast.success("Região adicionada");
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar região"),
+    onError: (e: any) => toast.error(erroEmPortugues(e, "Erro ao adicionar região")),
   });
 
   const mut = useMutation({
     mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user?.id) throw new Error("Sessão inválida. Faça login novamente.");
-
-      // Busca empresa_id do usuário (não depender do default do banco)
-      const { data: ur, error: urErr } = await supabase
-        .from("user_roles")
-        .select("empresa_id")
-        .eq("user_id", u.user.id)
-        .not("empresa_id", "is", null)
-        .maybeSingle();
-      if (urErr) throw urErr;
-      if (!ur?.empresa_id) throw new Error("Nenhuma empresa vinculada ao seu usuário.");
-
-      const payload: any = {
-        empresa_id: ur.empresa_id,
-        codigo_chamado: form.codigo_chamado,
-        origem: form.origem,
-        engenheiro_responsavel: form.engenheiro_responsavel,
-        descricao_servico: form.descricao_servico,
-        endereco: form.endereco,
-        data_recebimento: form.data_recebimento,
-        regiao: "leste", // valor dummy para satisfazer enum legado
-        regiao_label: form.regiao_label || null,
-        created_by: u.user.id,
-      };
-      const { data, error } = await supabase.from("obras").insert([payload]).select().single();
+      const { data, error } = await (supabase as any).rpc("criar_obra_segura", {
+        _codigo_chamado: form.codigo_chamado,
+        _origem: form.origem,
+        _regiao_label: form.regiao_label || null,
+        _engenheiro_responsavel: form.engenheiro_responsavel,
+        _descricao_servico: form.descricao_servico,
+        _endereco: form.endereco,
+        _data_recebimento: form.data_recebimento,
+      });
       if (error) throw error;
-      await supabase.from("obra_timeline").insert([{
-        obra_id: data.id,
-        empresa_id: ur.empresa_id,
-        user_id: u.user.id,
-        evento: "Obra criada",
-        detalhes: `Chamado ${data.codigo_chamado} cadastrado no sistema`,
-      } as any]);
       return data;
     },
     onSuccess: () => {
@@ -130,7 +107,7 @@ export function ObraFormDialog({
       onOpenChange(false);
       setForm({ ...form, codigo_chamado: "", engenheiro_responsavel: "", descricao_servico: "", endereco: "" });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
+    onError: (e: any) => toast.error(erroEmPortugues(e, "Erro ao salvar obra")),
   });
 
   return (
