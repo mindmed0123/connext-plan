@@ -89,7 +89,20 @@ export function ObraFormDialog({
   const mut = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
+      if (!u.user?.id) throw new Error("Sessão inválida. Faça login novamente.");
+
+      // Busca empresa_id do usuário (não depender do default do banco)
+      const { data: ur, error: urErr } = await supabase
+        .from("user_roles")
+        .select("empresa_id")
+        .eq("user_id", u.user.id)
+        .not("empresa_id", "is", null)
+        .maybeSingle();
+      if (urErr) throw urErr;
+      if (!ur?.empresa_id) throw new Error("Nenhuma empresa vinculada ao seu usuário.");
+
       const payload: any = {
+        empresa_id: ur.empresa_id,
         codigo_chamado: form.codigo_chamado,
         origem: form.origem,
         engenheiro_responsavel: form.engenheiro_responsavel,
@@ -98,13 +111,14 @@ export function ObraFormDialog({
         data_recebimento: form.data_recebimento,
         regiao: "leste", // valor dummy para satisfazer enum legado
         regiao_label: form.regiao_label || null,
-        created_by: u.user?.id,
+        created_by: u.user.id,
       };
       const { data, error } = await supabase.from("obras").insert([payload]).select().single();
       if (error) throw error;
       await supabase.from("obra_timeline").insert([{
         obra_id: data.id,
-        user_id: u.user?.id,
+        empresa_id: ur.empresa_id,
+        user_id: u.user.id,
         evento: "Obra criada",
         detalhes: `Chamado ${data.codigo_chamado} cadastrado no sistema`,
       } as any]);
