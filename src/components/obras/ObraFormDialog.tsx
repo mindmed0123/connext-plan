@@ -89,10 +89,10 @@ export function ObraFormDialog({
 
   const mut = useMutation({
     mutationFn: async () => {
-      const { data, error } = await (supabase as any).rpc("criar_obra_segura", {
+      const { data, error } = await supabase.rpc("criar_obra_segura", {
         _codigo_chamado: form.codigo_chamado,
         _origem: form.origem,
-        _regiao_label: form.regiao_label || null,
+        _regiao_label: form.regiao_label || "",
         _engenheiro_responsavel: form.engenheiro_responsavel,
         _descricao_servico: form.descricao_servico,
         _endereco: form.endereco,

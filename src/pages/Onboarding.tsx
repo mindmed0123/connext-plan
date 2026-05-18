@@ -160,10 +160,10 @@ export default function Onboarding() {
     }
     setBusy(true);
     try {
-      const { error } = await (supabase as any).rpc("criar_obra_segura", {
+      const { error } = await supabase.rpc("criar_obra_segura", {
         _codigo_chamado: obraCodigo || `OB-${Date.now().toString().slice(-5)}`,
         _origem: "Sabesp",
-        _regiao_label: obraRegiao || null,
+        _regiao_label: obraRegiao || "",
         _engenheiro_responsavel: obraEngenheiro || nome || "—",
         _descricao_servico: obraDescricao || "—",
         _endereco: obraEndereco,
