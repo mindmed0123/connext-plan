@@ -84,7 +84,7 @@ export default function Admin() {
   }
 
   if (isLoading) return null;
-  if (!isSuperAdmin) return <Navigate to="/dashboard" replace />;
+  if (!isSuperAdmin) return <Navigate to="/obras" replace />;
 
   return (
     <div className="space-y-5">
