@@ -1005,6 +1005,7 @@ export type Database = {
           id: string
           numero_nf: string
           obra_id: string | null
+          pedido_compra_id: string | null
           updated_at: string
           valor: number
         }
@@ -1017,6 +1018,7 @@ export type Database = {
           id?: string
           numero_nf: string
           obra_id?: string | null
+          pedido_compra_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -1029,6 +1031,7 @@ export type Database = {
           id?: string
           numero_nf?: string
           obra_id?: string | null
+          pedido_compra_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -1045,6 +1048,13 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_pedido_compra_id_fkey"
+            columns: ["pedido_compra_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_compra"
             referencedColumns: ["id"]
           },
         ]
