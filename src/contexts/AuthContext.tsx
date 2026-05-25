@@ -6,6 +6,7 @@ type AuthCtx = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  authReady: boolean;
   empresaId: string | null;
   empresaNome: string | null;
   refreshEmpresa: () => Promise<void>;
@@ -16,6 +17,7 @@ const Ctx = createContext<AuthCtx>({
   user: null,
   session: null,
   loading: true,
+  authReady: false,
   empresaId: null,
   empresaNome: null,
   refreshEmpresa: async () => {},
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [empresaNome, setEmpresaNome] = useState<string | null>(null);
 
@@ -109,21 +112,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      // Defer to avoid deadlocks
-      if (sess?.user) setTimeout(() => loadEmpresa(sess.user.id), 0);
-      else {
+      if (!authReady) return;
+      setLoading(true);
+      if (sess?.user) {
+        setTimeout(async () => {
+          await loadEmpresa(sess.user.id);
+          setLoading(false);
+        }, 0);
+      } else {
         setEmpresaId(null);
         setEmpresaNome(null);
+        setLoading(false);
       }
     });
+
     supabase.auth.getSession().then(async ({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) await loadEmpresa(sess.user.id);
+      setAuthReady(true);
       setLoading(false);
     });
+
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [authReady]);
 
   const refreshEmpresa = async () => {
     if (user?.id) await loadEmpresa(user.id);
@@ -134,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user, session, loading, empresaId, empresaNome, refreshEmpresa, signOut }}>
+    <Ctx.Provider value={{ user, session, loading, authReady, empresaId, empresaNome, refreshEmpresa, signOut }}>
       {children}
     </Ctx.Provider>
   );
