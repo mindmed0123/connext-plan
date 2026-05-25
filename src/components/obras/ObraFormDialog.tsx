@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { erroEmPortugues } from "@/lib/erros";
+import { getTodayDateInputValue } from "@/lib/date";
 
 export function ObraFormDialog({
   open, onOpenChange, onCreated,
@@ -26,7 +27,7 @@ export function ObraFormDialog({
     engenheiro_responsavel: "",
     descricao_servico: "",
     endereco: "",
-    data_recebimento: new Date().toISOString().slice(0, 10),
+    data_recebimento: getTodayDateInputValue(),
   });
 
   const { data: origens } = useQuery({
