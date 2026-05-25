@@ -4,11 +4,12 @@ import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR } from "@/lib/dashboard-helpers";
 import type { DashboardData } from "@/hooks/useDashboardData";
 import { Calendar } from "lucide-react";
+import { parseDateString } from "@/lib/date";
 
 export function AgendaRecebimentos({ data }: { data: DashboardData }) {
   const proximos = data.recebimentos
     .filter((r) => r.status === "a_receber" && r.data_prevista)
-    .sort((a, b) => new Date(a.data_prevista!).getTime() - new Date(b.data_prevista!).getTime())
+    .sort((a, b) => (parseDateString(a.data_prevista)?.getTime() ?? 0) - (parseDateString(b.data_prevista)?.getTime() ?? 0))
     .slice(0, 10);
 
   const obraMap = new Map(data.obras.map((o) => [o.id, o]));
