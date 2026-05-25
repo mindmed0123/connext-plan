@@ -12,7 +12,6 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { VistoriaTab } from "./tabs/VistoriaTab";
 import { OrcamentoTab } from "./tabs/OrcamentoTab";
@@ -24,6 +23,7 @@ import { EquipeTab } from "./tabs/EquipeTab";
 import { ContratacoesTab } from "./tabs/ContratacoesTab";
 import { MateriaisTab } from "./tabs/MateriaisTab";
 import { useUserRole } from "@/hooks/useUserRole";
+import { formatDateBR } from "@/lib/date";
 
 export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; onClose: () => void }) {
   const qc = useQueryClient();
@@ -105,7 +105,7 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <span><strong className="text-foreground">Origem:</strong> {ORIGEM_LABEL[obra.origem]}</span>
                 <span><strong className="text-foreground">Região:</strong> {getRegiaoLabel(obra as any)}</span>
                 <span><strong className="text-foreground">Engenheiro:</strong> {obra.engenheiro_responsavel}</span>
-                <span><strong className="text-foreground">Recebido:</strong> {format(new Date(obra.data_recebimento), "dd/MM/yyyy")}</span>
+                <span><strong className="text-foreground">Recebido:</strong> {formatDateBR(obra.data_recebimento)}</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 <strong className="text-foreground">Endereço:</strong> {obra.endereco}
