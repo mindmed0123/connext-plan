@@ -19,8 +19,10 @@ const emptyEstado = (): Estado =>
 
 export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
   const qc = useQueryClient();
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, isAdmin } = useUserRole();
+  const podeEditar = isSuperAdmin || isAdmin;
   const [estado, setEstado] = useState<Estado>(emptyEstado());
+  const [carregado, setCarregado] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pessoa-permissoes", pessoaId],
