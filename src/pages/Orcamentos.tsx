@@ -144,8 +144,16 @@ export default function Orcamentos() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Status:</span>
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por número, chamado, cliente ou título..."
+            className="pl-9"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
