@@ -4,8 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/obra-helpers";
-import { format } from "date-fns";
 import { toast } from "sonner";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 export default function Recebimentos() {
   const qc = useQueryClient();
@@ -22,7 +22,7 @@ export default function Recebimentos() {
 
   const marcarRecebido = useMutation({
     mutationFn: async (r: any) => {
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = getTodayDateInputValue();
       // Atualiza o recebimento
       const { error } = await supabase.from("recebimentos").update({
         status: "recebido", data_recebido: hoje,
@@ -87,8 +87,8 @@ export default function Recebimentos() {
                     )}
                   </TableCell>
                   <TableCell>{formatCurrency(r.valor)}</TableCell>
-                  <TableCell>{r.data_prevista ? format(new Date(r.data_prevista), "dd/MM/yyyy") : "—"}</TableCell>
-                  <TableCell>{r.data_recebido ? format(new Date(r.data_recebido), "dd/MM/yyyy") : "—"}</TableCell>
+                  <TableCell>{formatDateBR(r.data_prevista)}</TableCell>
+                  <TableCell>{formatDateBR(r.data_recebido)}</TableCell>
                   <TableCell className="text-xs">{r.status === "recebido" ? "✓ Recebido" : "A receber"}</TableCell>
                   <TableCell>
                     {r.status === "a_receber" && (
