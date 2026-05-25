@@ -19,8 +19,10 @@ const emptyEstado = (): Estado =>
 
 export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
   const qc = useQueryClient();
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, isAdmin } = useUserRole();
+  const podeEditar = isSuperAdmin || isAdmin;
   const [estado, setEstado] = useState<Estado>(emptyEstado());
+  const [carregado, setCarregado] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pessoa-permissoes", pessoaId],
@@ -35,6 +37,7 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
   });
 
   useEffect(() => {
+    if (isLoading) return;
     const novo = emptyEstado();
     data?.forEach((r) => {
       novo[r.modulo] = {
@@ -45,10 +48,12 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
       };
     });
     setEstado(novo);
-  }, [data]);
+    setCarregado(true);
+  }, [data, isLoading]);
 
   const salvar = useMutation({
     mutationFn: async () => {
+      if (!carregado) throw new Error("Aguarde o carregamento das permissões");
       const rows = APP_MODULOS.map((m) => ({
         pessoa_id: pessoaId,
         modulo: m,
@@ -67,14 +72,15 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  if (!isSuperAdmin) {
+  if (!podeEditar) {
     return (
       <div className="rounded-md border bg-muted/40 p-4 text-xs text-muted-foreground flex items-center gap-2">
         <ShieldAlert className="h-4 w-4" />
-        Apenas o Super Admin pode alterar permissões.
+        Apenas administradores da empresa podem alterar permissões.
       </div>
     );
   }
+
 
   const setCampo = (m: AppModulo, campo: keyof Estado[AppModulo], v: boolean) => {
     setEstado((s) => {
@@ -145,8 +151,8 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>
-          {salvar.isPending ? "Salvando..." : "Salvar permissões"}
+        <Button onClick={() => salvar.mutate()} disabled={salvar.isPending || !carregado || isLoading}>
+          {salvar.isPending ? "Salvando..." : !carregado || isLoading ? "Carregando..." : "Salvar permissões"}
         </Button>
       </div>
     </div>

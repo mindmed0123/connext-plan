@@ -52,13 +52,18 @@ export function usePermissions() {
   const { data, isLoading } = useQuery({
     queryKey: ["my-permissions", user?.id],
     enabled: !!user && !isAdmin && !roleLoading,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
-      // Buscar a pessoa vinculada ao usuário
-      const { data: pessoa } = await supabase
+      // Buscar a pessoa vinculada ao usuário (pode haver mais de uma — pegamos a mais recente ativa)
+      const { data: pessoas } = await supabase
         .from("pessoas")
-        .select("id")
+        .select("id, status, created_at")
         .eq("user_id", user!.id)
-        .maybeSingle();
+        .order("status", { ascending: true }) // 'ativo' antes de 'inativo'
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const pessoa = pessoas?.[0];
       if (!pessoa) return [] as PermissaoLinha[];
       const { data, error } = await supabase
         .from("pessoa_permissoes")
