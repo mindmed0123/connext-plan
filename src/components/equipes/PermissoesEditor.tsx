@@ -151,8 +151,8 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>
-          {salvar.isPending ? "Salvando..." : "Salvar permissões"}
+        <Button onClick={() => salvar.mutate()} disabled={salvar.isPending || !carregado || isLoading}>
+          {salvar.isPending ? "Salvando..." : !carregado || isLoading ? "Carregando..." : "Salvar permissões"}
         </Button>
       </div>
     </div>
