@@ -704,14 +704,23 @@ export function OrcamentoFormDialog({
               </div>
             </section>
 
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="h-4 w-4" /> Voltar
-              </Button>
-              <Button onClick={() => save.mutate()} disabled={save.isPending}>
-                Salvar orçamento
-              </Button>
-            </DialogFooter>
+            <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 border-t bg-background px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Total do orçamento</div>
+                <div className="text-2xl font-bold text-primary">{formatCurrency(total)}</div>
+              </div>
+              <div className="flex gap-2 ml-auto">
+                <Button variant="outline" onClick={() => setStep(1)}>
+                  <ArrowLeft className="h-4 w-4" /> Voltar
+                </Button>
+                <Button variant="outline" onClick={() => save.mutate("em_elaboracao")} disabled={save.isPending}>
+                  <Save className="h-4 w-4" /> Salvar rascunho
+                </Button>
+                <Button onClick={() => save.mutate("enviado")} disabled={save.isPending}>
+                  <Send className="h-4 w-4" /> Salvar e enviar
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </DialogContent>
