@@ -22,11 +22,13 @@ import { getTodayDateInputValue } from "@/lib/date";
 type ItemForm = {
   id?: string;
   servico_id?: string | null;
+  codigo?: string | null;
   descricao: string;
   unidade: string;
   quantidade: number;
   preco_unitario: number;
   desconto_pct: number;
+  aliquota_iss?: number;
 };
 
 const subtotal = (i: ItemForm) =>
