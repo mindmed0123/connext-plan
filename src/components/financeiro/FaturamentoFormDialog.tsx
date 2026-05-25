@@ -27,6 +27,12 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [valor, setValor] = useState("");
   const [status, setStatus] = useState<string>(tipo === "nf" ? "" : "aguardando");
 
+  // NF opcional ao criar PC
+  const [withNf, setWithNf] = useState(false);
+  const [nfNumero, setNfNumero] = useState("");
+  const [nfData, setNfData] = useState("");
+  const [nfValor, setNfValor] = useState("");
+
   const obras = useQuery({
     queryKey: ["obras-select"],
     enabled: open && vinculo === "existente",
@@ -36,6 +42,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(""); setValor("");
     setStatus(tipo === "nf" ? "" : "aguardando");
+    setWithNf(false); setNfNumero(""); setNfData(""); setNfValor("");
   };
 
   const save = useMutation({
