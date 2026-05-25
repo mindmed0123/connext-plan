@@ -176,6 +176,10 @@ export function OrcamentoFormDialog({
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
       setObservacoes(""); setItens([]); setNumero(null);
+      setObjeto(""); setPrazoExecucao(""); setLocalExecucao("");
+      setDescontoGlobalPct(0); setCondicaoPagamento("a_vista");
+      setNumeroParcelas(1); setIntervaloParcelas(30); setPercentualEntrada(0);
+      setObservacoesInternas("");
       return;
     }
     (async () => {
