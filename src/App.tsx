@@ -27,11 +27,22 @@ import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Configuracoes from "./pages/Configuracoes";
+import Cartoes from "./pages/Cartoes";
+import Compradores from "./pages/Compradores";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { instalarErrosEmPortugues } from "@/lib/erros";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 instalarErrosEmPortugues();
 
 const App = () => (
@@ -80,6 +91,8 @@ const App = () => (
               <Route path="/faturamento" element={<RequirePermission modulo="faturamento"><Faturamento /></RequirePermission>} />
               <Route path="/recebimentos" element={<RequirePermission modulo="financeiro"><Recebimentos /></RequirePermission>} />
               <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
+              <Route path="/cartoes" element={<RequirePermission modulo="financeiro"><Cartoes /></RequirePermission>} />
+              <Route path="/compradores" element={<RequirePermission modulo="financeiro"><Compradores /></RequirePermission>} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/configuracoes" element={<Configuracoes />} />

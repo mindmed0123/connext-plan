@@ -133,6 +133,126 @@ export type Database = {
           },
         ]
       }
+      cartao_despesas: {
+        Row: {
+          cartao_id: string
+          categoria_id: string | null
+          comprador_id: string | null
+          created_at: string
+          created_by: string | null
+          data_compra: string
+          descricao: string
+          empresa_id: string
+          id: string
+          obra_id: string | null
+          observacoes: string | null
+          parcelas: number
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          cartao_id: string
+          categoria_id?: string | null
+          comprador_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string
+          descricao: string
+          empresa_id?: string
+          id?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          parcelas?: number
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          cartao_id?: string
+          categoria_id?: string | null
+          comprador_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          parcelas?: number
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartao_despesas_cartao_id_fkey"
+            columns: ["cartao_id"]
+            isOneToOne: false
+            referencedRelation: "cartoes_credito"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cartao_despesas_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cartoes_credito: {
+        Row: {
+          apelido: string
+          ativo: boolean
+          banco: string | null
+          bandeira: string | null
+          created_at: string
+          created_by: string | null
+          dia_fechamento: number | null
+          dia_vencimento: number | null
+          empresa_id: string
+          id: string
+          limite: number
+          observacoes: string | null
+          titular: string | null
+          ultimos_4: string | null
+          updated_at: string
+        }
+        Insert: {
+          apelido: string
+          ativo?: boolean
+          banco?: string | null
+          bandeira?: string | null
+          created_at?: string
+          created_by?: string | null
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
+          empresa_id?: string
+          id?: string
+          limite?: number
+          observacoes?: string | null
+          titular?: string | null
+          ultimos_4?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apelido?: string
+          ativo?: boolean
+          banco?: string | null
+          bandeira?: string | null
+          created_at?: string
+          created_by?: string | null
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
+          empresa_id?: string
+          id?: string
+          limite?: number
+          observacoes?: string | null
+          titular?: string | null
+          ultimos_4?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categorias_financeiras: {
         Row: {
           ativo: boolean
@@ -208,6 +328,51 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      compradores: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -835,6 +1000,7 @@ export type Database = {
         Row: {
           anexo_path: string | null
           anexo_url: string | null
+          comprador_id: string | null
           created_at: string
           created_by: string | null
           data_compra: string
@@ -855,6 +1021,7 @@ export type Database = {
         Insert: {
           anexo_path?: string | null
           anexo_url?: string | null
+          comprador_id?: string | null
           created_at?: string
           created_by?: string | null
           data_compra?: string
@@ -877,6 +1044,7 @@ export type Database = {
         Update: {
           anexo_path?: string | null
           anexo_url?: string | null
+          comprador_id?: string | null
           created_at?: string
           created_by?: string | null
           data_compra?: string
@@ -897,6 +1065,13 @@ export type Database = {
           valor_unitario?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "materiais_obra_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "materiais_obra_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -1495,6 +1670,7 @@ export type Database = {
       pedidos_compra: {
         Row: {
           codigo_chamado_avulso: string | null
+          comprador_id: string | null
           created_at: string
           data_recebimento: string | null
           empresa_id: string
@@ -1507,6 +1683,7 @@ export type Database = {
         }
         Insert: {
           codigo_chamado_avulso?: string | null
+          comprador_id?: string | null
           created_at?: string
           data_recebimento?: string | null
           empresa_id?: string
@@ -1519,6 +1696,7 @@ export type Database = {
         }
         Update: {
           codigo_chamado_avulso?: string | null
+          comprador_id?: string | null
           created_at?: string
           data_recebimento?: string | null
           empresa_id?: string
@@ -1530,6 +1708,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "pedidos_compra_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pedidos_compra_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -2163,6 +2348,23 @@ export type Database = {
           saldo_acumulado: number
           saldo_prev: number
           saldo_real: number
+        }[]
+      }
+      get_obra_financeiro_resumo: {
+        Args: { _obra_id?: string }
+        Returns: {
+          codigo_chamado: string
+          custo_cartao: number
+          custo_materiais: number
+          custo_terceirizados_pago: number
+          custo_terceirizados_previsto: number
+          custo_total: number
+          despesas_realizadas: number
+          obra_id: string
+          receita_faturada: number
+          receita_orcada: number
+          receita_recebida: number
+          saldo: number
         }[]
       }
       get_user_empresa_id: { Args: never; Returns: string }
