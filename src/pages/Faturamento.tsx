@@ -21,7 +21,7 @@ export default function Faturamento() {
   });
   const pcs = useQuery({
     queryKey: ["faturamento-pcs"],
-    queryFn: async () => (await supabase.from("pedidos_compra").select("*, obras(codigo_chamado)").order("created_at", { ascending: false })).data,
+    queryFn: async () => (await supabase.from("pedidos_compra").select("*, obras(codigo_chamado), notas_fiscais(id, numero_nf)").order("created_at", { ascending: false })).data,
   });
   const nfs = useQuery({
     queryKey: ["faturamento-nfs"],
