@@ -12,13 +12,22 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
+const ROTA_PADRAO_POR_ROLE = {
+  super_admin: "/admin",
+  admin: "/dashboard",
+  gestor: "/dashboard",
+  financeiro: "/financeiro",
+  engenheiro: "/obras",
+  operacional: "/obras",
+} as const;
+
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const motivo = searchParams.get("motivo");
   const tabParam = searchParams.get("tab") === "signup" ? "signup" : "login";
-  const { user, loading } = useAuth();
-  const { isSuperAdmin, isLoading: roleLoading } = useUserRole();
+  const { user, loading, authReady } = useAuth();
+  const { role, isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,10 +40,11 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState("");
 
   useEffect(() => {
-    if (!loading && !roleLoading && user) {
-      navigate(isSuperAdmin ? "/admin" : "/dashboard", { replace: true });
+    if (authReady && !loading && !roleLoading && user) {
+      const fallback = role ? ROTA_PADRAO_POR_ROLE[role] : isSuperAdmin ? "/admin" : "/obras";
+      navigate(fallback, { replace: true });
     }
-  }, [user, loading, roleLoading, isSuperAdmin, navigate]);
+  }, [user, loading, authReady, roleLoading, role, isSuperAdmin, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
