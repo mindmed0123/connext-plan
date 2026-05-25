@@ -37,6 +37,7 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
   });
 
   useEffect(() => {
+    if (isLoading) return;
     const novo = emptyEstado();
     data?.forEach((r) => {
       novo[r.modulo] = {
@@ -47,10 +48,12 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
       };
     });
     setEstado(novo);
-  }, [data]);
+    setCarregado(true);
+  }, [data, isLoading]);
 
   const salvar = useMutation({
     mutationFn: async () => {
+      if (!carregado) throw new Error("Aguarde o carregamento das permissões");
       const rows = APP_MODULOS.map((m) => ({
         pessoa_id: pessoaId,
         modulo: m,
@@ -69,14 +72,15 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  if (!isSuperAdmin) {
+  if (!podeEditar) {
     return (
       <div className="rounded-md border bg-muted/40 p-4 text-xs text-muted-foreground flex items-center gap-2">
         <ShieldAlert className="h-4 w-4" />
-        Apenas o Super Admin pode alterar permissões.
+        Apenas administradores da empresa podem alterar permissões.
       </div>
     );
   }
+
 
   const setCampo = (m: AppModulo, campo: keyof Estado[AppModulo], v: boolean) => {
     setEstado((s) => {
