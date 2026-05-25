@@ -30,9 +30,10 @@ import {
   ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 const fmt = formatCurrency;
-const fmtDate = (d?: string | null) => (d ? format(parseISO(d), "dd/MM/yyyy") : "—");
+const fmtDate = (d?: string | null) => formatDateBR(d);
 
 type LancamentoForm = {
   tipo: "receita" | "despesa";
@@ -55,7 +56,7 @@ const emptyForm: LancamentoForm = {
   status: "previsto",
   descricao: "",
   valor: 0,
-  data_competencia: new Date().toISOString().slice(0, 10),
+  data_competencia: getTodayDateInputValue(),
   data_vencimento: null,
   data_realizado: null,
   fornecedor_nome: "",
@@ -275,7 +276,7 @@ export default function Financeiro() {
   const realizar = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase as any).from("lancamentos_financeiros")
-        .update({ status: "realizado", data_realizado: new Date().toISOString().slice(0, 10) })
+        .update({ status: "realizado", data_realizado: getTodayDateInputValue() })
         .eq("id", id);
       if (error) throw error;
     },
