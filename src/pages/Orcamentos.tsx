@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { format, addDays, parseISO } from "date-fns";
-import { Plus, Eye, Pencil, FileDown, Trash2 } from "lucide-react";
+import { Plus, Eye, Pencil, FileDown, Trash2, Copy, Search } from "lucide-react";
 import { OrcamentoFormDialog } from "@/components/orcamentos/OrcamentoFormDialog";
 import { OrcamentoDetailSheet } from "@/components/orcamentos/OrcamentoDetailSheet";
+import { Input } from "@/components/ui/input";
 import { ORC_STATUS_BADGE, ORC_STATUS_OPTIONS } from "@/components/orcamentos/orc-helpers";
 import { gerarOrcamentoPDF } from "@/lib/orcamento-pdf";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export default function Orcamentos() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [busca, setBusca] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -52,6 +54,52 @@ export default function Orcamentos() {
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
       toast.success("Orçamento excluído");
       setDeleteId(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: original } = await supabase
+        .from("orcamentos").select("*").eq("id", id).single();
+      if (!original) throw new Error("Orçamento não encontrado");
+      const { data: itens } = await supabase
+        .from("orcamento_itens").select("*").eq("orcamento_id", id);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const o = original as any;
+      const payload = {
+        ...o,
+        id: undefined,
+        numero: null,
+        numero_orcamento: null,
+        status: "em_elaboracao",
+        created_at: undefined,
+        updated_at: undefined,
+        data_envio: null,
+        data_resposta: null,
+      };
+      delete payload.id;
+      delete payload.numero;
+      delete payload.created_at;
+      delete payload.updated_at;
+
+      const { data: novo, error } = await supabase
+        .from("orcamentos").insert(payload).select("id").single();
+      if (error) throw error;
+
+      if (itens && itens.length > 0) {
+        await supabase.from("orcamento_itens").insert(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          itens.map(({ id: _i, orcamento_id: _o, created_at: _c, subtotal: _s, ...rest }: any) => ({
+            ...rest, orcamento_id: novo.id,
+          }))
+        );
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
+      toast.success("Orçamento duplicado!");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -96,8 +144,16 @@ export default function Orcamentos() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Status:</span>
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por número, chamado, cliente ou título..."
+            className="pl-9"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -125,43 +181,62 @@ export default function Orcamentos() {
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : (data?.length ?? 0) === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Nenhum orçamento</TableCell></TableRow>
-            ) : data?.map((o) => {
-              const validUntil = o.data_orcamento
-                ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
-                : "—";
-              const editable = o.status === "em_elaboracao" || o.status === "em_negociacao";
-              return (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono text-xs">{o.numero_orcamento || "—"}</TableCell>
-                  <TableCell className="max-w-xs truncate">{o.titulo || "—"}</TableCell>
-                  <TableCell className="font-medium">{(o as { codigo_chamado?: string | null }).codigo_chamado || o.obras?.codigo_chamado || "—"}</TableCell>
-                  <TableCell className="text-sm">{o.data_orcamento ? format(parseISO(o.data_orcamento), "dd/MM/yyyy") : "—"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{validUntil}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatCurrency(Number(o.valor_orcamento))}</TableCell>
-                  <TableCell>
-                    <Badge className={ORC_STATUS_BADGE[o.status]?.className}>{ORC_STATUS_BADGE[o.status]?.label || o.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openDetail(o.id)} title="Visualizar">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {editable && (
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(o.id)} title="Editar">
-                          <Pencil className="h-4 w-4" />
+            ) : (() => {
+              const q = busca.trim().toLowerCase();
+              const filtered = !q ? data : data.filter((o) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const oo = o as any;
+                return [
+                  oo.numero, oo.numero_orcamento, oo.codigo_chamado, oo.titulo,
+                  oo.cliente_nome, oo.obras?.codigo_chamado,
+                ].some((v) => v && String(v).toLowerCase().includes(q));
+              });
+              if (filtered.length === 0) {
+                return <TableRow><TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Nenhum orçamento encontrado</TableCell></TableRow>;
+              }
+              return filtered.map((o) => {
+                const validUntil = o.data_orcamento
+                  ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
+                  : "—";
+                const editable = o.status === "em_elaboracao" || o.status === "em_negociacao";
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const numeroDisplay = (o as any).numero || o.numero_orcamento || "—";
+                return (
+                  <TableRow key={o.id}>
+                    <TableCell className="font-mono text-xs">{numeroDisplay}</TableCell>
+                    <TableCell className="max-w-xs truncate">{o.titulo || "—"}</TableCell>
+                    <TableCell className="font-medium">{(o as { codigo_chamado?: string | null }).codigo_chamado || o.obras?.codigo_chamado || "—"}</TableCell>
+                    <TableCell className="text-sm">{o.data_orcamento ? format(parseISO(o.data_orcamento), "dd/MM/yyyy") : "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{validUntil}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatCurrency(Number(o.valor_orcamento))}</TableCell>
+                    <TableCell>
+                      <Badge className={ORC_STATUS_BADGE[o.status]?.className}>{ORC_STATUS_BADGE[o.status]?.label || o.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openDetail(o.id)} title="Visualizar">
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button size="icon" variant="ghost" onClick={() => handlePDF(o.id)} title="Gerar PDF">
-                        <FileDown className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setDeleteId(o.id)} title="Excluir">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                        {editable && (
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(o.id)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={() => handlePDF(o.id)} title="Gerar PDF">
+                          <FileDown className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => duplicate.mutate(o.id)} title="Duplicar">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setDeleteId(o.id)} title="Excluir">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              });
+            })()}
           </TableBody>
         </Table>
       </div>

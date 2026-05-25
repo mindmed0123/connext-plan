@@ -12,7 +12,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Minus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown, ChevronDown, Send, Save } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
@@ -24,6 +24,7 @@ type ItemForm = {
   servico_id?: string | null;
   codigo?: string | null;
   descricao: string;
+  descricao_detalhada?: string;
   unidade: string;
   quantidade: number;
   preco_unitario: number;
@@ -33,17 +34,6 @@ type ItemForm = {
 
 const subtotal = (i: ItemForm) =>
   Number(i.quantidade) * Number(i.preco_unitario) * (1 - Number(i.desconto_pct) / 100);
-
-async function generateNumero(empresaId: string) {
-  const ym = format(new Date(), "yyyyMM");
-  const { count } = await supabase
-    .from("orcamentos")
-    .select("*", { count: "exact", head: true })
-    .eq("empresa_id", empresaId)
-    .like("numero_orcamento", `ORC-${ym}-%`);
-  const seq = String((count ?? 0) + 1).padStart(3, "0");
-  return `ORC-${ym}-${seq}`;
-}
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
@@ -71,7 +61,6 @@ export function OrcamentoFormDialog({
   const [titulo, setTitulo] = useState("");
   const [dataOrcamento, setDataOrcamento] = useState(getTodayDateInputValue());
   const [validadeDias, setValidadeDias] = useState(30);
-  const [condicoes, setCondicoes] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCnpj, setClienteCnpj] = useState("");
   const [clienteIE, setClienteIE] = useState("");
@@ -86,6 +75,7 @@ export function OrcamentoFormDialog({
   const [itens, setItens] = useState<ItemForm[]>([]);
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
+  const [detalheAberto, setDetalheAberto] = useState<Record<number, boolean>>({});
 
   // Proposta comercial (campos extras Omie-like)
   const [objeto, setObjeto] = useState("");
@@ -175,7 +165,7 @@ export function OrcamentoFormDialog({
     setServicoSearch("");
     if (!orcamentoId) {
       setChamado(""); setTitulo(""); setDataOrcamento(getTodayDateInputValue());
-      setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
+      setValidadeDias(30); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
       setObservacoes(""); setItens([]); setNumero(null);
       setObjeto(""); setPrazoExecucao(""); setLocalExecucao("");
@@ -192,7 +182,7 @@ export function OrcamentoFormDialog({
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? getTodayDateInputValue());
       setValidadeDias(orc.validade_dias ?? 30);
-      setCondicoes(orc.condicoes_pagamento ?? "");
+      // (condicoes_pagamento legado removido — usar condicao_pagamento estruturado)
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -266,11 +256,10 @@ export function OrcamentoFormDialog({
   }, [servicos, servicoSearch]);
 
   const save = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (novoStatus: "em_elaboracao" | "enviado") => {
       if (!empresaId) throw new Error("Empresa não identificada");
       if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
-      const num = numero ?? (await generateNumero(empresaId));
 
       // Persiste/atualiza cliente se tiver CNPJ
       const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
@@ -286,7 +275,6 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // Garante uma obra correspondente ao chamado (via RPC com privilégios elevados)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: obraIdData, error: obraErr } = await (supabase as any).rpc("ensure_obra_for_chamado", {
         _chamado: chamado,
@@ -300,12 +288,10 @@ export function OrcamentoFormDialog({
         empresa_id: empresaId,
         obra_id: obraId,
         codigo_chamado: chamado,
-        numero_orcamento: num,
         titulo: titulo || null,
         data_orcamento: dataOrcamento,
         data_emissao: dataOrcamento,
         validade_dias: validadeDias,
-        condicoes_pagamento: condicoes || null,
         cliente_nome: clienteNome || null,
         cliente_cnpj: clienteCnpj || null,
         cliente_inscricao_estadual: clienteIE || null,
@@ -322,9 +308,9 @@ export function OrcamentoFormDialog({
         numero_parcelas: Number(numeroParcelas) || 1,
         intervalo_parcelas: Number(intervaloParcelas) || 30,
         percentual_entrada: Number(percentualEntrada) || 0,
-        status: "em_elaboracao" as const,
+        status: novoStatus,
         valor_orcamento: total,
-        data_envio: null,
+        data_envio: novoStatus === "enviado" ? new Date().toISOString().slice(0, 10) : null,
       };
 
       let id = orcamentoId;
@@ -344,7 +330,9 @@ export function OrcamentoFormDialog({
           servico_id: it.servico_id || null,
           codigo: it.codigo || null,
           tipo: "servico",
-          descricao: it.descricao, unidade: it.unidade,
+          descricao: it.descricao,
+          descricao_detalhada: it.descricao_detalhada || null,
+          unidade: it.unidade,
           quantidade: Number(it.quantidade) || 0,
           preco_unitario: Number(it.preco_unitario) || 0,
           desconto_pct: Number(it.desconto_pct) || 0,
@@ -354,8 +342,8 @@ export function OrcamentoFormDialog({
       );
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Orçamento salvo!");
+    onSuccess: (_d, status) => {
+      toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
       qc.invalidateQueries({ queryKey: ["obras"] });
@@ -417,11 +405,8 @@ export function OrcamentoFormDialog({
                   <Label>Validade (dias) *</Label>
                   <Input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(Number(e.target.value))} />
                 </div>
-                <div className="md:col-span-2">
-                  <Label>Condições de pagamento</Label>
-                  <Input value={condicoes} onChange={(e) => setCondicoes(e.target.value)} placeholder="Ex.: 30/60/90 dias" />
-                </div>
               </div>
+
             </section>
 
             {/* Cliente */}
@@ -557,6 +542,11 @@ export function OrcamentoFormDialog({
                     >
                       <div className="min-w-0">
                         <div className="font-medium text-sm flex items-center gap-2 truncate">
+                          {(s as { codigo?: string | null }).codigo && (
+                            <span className="font-mono text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded shrink-0">
+                              {(s as { codigo?: string | null }).codigo}
+                            </span>
+                          )}
                           <span className="truncate">{s.nome}</span>
                           {jaIncluido && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded shrink-0">incluído</span>}
                         </div>
@@ -586,60 +576,63 @@ export function OrcamentoFormDialog({
               ) : (
                 <div className="space-y-2">
                   {itens.map((item, idx) => (
-                    <div key={idx} className="rounded-md border bg-background p-3 grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-12 md:col-span-5">
-                        <Label className="text-xs">Descrição</Label>
-                        <Input value={item.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} />
-                      </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <Label className="text-xs">Qtd</Label>
-                        <div className="flex">
-                          <Button type="button" size="icon" variant="outline" className="rounded-r-none h-10 w-9"
-                            onClick={() => updateItem(idx, { quantidade: Math.max(0, Number(item.quantidade) - 1) })}>
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <Input type="number" step="0.01" className="rounded-none text-center"
+                    <div key={idx} className="rounded-md border bg-background p-3 space-y-2">
+                      <div className="grid grid-cols-12 gap-2 items-end">
+                        <div className="col-span-12 md:col-span-5">
+                          <Label className="text-xs">Descrição</Label>
+                          <Input value={item.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} />
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">Qtd</Label>
+                          <Input type="number" step="0.001" min={0} className="text-right"
                             value={item.quantidade}
-                            onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) })} />
-                          <Button type="button" size="icon" variant="outline" className="rounded-l-none h-10 w-9"
-                            onClick={() => updateItem(idx, { quantidade: Number(item.quantidade) + 1 })}>
-                            <Plus className="h-3 w-3" />
+                            onChange={(e) => updateItem(idx, { quantidade: parseFloat(e.target.value) || 0 })} />
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">Preço un. (R$)</Label>
+                          <Input type="number" step="0.01" value={item.preco_unitario}
+                            onChange={(e) => updateItem(idx, { preco_unitario: Number(e.target.value) })} />
+                        </div>
+                        <div className="col-span-4 md:col-span-1">
+                          <Label className="text-xs">Desc%</Label>
+                          <Input type="number" step="1" min={0} max={100} value={item.desconto_pct}
+                            onChange={(e) => updateItem(idx, { desconto_pct: Number(e.target.value) })} />
+                        </div>
+                        <div className="col-span-10 md:col-span-1">
+                          <Label className="text-xs">Subtotal</Label>
+                          <div className="h-10 flex items-center px-2 rounded-md border bg-muted/50 text-sm font-semibold">
+                            {formatCurrency(subtotal(item))}
+                          </div>
+                        </div>
+                        <div className="col-span-2 md:col-span-1 flex justify-end">
+                          <Button type="button" size="icon" variant="ghost" onClick={() => removerItem(idx)}>
+                            <X className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <Label className="text-xs">Preço un. (R$)</Label>
-                        <Input type="number" step="0.01" value={item.preco_unitario}
-                          onChange={(e) => updateItem(idx, { preco_unitario: Number(e.target.value) })} />
-                      </div>
-                      <div className="col-span-4 md:col-span-1">
-                        <Label className="text-xs">Desc%</Label>
-                        <Input type="number" step="1" min={0} max={100} value={item.desconto_pct}
-                          onChange={(e) => updateItem(idx, { desconto_pct: Number(e.target.value) })} />
-                      </div>
-                      <div className="col-span-10 md:col-span-1">
-                        <Label className="text-xs">Subtotal</Label>
-                        <div className="h-10 flex items-center px-2 rounded-md border bg-muted/50 text-sm font-semibold">
-                          {formatCurrency(subtotal(item))}
-                        </div>
-                      </div>
-                      <div className="col-span-2 md:col-span-1 flex justify-end">
-                        <Button type="button" size="icon" variant="ghost" onClick={() => removerItem(idx)}>
-                          <X className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                          onClick={() => setDetalheAberto((s) => ({ ...s, [idx]: !s[idx] }))}
+                        >
+                          <ChevronDown className={cn("h-3 w-3 transition-transform", detalheAberto[idx] && "rotate-180")} />
+                          {detalheAberto[idx] || item.descricao_detalhada ? "Descrição detalhada (sai no PDF)" : "Adicionar descrição detalhada (sai no PDF)"}
+                        </button>
+                        {(detalheAberto[idx] || item.descricao_detalhada) && (
+                          <Textarea
+                            rows={3}
+                            className="mt-1 text-sm"
+                            placeholder="Escopo técnico, medições, materiais, considerações..."
+                            value={item.descricao_detalhada || ""}
+                            onChange={(e) => updateItem(idx, { descricao_detalhada: e.target.value })}
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-
-              <div className="flex justify-end pt-2 border-t">
-                <div className="text-right">
-                  <div className="text-lg font-bold">
-                    TOTAL: <span className="text-primary">{formatCurrency(total)}</span>
-                  </div>
-                </div>
-              </div>
             </section>
 
             <section className="space-y-3 rounded-lg border bg-muted/10 p-4">
@@ -711,14 +704,23 @@ export function OrcamentoFormDialog({
               </div>
             </section>
 
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="h-4 w-4" /> Voltar
-              </Button>
-              <Button onClick={() => save.mutate()} disabled={save.isPending}>
-                Salvar orçamento
-              </Button>
-            </DialogFooter>
+            <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 border-t bg-background px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Total do orçamento</div>
+                <div className="text-2xl font-bold text-primary">{formatCurrency(total)}</div>
+              </div>
+              <div className="flex gap-2 ml-auto">
+                <Button variant="outline" onClick={() => setStep(1)}>
+                  <ArrowLeft className="h-4 w-4" /> Voltar
+                </Button>
+                <Button variant="outline" onClick={() => save.mutate("em_elaboracao")} disabled={save.isPending}>
+                  <Save className="h-4 w-4" /> Salvar rascunho
+                </Button>
+                <Button onClick={() => save.mutate("enviado")} disabled={save.isPending}>
+                  <Send className="h-4 w-4" /> Salvar e enviar
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </DialogContent>

@@ -77,7 +77,7 @@ export function OrcamentoDetailSheet({
       <SheetContent className="sm:max-w-2xl w-full overflow-y-auto">
         <SheetHeader>
           <div className="flex items-center justify-between">
-            <SheetTitle>{orc?.numero_orcamento || "Orçamento"}</SheetTitle>
+            <SheetTitle>{(orc as { numero?: string } | null)?.numero || orc?.numero_orcamento || "Orçamento"}</SheetTitle>
             {orc && <Badge className={ORC_STATUS_BADGE[orc.status]?.className}>{ORC_STATUS_BADGE[orc.status]?.label}</Badge>}
           </div>
         </SheetHeader>
