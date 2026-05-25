@@ -52,13 +52,13 @@ export type PermissaoLinha = {
  * Para administrativo "comum" (sem role admin), aplica granularidade da tabela pessoa_permissoes.
  */
 export function usePermissions() {
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
   const { isSuperAdmin, isAdmin, isLoading: roleLoading } = useUserRole();
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-permissions", user?.id],
-    enabled: !!user && !isAdmin && !roleLoading,
+    enabled: authReady && !!user && !isAdmin && !roleLoading,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
@@ -84,7 +84,7 @@ export function usePermissions() {
 
   // Realtime: refletir mudanças de permissões assim que o admin salvar
   useEffect(() => {
-    if (!user?.id || isAdmin) return;
+    if (!authReady || !user?.id || isAdmin) return;
     const ch = supabase
       .channel(`perm-${user.id}`)
       .on(
@@ -96,7 +96,7 @@ export function usePermissions() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [user?.id, isAdmin, qc]);
+  }, [authReady, user?.id, isAdmin, qc]);
 
 
 
@@ -114,7 +114,7 @@ export function usePermissions() {
   return {
     can,
     permissoes: data ?? [],
-    isLoading: isLoading || roleLoading,
+    isLoading: !authReady || isLoading || roleLoading,
     isSuperAdmin,
     isAdmin,
   };

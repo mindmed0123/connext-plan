@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function OnboardingGate({ children }: { children: ReactNode }) {
-  const { empresaId, loading } = useAuth();
+  const { empresaId, loading, authReady } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["empresa-onboarding", empresaId],
-    enabled: !!empresaId,
+    enabled: authReady && !!empresaId,
     queryFn: async () => {
       const { data } = await supabase
         .from("empresas")
@@ -20,7 +20,7 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
     },
   });
 
-  if (loading || (empresaId && isLoading)) {
+  if (!authReady || loading || (empresaId && isLoading)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />

@@ -7,11 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
  * Usado para liberar acesso à seção "Minhas obras" mesmo sem permissão geral.
  */
 export function useObrasVinculadas() {
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["minhas-obras-vinculadas", user?.id],
-    enabled: !!user,
+    enabled: authReady && !!user,
     queryFn: async () => {
       const { data: pessoa } = await supabase
         .from("pessoas")
@@ -31,6 +31,6 @@ export function useObrasVinculadas() {
   return {
     temVinculo: data?.temVinculo ?? false,
     pessoaId: data?.pessoaId ?? null,
-    isLoading,
+    isLoading: !authReady || isLoading,
   };
 }

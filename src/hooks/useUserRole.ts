@@ -5,11 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 export type AppRole = "super_admin" | "admin" | "gestor" | "engenheiro" | "financeiro" | "operacional";
 
 export function useUserRole() {
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["user-role", user?.id],
-    enabled: !!user,
+    enabled: authReady && !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_roles")
@@ -30,5 +30,5 @@ export function useUserRole() {
   const isAdmin = role === "admin" || role === "gestor";
   const isOperacional = role === "operacional" || role === "engenheiro" || role === "financeiro";
 
-  return { role, roles: data?.roles ?? [], empresaId: data?.empresaId ?? null, isSuperAdmin, isAdmin, isOperacional, isLoading };
+  return { role, roles: data?.roles ?? [], empresaId: data?.empresaId ?? null, isSuperAdmin, isAdmin, isOperacional, isLoading: !authReady || isLoading };
 }
