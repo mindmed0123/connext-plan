@@ -576,60 +576,63 @@ export function OrcamentoFormDialog({
               ) : (
                 <div className="space-y-2">
                   {itens.map((item, idx) => (
-                    <div key={idx} className="rounded-md border bg-background p-3 grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-12 md:col-span-5">
-                        <Label className="text-xs">Descrição</Label>
-                        <Input value={item.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} />
-                      </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <Label className="text-xs">Qtd</Label>
-                        <div className="flex">
-                          <Button type="button" size="icon" variant="outline" className="rounded-r-none h-10 w-9"
-                            onClick={() => updateItem(idx, { quantidade: Math.max(0, Number(item.quantidade) - 1) })}>
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <Input type="number" step="0.01" className="rounded-none text-center"
+                    <div key={idx} className="rounded-md border bg-background p-3 space-y-2">
+                      <div className="grid grid-cols-12 gap-2 items-end">
+                        <div className="col-span-12 md:col-span-5">
+                          <Label className="text-xs">Descrição</Label>
+                          <Input value={item.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} />
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">Qtd</Label>
+                          <Input type="number" step="0.001" min={0} className="text-right"
                             value={item.quantidade}
-                            onChange={(e) => updateItem(idx, { quantidade: Number(e.target.value) })} />
-                          <Button type="button" size="icon" variant="outline" className="rounded-l-none h-10 w-9"
-                            onClick={() => updateItem(idx, { quantidade: Number(item.quantidade) + 1 })}>
-                            <Plus className="h-3 w-3" />
+                            onChange={(e) => updateItem(idx, { quantidade: parseFloat(e.target.value) || 0 })} />
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">Preço un. (R$)</Label>
+                          <Input type="number" step="0.01" value={item.preco_unitario}
+                            onChange={(e) => updateItem(idx, { preco_unitario: Number(e.target.value) })} />
+                        </div>
+                        <div className="col-span-4 md:col-span-1">
+                          <Label className="text-xs">Desc%</Label>
+                          <Input type="number" step="1" min={0} max={100} value={item.desconto_pct}
+                            onChange={(e) => updateItem(idx, { desconto_pct: Number(e.target.value) })} />
+                        </div>
+                        <div className="col-span-10 md:col-span-1">
+                          <Label className="text-xs">Subtotal</Label>
+                          <div className="h-10 flex items-center px-2 rounded-md border bg-muted/50 text-sm font-semibold">
+                            {formatCurrency(subtotal(item))}
+                          </div>
+                        </div>
+                        <div className="col-span-2 md:col-span-1 flex justify-end">
+                          <Button type="button" size="icon" variant="ghost" onClick={() => removerItem(idx)}>
+                            <X className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                      <div className="col-span-4 md:col-span-2">
-                        <Label className="text-xs">Preço un. (R$)</Label>
-                        <Input type="number" step="0.01" value={item.preco_unitario}
-                          onChange={(e) => updateItem(idx, { preco_unitario: Number(e.target.value) })} />
-                      </div>
-                      <div className="col-span-4 md:col-span-1">
-                        <Label className="text-xs">Desc%</Label>
-                        <Input type="number" step="1" min={0} max={100} value={item.desconto_pct}
-                          onChange={(e) => updateItem(idx, { desconto_pct: Number(e.target.value) })} />
-                      </div>
-                      <div className="col-span-10 md:col-span-1">
-                        <Label className="text-xs">Subtotal</Label>
-                        <div className="h-10 flex items-center px-2 rounded-md border bg-muted/50 text-sm font-semibold">
-                          {formatCurrency(subtotal(item))}
-                        </div>
-                      </div>
-                      <div className="col-span-2 md:col-span-1 flex justify-end">
-                        <Button type="button" size="icon" variant="ghost" onClick={() => removerItem(idx)}>
-                          <X className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                          onClick={() => setDetalheAberto((s) => ({ ...s, [idx]: !s[idx] }))}
+                        >
+                          <ChevronDown className={cn("h-3 w-3 transition-transform", detalheAberto[idx] && "rotate-180")} />
+                          {detalheAberto[idx] || item.descricao_detalhada ? "Descrição detalhada (sai no PDF)" : "Adicionar descrição detalhada (sai no PDF)"}
+                        </button>
+                        {(detalheAberto[idx] || item.descricao_detalhada) && (
+                          <Textarea
+                            rows={3}
+                            className="mt-1 text-sm"
+                            placeholder="Escopo técnico, medições, materiais, considerações..."
+                            value={item.descricao_detalhada || ""}
+                            onChange={(e) => updateItem(idx, { descricao_detalhada: e.target.value })}
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-
-              <div className="flex justify-end pt-2 border-t">
-                <div className="text-right">
-                  <div className="text-lg font-bold">
-                    TOTAL: <span className="text-primary">{formatCurrency(total)}</span>
-                  </div>
-                </div>
-              </div>
             </section>
 
             <section className="space-y-3 rounded-lg border bg-muted/10 p-4">
