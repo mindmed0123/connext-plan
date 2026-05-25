@@ -24,6 +24,7 @@ export default function Orcamentos() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [busca, setBusca] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
