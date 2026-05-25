@@ -62,14 +62,24 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
         }]);
         if (error) throw error;
       } else if (tipo === "pc") {
-        const { error } = await supabase.from("pedidos_compra").insert([{
+        const { data: pcRow, error } = await supabase.from("pedidos_compra").insert([{
           ...baseObra,
           numero_pedido: numero || null,
           data_recebimento: data || null,
           valor: valor ? Number(valor) : 0,
           status: (status || "aguardando") as any,
-        }]);
+        }]).select("id").single();
         if (error) throw error;
+        if (withNf && nfNumero.trim() && nfData) {
+          const { error: nfErr } = await supabase.from("notas_fiscais").insert([{
+            ...baseObra,
+            pedido_compra_id: pcRow!.id,
+            numero_nf: nfNumero.trim(),
+            data_emissao: nfData,
+            valor: nfValor ? Number(nfValor) : (valor ? Number(valor) : 0),
+          }]);
+          if (nfErr) throw nfErr;
+        }
       } else {
         if (!numero.trim()) throw new Error("Informe o número da NF");
         if (!data) throw new Error("Informe a data de emissão");
