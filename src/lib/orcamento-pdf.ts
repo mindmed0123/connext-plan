@@ -245,14 +245,14 @@ export async function gerarOrcamentoPDF(
       `${Number(item.aliquota_iss ?? 0).toFixed(2)}%`,
       BRL(Number(item.subtotal)),
     ]),
-    foot: [
+    foot: ([
       [
         { content: "Subtotal:", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
         { content: BRL(subtotalItens), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
       ],
       ...(descontoGlobalPct > 0 ? [[
-        { content: `Desconto global (${descontoGlobalPct.toFixed(2)}%):`, colSpan: 4, styles: { halign: "right", fontStyle: "bold" as const, fillColor: TEAL_LIGHT, textColor: TEXT } },
-        { content: `- ${BRL(valorDescGlobal)}`, styles: { halign: "right" as const, fontStyle: "bold" as const, fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: `Desconto global (${descontoGlobalPct.toFixed(2)}%):`, colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: `- ${BRL(valorDescGlobal)}`, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
       ]] : []),
       [
         { content: "Total do ISS:", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
@@ -262,7 +262,7 @@ export async function gerarOrcamentoPDF(
         { content: "TOTAL:", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL, textColor: [255, 255, 255] } },
         { content: BRL(valorTotal), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL, textColor: [255, 255, 255] } },
       ],
-    ],
+    ] as unknown) as import("jspdf-autotable").RowInput[],
     theme: "plain",
     headStyles: {
       fillColor: TEAL,
