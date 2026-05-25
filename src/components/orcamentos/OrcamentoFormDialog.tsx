@@ -256,11 +256,10 @@ export function OrcamentoFormDialog({
   }, [servicos, servicoSearch]);
 
   const save = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (novoStatus: "em_elaboracao" | "enviado") => {
       if (!empresaId) throw new Error("Empresa não identificada");
       if (!chamado.trim()) throw new Error("Informe o chamado");
       if (itens.length === 0) throw new Error("Adicione pelo menos um serviço");
-      const num = numero ?? (await generateNumero(empresaId));
 
       // Persiste/atualiza cliente se tiver CNPJ
       const cnpjLimpo = clienteCnpj.replace(/\D/g, "");
@@ -276,7 +275,6 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // Garante uma obra correspondente ao chamado (via RPC com privilégios elevados)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: obraIdData, error: obraErr } = await (supabase as any).rpc("ensure_obra_for_chamado", {
         _chamado: chamado,
@@ -290,12 +288,10 @@ export function OrcamentoFormDialog({
         empresa_id: empresaId,
         obra_id: obraId,
         codigo_chamado: chamado,
-        numero_orcamento: num,
         titulo: titulo || null,
         data_orcamento: dataOrcamento,
         data_emissao: dataOrcamento,
         validade_dias: validadeDias,
-        condicoes_pagamento: condicoes || null,
         cliente_nome: clienteNome || null,
         cliente_cnpj: clienteCnpj || null,
         cliente_inscricao_estadual: clienteIE || null,
@@ -312,9 +308,9 @@ export function OrcamentoFormDialog({
         numero_parcelas: Number(numeroParcelas) || 1,
         intervalo_parcelas: Number(intervaloParcelas) || 30,
         percentual_entrada: Number(percentualEntrada) || 0,
-        status: "em_elaboracao" as const,
+        status: novoStatus,
         valor_orcamento: total,
-        data_envio: null,
+        data_envio: novoStatus === "enviado" ? new Date().toISOString().slice(0, 10) : null,
       };
 
       let id = orcamentoId;
@@ -334,7 +330,9 @@ export function OrcamentoFormDialog({
           servico_id: it.servico_id || null,
           codigo: it.codigo || null,
           tipo: "servico",
-          descricao: it.descricao, unidade: it.unidade,
+          descricao: it.descricao,
+          descricao_detalhada: it.descricao_detalhada || null,
+          unidade: it.unidade,
           quantidade: Number(it.quantidade) || 0,
           preco_unitario: Number(it.preco_unitario) || 0,
           desconto_pct: Number(it.desconto_pct) || 0,
@@ -344,8 +342,8 @@ export function OrcamentoFormDialog({
       );
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Orçamento salvo!");
+    onSuccess: (_d, status) => {
+      toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
       qc.invalidateQueries({ queryKey: ["obras"] });
