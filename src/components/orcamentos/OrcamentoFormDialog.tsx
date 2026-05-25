@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
+import { getTodayDateInputValue } from "@/lib/date";
 
 type ItemForm = {
   id?: string;
@@ -66,7 +67,7 @@ export function OrcamentoFormDialog({
   // Etapa 1
   const [chamado, setChamado] = useState<string>("");
   const [titulo, setTitulo] = useState("");
-  const [dataOrcamento, setDataOrcamento] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [dataOrcamento, setDataOrcamento] = useState(getTodayDateInputValue());
   const [validadeDias, setValidadeDias] = useState(30);
   const [condicoes, setCondicoes] = useState("");
   const [clienteNome, setClienteNome] = useState("");
@@ -161,7 +162,7 @@ export function OrcamentoFormDialog({
     setStep(1);
     setServicoSearch("");
     if (!orcamentoId) {
-      setChamado(""); setTitulo(""); setDataOrcamento(format(new Date(), "yyyy-MM-dd"));
+      setChamado(""); setTitulo(""); setDataOrcamento(getTodayDateInputValue());
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
       setObservacoes(""); setItens([]); setNumero(null);
@@ -173,7 +174,7 @@ export function OrcamentoFormDialog({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setChamado((orc as any).codigo_chamado ?? "");
       setTitulo(orc.titulo ?? "");
-      setDataOrcamento(orc.data_orcamento ?? format(new Date(), "yyyy-MM-dd"));
+      setDataOrcamento(orc.data_orcamento ?? getTodayDateInputValue());
       setValidadeDias(orc.validade_dias ?? 30);
       setCondicoes(orc.condicoes_pagamento ?? "");
       setClienteNome(orc.cliente_nome ?? "");
