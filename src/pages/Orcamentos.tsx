@@ -58,7 +58,52 @@ export default function Orcamentos() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const handlePDF = async (orcId: string) => {
+  const duplicate = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: original } = await supabase
+        .from("orcamentos").select("*").eq("id", id).single();
+      if (!original) throw new Error("Orçamento não encontrado");
+      const { data: itens } = await supabase
+        .from("orcamento_itens").select("*").eq("orcamento_id", id);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const o = original as any;
+      const payload = {
+        ...o,
+        id: undefined,
+        numero: null,
+        numero_orcamento: null,
+        status: "em_elaboracao",
+        created_at: undefined,
+        updated_at: undefined,
+        data_envio: null,
+        data_resposta: null,
+      };
+      delete payload.id;
+      delete payload.numero;
+      delete payload.created_at;
+      delete payload.updated_at;
+
+      const { data: novo, error } = await supabase
+        .from("orcamentos").insert(payload).select("id").single();
+      if (error) throw error;
+
+      if (itens && itens.length > 0) {
+        await supabase.from("orcamento_itens").insert(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          itens.map(({ id: _i, orcamento_id: _o, created_at: _c, subtotal: _s, ...rest }: any) => ({
+            ...rest, orcamento_id: novo.id,
+          }))
+        );
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
+      toast.success("Orçamento duplicado!");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
     if (!empresaId) return;
     const [{ data: orc }, { data: itens }, { data: empresa }] = await Promise.all([
       supabase.from("orcamentos").select("*, obras(codigo_chamado)").eq("id", orcId).single(),
