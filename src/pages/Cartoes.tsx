@@ -112,6 +112,7 @@ export default function Cartoes() {
         data_compra: despForm.data_compra,
         parcelas: parseInt(despForm.parcelas) || 1,
         observacoes: despForm.observacoes || null,
+        categoria: despForm.categoria || null,
       };
       const { error } = await supabase.from("cartao_despesas" as any).insert([payload]);
       if (error) throw error;
