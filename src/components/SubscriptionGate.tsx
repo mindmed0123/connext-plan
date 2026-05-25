@@ -9,12 +9,12 @@ import SubscriptionRequired from "@/pages/SubscriptionRequired";
 const ALLOWED_PATHS = ["/billing", "/pricing"];
 
 export function SubscriptionGate({ children }: { children: ReactNode }) {
-  const { empresaId, user } = useAuth();
+  const { empresaId, user, authReady } = useAuth();
   const { isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
   const { data, isLoading } = useQuery({
     queryKey: ["assinatura-status", empresaId],
-    enabled: !!empresaId && !isSuperAdmin,
+    enabled: authReady && !!empresaId && !isSuperAdmin,
     queryFn: async () => {
       const { data } = await supabase
         .from("assinaturas")
@@ -25,7 +25,7 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
     },
   });
 
-  if (!user || roleLoading) return <>{children}</>;
+  if (!authReady || !user || roleLoading) return <>{children}</>;
   if (isSuperAdmin) return <>{children}</>;
   if (!empresaId) return <>{children}</>;
   if (isLoading) {
