@@ -323,7 +323,7 @@ export default function Cartoes() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDespDialog(false)}>Cancelar</Button>
-            <Button onClick={() => saveDesp.mutate()} disabled={!despForm.cartao_id || !despForm.descricao || !despForm.valor || saveDesp.isPending}>Salvar</Button>
+            <Button onClick={() => saveDesp.mutate()} disabled={!despForm.cartao_id || !despForm.categoria || !despForm.valor || saveDesp.isPending}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
