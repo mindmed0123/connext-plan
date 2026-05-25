@@ -200,6 +200,13 @@ export type Database = {
             referencedRelation: "compradores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cartao_despesas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cartoes_credito: {
