@@ -107,7 +107,7 @@ export default function Cartoes() {
         cartao_id: despForm.cartao_id,
         obra_id: despForm.obra_id || null,
         comprador_id: despForm.comprador_id || null,
-        descricao: despForm.descricao.trim(),
+        descricao: despForm.descricao.trim() || despForm.categoria || "Despesa",
         valor: parseFloat(despForm.valor) || 0,
         data_compra: despForm.data_compra,
         parcelas: parseInt(despForm.parcelas) || 1,
