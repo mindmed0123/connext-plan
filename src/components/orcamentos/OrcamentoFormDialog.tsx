@@ -84,7 +84,17 @@ export function OrcamentoFormDialog({
   const [itens, setItens] = useState<ItemForm[]>([]);
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
-  const [statusSalvar, setStatusSalvar] = useState<"em_elaboracao" | "enviado" | "em_negociacao" | "aprovado" | "reprovado">("em_elaboracao");
+
+  // Proposta comercial (campos extras Omie-like)
+  const [objeto, setObjeto] = useState("");
+  const [prazoExecucao, setPrazoExecucao] = useState("");
+  const [localExecucao, setLocalExecucao] = useState("");
+  const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
+  const [condicaoPagamento, setCondicaoPagamento] = useState<string>("a_vista");
+  const [numeroParcelas, setNumeroParcelas] = useState(1);
+  const [intervaloParcelas, setIntervaloParcelas] = useState(30);
+  const [percentualEntrada, setPercentualEntrada] = useState(0);
+  const [observacoesInternas, setObservacoesInternas] = useState("");
 
 
   const { data: servicos } = useQuery({
