@@ -22,11 +22,13 @@ import { getTodayDateInputValue } from "@/lib/date";
 type ItemForm = {
   id?: string;
   servico_id?: string | null;
+  codigo?: string | null;
   descricao: string;
   unidade: string;
   quantidade: number;
   preco_unitario: number;
   desconto_pct: number;
+  aliquota_iss?: number;
 };
 
 const subtotal = (i: ItemForm) =>
@@ -84,7 +86,17 @@ export function OrcamentoFormDialog({
   const [itens, setItens] = useState<ItemForm[]>([]);
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
-  const [statusSalvar, setStatusSalvar] = useState<"em_elaboracao" | "enviado" | "em_negociacao" | "aprovado" | "reprovado">("em_elaboracao");
+
+  // Proposta comercial (campos extras Omie-like)
+  const [objeto, setObjeto] = useState("");
+  const [prazoExecucao, setPrazoExecucao] = useState("");
+  const [localExecucao, setLocalExecucao] = useState("");
+  const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
+  const [condicaoPagamento, setCondicaoPagamento] = useState<string>("a_vista");
+  const [numeroParcelas, setNumeroParcelas] = useState(1);
+  const [intervaloParcelas, setIntervaloParcelas] = useState(30);
+  const [percentualEntrada, setPercentualEntrada] = useState(0);
+  const [observacoesInternas, setObservacoesInternas] = useState("");
 
 
   const { data: servicos } = useQuery({
@@ -166,6 +178,10 @@ export function OrcamentoFormDialog({
       setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
       setObservacoes(""); setItens([]); setNumero(null);
+      setObjeto(""); setPrazoExecucao(""); setLocalExecucao("");
+      setDescontoGlobalPct(0); setCondicaoPagamento("a_vista");
+      setNumeroParcelas(1); setIntervaloParcelas(30); setPercentualEntrada(0);
+      setObservacoesInternas("");
       return;
     }
     (async () => {
@@ -187,12 +203,25 @@ export function OrcamentoFormDialog({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setClienteTelefone((orc as any).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
-      setNumero(orc.numero_orcamento);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const o = orc as any;
+      setNumero(o.numero || o.numero_orcamento || null);
+      setObjeto(o.objeto ?? "");
+      setPrazoExecucao(o.prazo_execucao ?? "");
+      setLocalExecucao(o.local_execucao ?? "");
+      setDescontoGlobalPct(Number(o.desconto_global_pct ?? 0));
+      setCondicaoPagamento(o.condicao_pagamento ?? "a_vista");
+      setNumeroParcelas(Number(o.numero_parcelas ?? 1));
+      setIntervaloParcelas(Number(o.intervalo_parcelas ?? 30));
+      setPercentualEntrada(Number(o.percentual_entrada ?? 0));
+      setObservacoesInternas(o.observacoes_internas ?? "");
       const { data: its } = await supabase.from("orcamento_itens").select("*").eq("orcamento_id", orcamentoId).order("ordem");
       setItens(((its ?? []) as ItemForm[]).map((i) => ({
-        id: i.id, servico_id: i.servico_id, descricao: i.descricao, unidade: i.unidade,
+        id: i.id, servico_id: i.servico_id, codigo: i.codigo ?? null,
+        descricao: i.descricao, unidade: i.unidade,
         quantidade: Number(i.quantidade), preco_unitario: Number(i.preco_unitario),
         desconto_pct: Number(i.desconto_pct),
+        aliquota_iss: Number(i.aliquota_iss ?? 0),
       })));
     })();
   }, [open, orcamentoId]);
@@ -211,8 +240,10 @@ export function OrcamentoFormDialog({
       updateItem(existIdx, { quantidade: Number(itens[existIdx].quantidade) + 1 });
     } else {
       setItens([...itens, {
-        servico_id: s.id, descricao: s.nome, unidade: s.unidade,
+        servico_id: s.id, codigo: (s as { codigo?: string | null }).codigo ?? null,
+        descricao: s.nome, unidade: s.unidade,
         quantidade: 1, preco_unitario: Number(s.preco_unitario), desconto_pct: 0,
+        aliquota_iss: Number((s as { aliquota_iss?: number }).aliquota_iss ?? 0),
       }]);
     }
   };
@@ -272,6 +303,7 @@ export function OrcamentoFormDialog({
         numero_orcamento: num,
         titulo: titulo || null,
         data_orcamento: dataOrcamento,
+        data_emissao: dataOrcamento,
         validade_dias: validadeDias,
         condicoes_pagamento: condicoes || null,
         cliente_nome: clienteNome || null,
@@ -281,6 +313,15 @@ export function OrcamentoFormDialog({
         cliente_email: clienteEmail || null,
         cliente_telefone: clienteTelefone || null,
         observacoes: observacoes || null,
+        observacoes_internas: observacoesInternas || null,
+        objeto: objeto || null,
+        prazo_execucao: prazoExecucao || null,
+        local_execucao: localExecucao || null,
+        desconto_global_pct: Number(descontoGlobalPct) || 0,
+        condicao_pagamento: condicaoPagamento,
+        numero_parcelas: Number(numeroParcelas) || 1,
+        intervalo_parcelas: Number(intervaloParcelas) || 30,
+        percentual_entrada: Number(percentualEntrada) || 0,
         status: "em_elaboracao" as const,
         valor_orcamento: total,
         data_envio: null,
@@ -301,10 +342,13 @@ export function OrcamentoFormDialog({
         itens.map((it, idx) => ({
           orcamento_id: id!, empresa_id: empresaId,
           servico_id: it.servico_id || null,
+          codigo: it.codigo || null,
+          tipo: "servico",
           descricao: it.descricao, unidade: it.unidade,
           quantidade: Number(it.quantidade) || 0,
           preco_unitario: Number(it.preco_unitario) || 0,
           desconto_pct: Number(it.desconto_pct) || 0,
+          aliquota_iss: Number(it.aliquota_iss) || 0,
           ordem: idx,
         }))
       );

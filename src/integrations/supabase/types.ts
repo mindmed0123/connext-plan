@@ -304,6 +304,33 @@ export type Database = {
           },
         ]
       }
+      categorias_servico: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           cnpj: string
@@ -347,11 +374,14 @@ export type Database = {
         Row: {
           ativo: boolean
           cargo: string | null
+          cidade: string | null
           cpf_cnpj: string | null
           created_at: string
           created_by: string | null
           email: string | null
           empresa_id: string
+          endereco: string | null
+          estado: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -361,11 +391,14 @@ export type Database = {
         Insert: {
           ativo?: boolean
           cargo?: string | null
+          cidade?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id?: string
+          endereco?: string | null
+          estado?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -375,11 +408,14 @@ export type Database = {
         Update: {
           ativo?: boolean
           cargo?: string | null
+          cidade?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id?: string
+          endereco?: string | null
+          estado?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
@@ -1405,9 +1441,12 @@ export type Database = {
       }
       orcamento_itens: {
         Row: {
+          aliquota_iss: number
+          codigo: string | null
           created_at: string
           desconto_pct: number
           descricao: string
+          descricao_detalhada: string | null
           empresa_id: string
           id: string
           orcamento_id: string
@@ -1416,12 +1455,16 @@ export type Database = {
           quantidade: number
           servico_id: string | null
           subtotal: number | null
+          tipo: string
           unidade: string
         }
         Insert: {
+          aliquota_iss?: number
+          codigo?: string | null
           created_at?: string
           desconto_pct?: number
           descricao: string
+          descricao_detalhada?: string | null
           empresa_id: string
           id?: string
           orcamento_id: string
@@ -1430,12 +1473,16 @@ export type Database = {
           quantidade?: number
           servico_id?: string | null
           subtotal?: number | null
+          tipo?: string
           unidade?: string
         }
         Update: {
+          aliquota_iss?: number
+          codigo?: string | null
           created_at?: string
           desconto_pct?: number
           descricao?: string
+          descricao_detalhada?: string | null
           empresa_id?: string
           id?: string
           orcamento_id?: string
@@ -1444,6 +1491,7 @@ export type Database = {
           quantidade?: number
           servico_id?: string | null
           subtotal?: number | null
+          tipo?: string
           unidade?: string
         }
         Relationships: [
@@ -1481,24 +1529,43 @@ export type Database = {
           cliente_nome: string | null
           cliente_telefone: string | null
           codigo_chamado: string | null
+          comprador_id: string | null
+          condicao_pagamento: string
           condicoes_pagamento: string | null
           created_at: string
+          data_emissao: string | null
           data_envio: string | null
           data_orcamento: string
+          data_resposta: string | null
+          data_validade: string | null
+          desconto_global_pct: number
+          desconto_global_valor: number
           descricao: string | null
           empresa_id: string
           engenheiro_aprovador: string | null
           id: string
+          intervalo_parcelas: number
           last_updated_at: string | null
           last_updated_by: string | null
+          local_execucao: string | null
+          numero: string | null
           numero_orcamento: string | null
+          numero_parcelas: number
+          objeto: string | null
           obra_id: string | null
           observacoes: string | null
+          observacoes_internas: string | null
+          percentual_entrada: number
+          prazo_execucao: string | null
           status: Database["public"]["Enums"]["orcamento_status"]
+          subtotal: number
           titulo: string | null
           updated_at: string
           validade_dias: number
+          valor_impostos: number
           valor_orcamento: number
+          valor_total: number
+          vendedor_id: string | null
         }
         Insert: {
           arquivo_path?: string | null
@@ -1510,24 +1577,43 @@ export type Database = {
           cliente_nome?: string | null
           cliente_telefone?: string | null
           codigo_chamado?: string | null
+          comprador_id?: string | null
+          condicao_pagamento?: string
           condicoes_pagamento?: string | null
           created_at?: string
+          data_emissao?: string | null
           data_envio?: string | null
           data_orcamento?: string
+          data_resposta?: string | null
+          data_validade?: string | null
+          desconto_global_pct?: number
+          desconto_global_valor?: number
           descricao?: string | null
           empresa_id?: string
           engenheiro_aprovador?: string | null
           id?: string
+          intervalo_parcelas?: number
           last_updated_at?: string | null
           last_updated_by?: string | null
+          local_execucao?: string | null
+          numero?: string | null
           numero_orcamento?: string | null
+          numero_parcelas?: number
+          objeto?: string | null
           obra_id?: string | null
           observacoes?: string | null
+          observacoes_internas?: string | null
+          percentual_entrada?: number
+          prazo_execucao?: string | null
           status?: Database["public"]["Enums"]["orcamento_status"]
+          subtotal?: number
           titulo?: string | null
           updated_at?: string
           validade_dias?: number
+          valor_impostos?: number
           valor_orcamento?: number
+          valor_total?: number
+          vendedor_id?: string | null
         }
         Update: {
           arquivo_path?: string | null
@@ -1539,26 +1625,52 @@ export type Database = {
           cliente_nome?: string | null
           cliente_telefone?: string | null
           codigo_chamado?: string | null
+          comprador_id?: string | null
+          condicao_pagamento?: string
           condicoes_pagamento?: string | null
           created_at?: string
+          data_emissao?: string | null
           data_envio?: string | null
           data_orcamento?: string
+          data_resposta?: string | null
+          data_validade?: string | null
+          desconto_global_pct?: number
+          desconto_global_valor?: number
           descricao?: string | null
           empresa_id?: string
           engenheiro_aprovador?: string | null
           id?: string
+          intervalo_parcelas?: number
           last_updated_at?: string | null
           last_updated_by?: string | null
+          local_execucao?: string | null
+          numero?: string | null
           numero_orcamento?: string | null
+          numero_parcelas?: number
+          objeto?: string | null
           obra_id?: string | null
           observacoes?: string | null
+          observacoes_internas?: string | null
+          percentual_entrada?: number
+          prazo_execucao?: string | null
           status?: Database["public"]["Enums"]["orcamento_status"]
+          subtotal?: number
           titulo?: string | null
           updated_at?: string
           validade_dias?: number
+          valor_impostos?: number
           valor_orcamento?: number
+          valor_total?: number
+          vendedor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orcamentos_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orcamentos_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -2107,42 +2219,76 @@ export type Database = {
       }
       servicos: {
         Row: {
+          aliquota_iss: number
           ativo: boolean
+          categoria_id: string | null
           codigo: string | null
+          codigo_lc116: string | null
+          codigo_nbs: string | null
+          codigo_servico_municipio: string | null
           created_at: string
+          desconto_padrao_pct: number
           descricao: string | null
+          descricao_detalhada: string | null
           empresa_id: string
           id: string
+          iss_retido: boolean
           nome: string
           preco_unitario: number
+          tipo_tributacao: string
           unidade: string
           updated_at: string
         }
         Insert: {
+          aliquota_iss?: number
           ativo?: boolean
+          categoria_id?: string | null
           codigo?: string | null
+          codigo_lc116?: string | null
+          codigo_nbs?: string | null
+          codigo_servico_municipio?: string | null
           created_at?: string
+          desconto_padrao_pct?: number
           descricao?: string | null
+          descricao_detalhada?: string | null
           empresa_id: string
           id?: string
+          iss_retido?: boolean
           nome: string
           preco_unitario?: number
+          tipo_tributacao?: string
           unidade?: string
           updated_at?: string
         }
         Update: {
+          aliquota_iss?: number
           ativo?: boolean
+          categoria_id?: string | null
           codigo?: string | null
+          codigo_lc116?: string | null
+          codigo_nbs?: string | null
+          codigo_servico_municipio?: string | null
           created_at?: string
+          desconto_padrao_pct?: number
           descricao?: string | null
+          descricao_detalhada?: string | null
           empresa_id?: string
           id?: string
+          iss_retido?: boolean
           nome?: string
           preco_unitario?: number
+          tipo_tributacao?: string
           unidade?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "servicos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_servico"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "servicos_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -2507,6 +2653,7 @@ export type Database = {
         | "em_negociacao"
         | "aprovado"
         | "reprovado"
+        | "cancelado"
       parcela_status: "pendente" | "pago"
       pc_status: "aguardando" | "recebido"
       pessoa_status: "ativo" | "inativo"
@@ -2733,6 +2880,7 @@ export const Constants = {
         "em_negociacao",
         "aprovado",
         "reprovado",
+        "cancelado",
       ],
       parcela_status: ["pendente", "pago"],
       pc_status: ["aguardando", "recebido"],
