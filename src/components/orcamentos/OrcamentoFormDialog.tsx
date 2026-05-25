@@ -542,6 +542,11 @@ export function OrcamentoFormDialog({
                     >
                       <div className="min-w-0">
                         <div className="font-medium text-sm flex items-center gap-2 truncate">
+                          {(s as { codigo?: string | null }).codigo && (
+                            <span className="font-mono text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded shrink-0">
+                              {(s as { codigo?: string | null }).codigo}
+                            </span>
+                          )}
                           <span className="truncate">{s.nome}</span>
                           {jaIncluido && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded shrink-0">incluído</span>}
                         </div>
