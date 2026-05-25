@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
+import { getTodayDateInputValue } from "@/lib/date";
 
 type Tipo = "rc" | "pc" | "nf";
 
@@ -40,9 +41,9 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   });
 
   const reset = () => {
-    setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(""); setValor("");
+    setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");
     setStatus(tipo === "nf" ? "" : "aguardando");
-    setWithNf(false); setNfNumero(""); setNfData(""); setNfValor("");
+    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor("");
   };
 
   const save = useMutation({
