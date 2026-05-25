@@ -82,6 +82,24 @@ export function usePermissions() {
     },
   });
 
+  // Realtime: refletir mudanças de permissões assim que o admin salvar
+  useEffect(() => {
+    if (!user?.id || isAdmin) return;
+    const ch = supabase
+      .channel(`perm-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pessoa_permissoes" },
+        () => qc.invalidateQueries({ queryKey: ["my-permissions", user.id] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id, isAdmin, qc]);
+
+
+
   const can = (modulo: AppModulo, acao: AppAcao = "view"): boolean => {
     if (isSuperAdmin) return false;
     if (isAdmin) return true;
