@@ -18,6 +18,7 @@ import {
   FORMA_PAGAMENTO_LIST,
 } from "@/lib/financeiro-helpers";
 import { cn } from "@/lib/utils";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 export function ContratacaoCard({ contratacao, onDelete }: { contratacao: any; onDelete?: () => void }) {
   const qc = useQueryClient();
@@ -81,7 +82,7 @@ function ParcelaRow({ parcela, contratacaoId, obraId }: { parcela: any; contrata
   const [form, setForm] = useState({
     valor: String(parcela.valor),
     data_prevista: parcela.data_prevista ?? "",
-    data_pagamento: parcela.data_pagamento ?? new Date().toISOString().slice(0, 10),
+    data_pagamento: parcela.data_pagamento ?? getTodayDateInputValue(),
     forma_pagamento: parcela.forma_pagamento ?? "",
     observacao: parcela.observacao ?? "",
   });
@@ -116,7 +117,7 @@ function ParcelaRow({ parcela, contratacaoId, obraId }: { parcela: any; contrata
       const { error } = await supabase.from("parcelas_pagamento").update({
         status: "pago",
         valor: parseFloat(form.valor) || 0,
-        data_pagamento: form.data_pagamento || new Date().toISOString().slice(0, 10),
+        data_pagamento: form.data_pagamento || getTodayDateInputValue(),
         forma_pagamento: (form.forma_pagamento || null) as any,
         observacao: form.observacao || null,
         comprovante_url,
@@ -183,10 +184,10 @@ function ParcelaRow({ parcela, contratacaoId, obraId }: { parcela: any; contrata
           </span>
           <span className="font-semibold">{formatCurrency(parcela.valor)}</span>
           {parcela.data_prevista && !isPago && (
-            <span className="text-muted-foreground">· prev. {format(new Date(parcela.data_prevista), "dd/MM/yyyy")}</span>
+            <span className="text-muted-foreground">· prev. {formatDateBR(parcela.data_prevista)}</span>
           )}
           {isPago && parcela.data_pagamento && (
-            <span className="text-emerald-700 dark:text-emerald-300">· pago em {format(new Date(parcela.data_pagamento), "dd/MM/yyyy")}</span>
+            <span className="text-emerald-700 dark:text-emerald-300">· pago em {formatDateBR(parcela.data_pagamento)}</span>
           )}
           {parcela.forma_pagamento && isPago && (
             <Badge variant="outline" className="text-[9px] h-4">{FORMA_PAGAMENTO_LABEL[parcela.forma_pagamento as keyof typeof FORMA_PAGAMENTO_LABEL]}</Badge>
