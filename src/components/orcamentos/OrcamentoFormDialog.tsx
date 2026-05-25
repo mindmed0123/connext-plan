@@ -240,8 +240,10 @@ export function OrcamentoFormDialog({
       updateItem(existIdx, { quantidade: Number(itens[existIdx].quantidade) + 1 });
     } else {
       setItens([...itens, {
-        servico_id: s.id, descricao: s.nome, unidade: s.unidade,
+        servico_id: s.id, codigo: (s as { codigo?: string | null }).codigo ?? null,
+        descricao: s.nome, unidade: s.unidade,
         quantidade: 1, preco_unitario: Number(s.preco_unitario), desconto_pct: 0,
+        aliquota_iss: Number((s as { aliquota_iss?: number }).aliquota_iss ?? 0),
       }]);
     }
   };
