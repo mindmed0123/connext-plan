@@ -2425,6 +2425,8 @@ export type Database = {
         | "execucoes"
         | "etapas"
         | "servicos"
+        | "cartoes"
+        | "compradores"
       app_role:
         | "admin"
         | "gestor"
@@ -2641,6 +2643,8 @@ export const Constants = {
         "execucoes",
         "etapas",
         "servicos",
+        "cartoes",
+        "compradores",
       ],
       app_role: [
         "admin",
