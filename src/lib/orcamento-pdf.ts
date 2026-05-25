@@ -413,5 +413,7 @@ export async function gerarOrcamentoPDF(
   doc.text(`Gerado em ${geradoEm}`, pageW / 2, pageH - 14, { align: "center" });
   doc.text("Página 1 de 1", pageW / 2, pageH - 9, { align: "center" });
 
-  doc.save(`orcamento-${orc.numero_orcamento || "proposta"}-${format(new Date(), "yyyyMMdd")}.pdf`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const numForFile = (orc as any).numero || orc.numero_orcamento || "proposta";
+  doc.save(`orcamento-${numForFile}-${format(new Date(), "yyyyMMdd")}.pdf`);
 }
