@@ -1,0 +1,1 @@
+ALTER TABLE public.cartao_despesas ADD COLUMN IF NOT EXISTS categoria text;

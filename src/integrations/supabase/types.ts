@@ -136,6 +136,7 @@ export type Database = {
       cartao_despesas: {
         Row: {
           cartao_id: string
+          categoria: string | null
           categoria_id: string | null
           comprador_id: string | null
           created_at: string
@@ -152,6 +153,7 @@ export type Database = {
         }
         Insert: {
           cartao_id: string
+          categoria?: string | null
           categoria_id?: string | null
           comprador_id?: string | null
           created_at?: string
@@ -168,6 +170,7 @@ export type Database = {
         }
         Update: {
           cartao_id?: string
+          categoria?: string | null
           categoria_id?: string | null
           comprador_id?: string | null
           created_at?: string
