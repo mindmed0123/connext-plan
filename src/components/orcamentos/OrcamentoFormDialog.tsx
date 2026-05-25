@@ -12,7 +12,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Minus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown, ChevronDown, Send, Save } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
@@ -24,6 +24,7 @@ type ItemForm = {
   servico_id?: string | null;
   codigo?: string | null;
   descricao: string;
+  descricao_detalhada?: string;
   unidade: string;
   quantidade: number;
   preco_unitario: number;
@@ -33,17 +34,6 @@ type ItemForm = {
 
 const subtotal = (i: ItemForm) =>
   Number(i.quantidade) * Number(i.preco_unitario) * (1 - Number(i.desconto_pct) / 100);
-
-async function generateNumero(empresaId: string) {
-  const ym = format(new Date(), "yyyyMM");
-  const { count } = await supabase
-    .from("orcamentos")
-    .select("*", { count: "exact", head: true })
-    .eq("empresa_id", empresaId)
-    .like("numero_orcamento", `ORC-${ym}-%`);
-  const seq = String((count ?? 0) + 1).padStart(3, "0");
-  return `ORC-${ym}-${seq}`;
-}
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
