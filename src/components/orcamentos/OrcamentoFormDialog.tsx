@@ -217,9 +217,11 @@ export function OrcamentoFormDialog({
       setObservacoesInternas(o.observacoes_internas ?? "");
       const { data: its } = await supabase.from("orcamento_itens").select("*").eq("orcamento_id", orcamentoId).order("ordem");
       setItens(((its ?? []) as ItemForm[]).map((i) => ({
-        id: i.id, servico_id: i.servico_id, descricao: i.descricao, unidade: i.unidade,
+        id: i.id, servico_id: i.servico_id, codigo: i.codigo ?? null,
+        descricao: i.descricao, unidade: i.unidade,
         quantidade: Number(i.quantidade), preco_unitario: Number(i.preco_unitario),
         desconto_pct: Number(i.desconto_pct),
+        aliquota_iss: Number(i.aliquota_iss ?? 0),
       })));
     })();
   }, [open, orcamentoId]);
