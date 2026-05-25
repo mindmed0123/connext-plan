@@ -642,9 +642,73 @@ export function OrcamentoFormDialog({
               </div>
             </section>
 
-            <section>
-              <Label>Observações / Escopo de serviços</Label>
-              <Textarea rows={3} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+            <section className="space-y-3 rounded-lg border bg-muted/10 p-4">
+              <h3 className="text-sm font-semibold">Proposta comercial</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="md:col-span-2">
+                  <Label className="text-xs">Objeto do orçamento</Label>
+                  <Textarea rows={2} value={objeto} onChange={(e) => setObjeto(e.target.value)}
+                    placeholder="Ex.: Execução de reparo hidráulico em área comum..." />
+                </div>
+                <div>
+                  <Label className="text-xs">Local de execução</Label>
+                  <Input value={localExecucao} onChange={(e) => setLocalExecucao(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Prazo de execução</Label>
+                  <Input value={prazoExecucao} onChange={(e) => setPrazoExecucao(e.target.value)} placeholder="Ex.: 15 dias úteis" />
+                </div>
+                <div>
+                  <Label className="text-xs">Desconto global (%)</Label>
+                  <Input type="number" step="0.01" min={0} max={100}
+                    value={descontoGlobalPct}
+                    onChange={(e) => setDescontoGlobalPct(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Condição de pagamento</Label>
+                  <Select value={condicaoPagamento} onValueChange={setCondicaoPagamento}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="a_vista">À vista</SelectItem>
+                      <SelectItem value="parcelado">Parcelado</SelectItem>
+                      <SelectItem value="entrada_parcelas">Entrada + parcelas</SelectItem>
+                      <SelectItem value="faturado">Faturado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(condicaoPagamento === "parcelado" || condicaoPagamento === "entrada_parcelas") && (
+                  <>
+                    <div>
+                      <Label className="text-xs">Nº de parcelas</Label>
+                      <Input type="number" min={1} value={numeroParcelas}
+                        onChange={(e) => setNumeroParcelas(Number(e.target.value))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Intervalo (dias)</Label>
+                      <Input type="number" min={1} value={intervaloParcelas}
+                        onChange={(e) => setIntervaloParcelas(Number(e.target.value))} />
+                    </div>
+                  </>
+                )}
+                {condicaoPagamento === "entrada_parcelas" && (
+                  <div>
+                    <Label className="text-xs">% de entrada</Label>
+                    <Input type="number" min={0} max={100} value={percentualEntrada}
+                      onChange={(e) => setPercentualEntrada(Number(e.target.value))} />
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Observações (saem no PDF)</Label>
+                <Textarea rows={3} value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+              </div>
+              <div>
+                <Label>Observações internas (não saem no PDF)</Label>
+                <Textarea rows={3} value={observacoesInternas} onChange={(e) => setObservacoesInternas(e.target.value)} />
+              </div>
             </section>
 
             <DialogFooter className="gap-2">
