@@ -22,7 +22,13 @@ type Cartao = {
 };
 
 const emptyCartao = { apelido: "", banco: "", bandeira: "", ultimos_4: "", titular: "", limite: "0", dia_fechamento: "", dia_vencimento: "" };
-const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: new Date().toISOString().slice(0, 10), parcelas: "1", observacoes: "" };
+const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: new Date().toISOString().slice(0, 10), parcelas: "1", observacoes: "", categoria: "" };
+
+const CATEGORIAS_DESPESA = [
+  "Almoço", "Café", "Mercado", "Combustível", "Transporte", "Estacionamento",
+  "Pedágio", "Material de construção", "Ferramentas", "EPI", "Hospedagem",
+  "Manutenção veículo", "Telefonia/Internet", "Escritório", "Outros",
+];
 
 export default function Cartoes() {
   const { empresaId } = useAuth();
@@ -106,6 +112,7 @@ export default function Cartoes() {
         data_compra: despForm.data_compra,
         parcelas: parseInt(despForm.parcelas) || 1,
         observacoes: despForm.observacoes || null,
+        categoria: despForm.categoria || null,
       };
       const { error } = await supabase.from("cartao_despesas" as any).insert([payload]);
       if (error) throw error;
@@ -212,6 +219,7 @@ export default function Cartoes() {
               <TableHead>Data</TableHead>
               <TableHead>Cartão</TableHead>
               <TableHead>Descrição</TableHead>
+              <TableHead>Categoria</TableHead>
               <TableHead>Obra</TableHead>
               <TableHead>Comprador</TableHead>
               <TableHead>Parc.</TableHead>
@@ -225,6 +233,7 @@ export default function Cartoes() {
                 <TableCell>{format(new Date(d.data_compra), "dd/MM/yyyy")}</TableCell>
                 <TableCell>{d.cartoes_credito?.apelido ?? "—"}</TableCell>
                 <TableCell>{d.descricao}</TableCell>
+                <TableCell>{d.categoria ? <Badge variant="outline">{d.categoria}</Badge> : "—"}</TableCell>
                 <TableCell>{d.obras?.codigo_chamado ?? "—"}</TableCell>
                 <TableCell>{d.compradores?.nome ?? "—"}</TableCell>
                 <TableCell>{d.parcelas}x</TableCell>
@@ -237,7 +246,7 @@ export default function Cartoes() {
               </TableRow>
             ))}
             {(despesas as any[]).length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -280,6 +289,16 @@ export default function Cartoes() {
             <div><Label>Valor*</Label><Input type="number" step="0.01" value={despForm.valor} onChange={(e) => setDespForm({ ...despForm, valor: e.target.value })} /></div>
             <div><Label>Data</Label><Input type="date" value={despForm.data_compra} onChange={(e) => setDespForm({ ...despForm, data_compra: e.target.value })} /></div>
             <div><Label>Parcelas</Label><Input type="number" min={1} value={despForm.parcelas} onChange={(e) => setDespForm({ ...despForm, parcelas: e.target.value })} /></div>
+            <div className="col-span-2">
+              <Label>Categoria</Label>
+              <Select value={despForm.categoria || "none"} onValueChange={(v) => setDespForm({ ...despForm, categoria: v === "none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Sem categoria —</SelectItem>
+                  {CATEGORIAS_DESPESA.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Obra (origem)</Label>
               <Select value={despForm.obra_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, obra_id: v === "none" ? "" : v })}>
