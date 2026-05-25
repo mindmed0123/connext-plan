@@ -93,7 +93,7 @@ export function PedidoCompraEditDialog({
       if (!nfData) throw new Error("Informe a data de emissão");
       const { error } = await supabase.from("notas_fiscais").insert([{
         obra_id: pedido.obra_id,
-        codigo_chamado_avulso: pedido.obra_id ? null : (pedido.codigo_chamado_avulso ?? codigoAvulso.trim() || null),
+        codigo_chamado_avulso: pedido.obra_id ? null : (pedido.codigo_chamado_avulso ?? (codigoAvulso.trim() || null)),
         pedido_compra_id: pedido.id,
         numero_nf: nfNumero.trim(),
         data_emissao: nfData,
