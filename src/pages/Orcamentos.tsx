@@ -181,43 +181,62 @@ export default function Orcamentos() {
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : (data?.length ?? 0) === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Nenhum orçamento</TableCell></TableRow>
-            ) : data?.map((o) => {
-              const validUntil = o.data_orcamento
-                ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
-                : "—";
-              const editable = o.status === "em_elaboracao" || o.status === "em_negociacao";
-              return (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono text-xs">{o.numero_orcamento || "—"}</TableCell>
-                  <TableCell className="max-w-xs truncate">{o.titulo || "—"}</TableCell>
-                  <TableCell className="font-medium">{(o as { codigo_chamado?: string | null }).codigo_chamado || o.obras?.codigo_chamado || "—"}</TableCell>
-                  <TableCell className="text-sm">{o.data_orcamento ? format(parseISO(o.data_orcamento), "dd/MM/yyyy") : "—"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{validUntil}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatCurrency(Number(o.valor_orcamento))}</TableCell>
-                  <TableCell>
-                    <Badge className={ORC_STATUS_BADGE[o.status]?.className}>{ORC_STATUS_BADGE[o.status]?.label || o.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openDetail(o.id)} title="Visualizar">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {editable && (
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(o.id)} title="Editar">
-                          <Pencil className="h-4 w-4" />
+            ) : (() => {
+              const q = busca.trim().toLowerCase();
+              const filtered = !q ? data : data.filter((o) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const oo = o as any;
+                return [
+                  oo.numero, oo.numero_orcamento, oo.codigo_chamado, oo.titulo,
+                  oo.cliente_nome, oo.obras?.codigo_chamado,
+                ].some((v) => v && String(v).toLowerCase().includes(q));
+              });
+              if (filtered.length === 0) {
+                return <TableRow><TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Nenhum orçamento encontrado</TableCell></TableRow>;
+              }
+              return filtered.map((o) => {
+                const validUntil = o.data_orcamento
+                  ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
+                  : "—";
+                const editable = o.status === "em_elaboracao" || o.status === "em_negociacao";
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const numeroDisplay = (o as any).numero || o.numero_orcamento || "—";
+                return (
+                  <TableRow key={o.id}>
+                    <TableCell className="font-mono text-xs">{numeroDisplay}</TableCell>
+                    <TableCell className="max-w-xs truncate">{o.titulo || "—"}</TableCell>
+                    <TableCell className="font-medium">{(o as { codigo_chamado?: string | null }).codigo_chamado || o.obras?.codigo_chamado || "—"}</TableCell>
+                    <TableCell className="text-sm">{o.data_orcamento ? format(parseISO(o.data_orcamento), "dd/MM/yyyy") : "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{validUntil}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatCurrency(Number(o.valor_orcamento))}</TableCell>
+                    <TableCell>
+                      <Badge className={ORC_STATUS_BADGE[o.status]?.className}>{ORC_STATUS_BADGE[o.status]?.label || o.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openDetail(o.id)} title="Visualizar">
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button size="icon" variant="ghost" onClick={() => handlePDF(o.id)} title="Gerar PDF">
-                        <FileDown className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setDeleteId(o.id)} title="Excluir">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                        {editable && (
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(o.id)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={() => handlePDF(o.id)} title="Gerar PDF">
+                          <FileDown className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => duplicate.mutate(o.id)} title="Duplicar">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setDeleteId(o.id)} title="Excluir">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              });
+            })()}
           </TableBody>
         </Table>
       </div>
