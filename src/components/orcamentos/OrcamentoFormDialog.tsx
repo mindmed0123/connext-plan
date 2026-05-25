@@ -342,10 +342,13 @@ export function OrcamentoFormDialog({
         itens.map((it, idx) => ({
           orcamento_id: id!, empresa_id: empresaId,
           servico_id: it.servico_id || null,
+          codigo: it.codigo || null,
+          tipo: "servico",
           descricao: it.descricao, unidade: it.unidade,
           quantidade: Number(it.quantidade) || 0,
           preco_unitario: Number(it.preco_unitario) || 0,
           desconto_pct: Number(it.desconto_pct) || 0,
+          aliquota_iss: Number(it.aliquota_iss) || 0,
           ordem: idx,
         }))
       );
