@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase } from "lucide-react";
-import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { OBRA_STATUS_LABEL } from "@/lib/obra-helpers";
+import { formatDateBR } from "@/lib/date";
 
 const formatBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
@@ -156,7 +156,7 @@ export function TerceirizadoObrasTab({ pessoaId }: { pessoaId: string }) {
                   <span>
                     Próx. vencimento:{" "}
                     <strong className="text-foreground">
-                      {format(new Date(proxima.data_prevista), "dd/MM/yyyy")}
+                      {formatDateBR(proxima.data_prevista)}
                     </strong>
                   </span>
                 )}
