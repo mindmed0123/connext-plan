@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "./useUserRole";
+
 
 export const APP_MODULOS = [
   "dashboard",
@@ -52,12 +54,14 @@ export type PermissaoLinha = {
 export function usePermissions() {
   const { user } = useAuth();
   const { isSuperAdmin, isAdmin, isLoading: roleLoading } = useUserRole();
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-permissions", user?.id],
     enabled: !!user && !isAdmin && !roleLoading,
-    staleTime: 30_000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchOnMount: "always",
     queryFn: async () => {
       // Buscar a pessoa vinculada ao usuário (pode haver mais de uma — pegamos a mais recente ativa)
       const { data: pessoas } = await supabase
@@ -77,6 +81,24 @@ export function usePermissions() {
       return (data ?? []) as PermissaoLinha[];
     },
   });
+
+  // Realtime: refletir mudanças de permissões assim que o admin salvar
+  useEffect(() => {
+    if (!user?.id || isAdmin) return;
+    const ch = supabase
+      .channel(`perm-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pessoa_permissoes" },
+        () => qc.invalidateQueries({ queryKey: ["my-permissions", user.id] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id, isAdmin, qc]);
+
+
 
   const can = (modulo: AppModulo, acao: AppAcao = "view"): boolean => {
     if (isSuperAdmin) return false;
