@@ -55,6 +55,8 @@ const financeiroAdmin: NavItem[] = [
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, modulo: "financeiro" },
   { title: "Faturamento", url: "/faturamento", icon: Receipt, modulo: "faturamento" },
   { title: "Recebimentos", url: "/recebimentos", icon: Wallet, modulo: "financeiro" },
+  { title: "Cartões", url: "/cartoes", icon: CreditCard, modulo: "financeiro" },
+  { title: "Compradores", url: "/compradores", icon: ShoppingCart, modulo: "financeiro" },
 ];
 
 const gestaoAdmin: NavItem[] = [

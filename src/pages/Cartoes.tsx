@@ -36,7 +36,7 @@ export default function Cartoes() {
 
   const { data: cartoes = [] } = useQuery({
     queryKey: ["cartoes", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await supabase.from("cartoes_credito" as any).select("*").order("apelido")).data as Cartao[] | null ?? [],
+    queryFn: async () => ((await supabase.from("cartoes_credito" as any).select("*").order("apelido")).data as unknown as Cartao[]) ?? [],
   });
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-min", empresaId], enabled: !!empresaId,

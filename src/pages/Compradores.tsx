@@ -31,15 +31,15 @@ export default function Compradores() {
 
   const { data: compradores = [] } = useQuery({
     queryKey: ["compradores-full", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await supabase.from("compradores" as any).select("*").order("nome")).data as Comprador[] | null ?? [],
+    queryFn: async () => ((await supabase.from("compradores" as any).select("*").order("nome")).data as unknown as Comprador[]) ?? [],
   });
 
   const { data: historico } = useQuery({
     queryKey: ["comprador-historico", historicoId], enabled: !!historicoId,
     queryFn: async () => {
       const [pcs, mats, cards] = await Promise.all([
-        supabase.from("pedidos_compra").select("id, numero_pedido, valor, created_at, obras(codigo_chamado)").eq("comprador_id" as any, historicoId!).order("created_at", { ascending: false }),
-        supabase.from("materiais_obra").select("id, descricao, valor_total, data_compra, obras(codigo_chamado)").eq("comprador_id" as any, historicoId!).order("data_compra", { ascending: false }),
+        (supabase.from("pedidos_compra") as any).select("id, numero_pedido, valor, created_at, obras(codigo_chamado)").eq("comprador_id", historicoId!).order("created_at", { ascending: false }),
+        (supabase.from("materiais_obra") as any).select("id, descricao, valor_total, data_compra, obras(codigo_chamado)").eq("comprador_id", historicoId!).order("data_compra", { ascending: false }),
         supabase.from("cartao_despesas" as any).select("id, descricao, valor, data_compra, obras(codigo_chamado), cartoes_credito(apelido)").eq("comprador_id", historicoId!).order("data_compra", { ascending: false }),
       ]);
       return { pcs: pcs.data ?? [], mats: mats.data ?? [], cards: cards.data ?? [] };
