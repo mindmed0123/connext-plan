@@ -104,6 +104,7 @@ export default function Orcamentos() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const handlePDF = async (orcId: string) => {
     if (!empresaId) return;
     const [{ data: orc }, { data: itens }, { data: empresa }] = await Promise.all([
       supabase.from("orcamentos").select("*, obras(codigo_chamado)").eq("id", orcId).single(),
