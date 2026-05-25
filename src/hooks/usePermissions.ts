@@ -54,12 +54,14 @@ export type PermissaoLinha = {
 export function usePermissions() {
   const { user } = useAuth();
   const { isSuperAdmin, isAdmin, isLoading: roleLoading } = useUserRole();
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-permissions", user?.id],
     enabled: !!user && !isAdmin && !roleLoading,
-    staleTime: 30_000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchOnMount: "always",
     queryFn: async () => {
       // Buscar a pessoa vinculada ao usuário (pode haver mais de uma — pegamos a mais recente ativa)
       const { data: pessoas } = await supabase
