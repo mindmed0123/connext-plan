@@ -405,11 +405,8 @@ export function OrcamentoFormDialog({
                   <Label>Validade (dias) *</Label>
                   <Input type="number" min={1} value={validadeDias} onChange={(e) => setValidadeDias(Number(e.target.value))} />
                 </div>
-                <div className="md:col-span-2">
-                  <Label>Condições de pagamento</Label>
-                  <Input value={condicoes} onChange={(e) => setCondicoes(e.target.value)} placeholder="Ex.: 30/60/90 dias" />
-                </div>
               </div>
+
             </section>
 
             {/* Cliente */}
