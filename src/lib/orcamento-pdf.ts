@@ -141,7 +141,9 @@ export async function gerarOrcamentoPDF(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(...TEXT);
-  const numero = orc.numero_orcamento ? orc.numero_orcamento.replace(/^ORC-?/i, "") : "—";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const numeroRaw = (orc as any).numero || orc.numero_orcamento || "";
+  const numero = numeroRaw ? numeroRaw.replace(/^ORC-?/i, "") : "—";
   doc.text(`Orçamento Nº ${numero}`, margin, y);
   y += 8;
 
