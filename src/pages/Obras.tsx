@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
 import { ObraFormDialog } from "@/components/obras/ObraFormDialog";
 import { ObraDetailSheet } from "@/components/obras/ObraDetailSheet";
-import { format } from "date-fns";
+import { formatDateBR } from "@/lib/date";
 
 export default function Obras() {
   const qc = useQueryClient();
@@ -128,7 +128,7 @@ export default function Obras() {
                   <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
                   <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
                   <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
-                  <TableCell className="text-sm">{format(new Date(o.data_recebimento), "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-sm">{formatDateBR(o.data_recebimento)}</TableCell>
                   <TableCell className={`text-right text-sm font-medium tabular-nums ${valor == null ? "text-muted-foreground" : isAprovado ? "text-success" : "text-foreground"}`}>
                     {valor == null ? "—" : formatBRL(valor)}
                   </TableCell>

@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { Plus, Trash2, Paperclip, Package } from "lucide-react";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { FORMA_PAGAMENTO_LABEL, FORMA_PAGAMENTO_LIST } from "@/lib/financeiro-helpers";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 const empty = {
   descricao: "",
@@ -19,7 +19,7 @@ const empty = {
   unidade: "",
   valor_unitario: "",
   valor_total: "",
-  data_compra: new Date().toISOString().slice(0, 10),
+  data_compra: getTodayDateInputValue(),
   forma_pagamento: "",
   numero_nf: "",
   observacoes: "",
@@ -217,7 +217,7 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
                   <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{formatCurrency(m.valor_total)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {format(new Date(m.data_compra), "dd/MM/yyyy")}
+                  {formatDateBR(m.data_compra)}
                   {m.fornecedor && ` • ${m.fornecedor}`}
                   {Number(m.quantidade) > 0 && ` • ${m.quantidade}${m.unidade ? ` ${m.unidade}` : ""}`}
                   {Number(m.valor_unitario) > 0 && ` × ${formatCurrency(m.valor_unitario)}`}

@@ -12,8 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, CreditCard, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
-import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 type Cartao = {
   id: string; apelido: string; banco: string | null; bandeira: string | null;
@@ -22,7 +22,7 @@ type Cartao = {
 };
 
 const emptyCartao = { apelido: "", banco: "", bandeira: "", ultimos_4: "", titular: "", limite: "0", dia_fechamento: "", dia_vencimento: "" };
-const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: new Date().toISOString().slice(0, 10), parcelas: "1", observacoes: "", categoria: "" };
+const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: getTodayDateInputValue(), parcelas: "1", observacoes: "", categoria: "" };
 
 const CATEGORIAS_DESPESA = [
   "Almoço", "Café", "Mercado", "Combustível", "Transporte", "Estacionamento",
@@ -230,7 +230,7 @@ export default function Cartoes() {
           <TableBody>
             {(despesas as any[]).map((d) => (
               <TableRow key={d.id}>
-                <TableCell>{format(new Date(d.data_compra), "dd/MM/yyyy")}</TableCell>
+                <TableCell>{formatDateBR(d.data_compra)}</TableCell>
                 <TableCell>{d.cartoes_credito?.apelido ?? "—"}</TableCell>
                 <TableCell>{d.descricao}</TableCell>
                 <TableCell>{d.categoria ? <Badge variant="outline">{d.categoria}</Badge> : "—"}</TableCell>

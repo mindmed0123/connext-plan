@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Plus, Pencil, Trash2, History } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
-import { format } from "date-fns";
+import { formatDateBR } from "@/lib/date";
 
 type Comprador = {
   id: string; nome: string; cpf_cnpj: string | null; email: string | null;
@@ -182,7 +182,7 @@ export default function Compradores() {
               <h3 className="text-sm font-semibold mb-2">Materiais ({historico?.mats.length ?? 0})</h3>
               {(historico?.mats ?? []).map((m: any) => (
                 <div key={m.id} className="flex justify-between text-sm py-1 border-b">
-                  <span>{m.descricao} • {m.obras?.codigo_chamado ?? "—"} • {format(new Date(m.data_compra), "dd/MM/yyyy")}</span>
+                  <span>{m.descricao} • {m.obras?.codigo_chamado ?? "—"} • {formatDateBR(m.data_compra)}</span>
                   <span className="font-medium">{formatCurrency(m.valor_total)}</span>
                 </div>
               ))}

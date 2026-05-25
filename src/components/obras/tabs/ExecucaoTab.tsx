@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 const STATUS = ["nao_iniciada", "em_execucao", "pausada", "finalizada"] as const;
 const LABEL: Record<typeof STATUS[number], string> = {
@@ -29,7 +29,7 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
     valor_terceirizado: "",
     forma_pagamento: "" as Forma | "",
     responsavel_obra: "",
-    data_inicio: new Date().toISOString().slice(0, 10),
+    data_inicio: getTodayDateInputValue(),
     prazo_estimado: "",
     status: "em_execucao" as typeof STATUS[number],
     observacoes: "",
@@ -199,7 +199,7 @@ export function ExecucaoTab({ obraId }: { obraId: string }) {
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {x.data_inicio && `Início ${format(new Date(x.data_inicio), "dd/MM/yyyy")}`}
+              {x.data_inicio && `Início ${formatDateBR(x.data_inicio)}`}
               {x.prazo_estimado ? ` • Prazo ${x.prazo_estimado} dias` : ""}
               {x.tipo_execucao === "terceirizado" && Number(x.valor_terceirizado) > 0 && ` • ${formatCurrency(x.valor_terceirizado)}`}
               {x.tipo_execucao === "terceirizado" && x.forma_pagamento && ` • ${FORMA_LABEL[x.forma_pagamento as Forma]}`}

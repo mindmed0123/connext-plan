@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
+import { formatDateBR } from "@/lib/date";
 
 const STATUS_LABEL: Record<string, string> = {
   nao_iniciada: "Não iniciada", em_execucao: "Em execução", pausada: "Pausada", finalizada: "Finalizada",
@@ -47,7 +47,7 @@ export default function Execucoes() {
                 <TableCell className="font-medium">{x.obras?.codigo_chamado}</TableCell>
                 <TableCell className="text-xs">{x.tipo_execucao === "terceirizado" ? `Terc.: ${x.nome_terceirizado}` : "Equipe própria"}</TableCell>
                 <TableCell>{x.responsavel_obra}</TableCell>
-                <TableCell>{x.data_inicio ? format(new Date(x.data_inicio), "dd/MM/yyyy") : "—"}</TableCell>
+                <TableCell>{formatDateBR(x.data_inicio)}</TableCell>
                 <TableCell>{x.prazo_estimado ? `${x.prazo_estimado} d` : "—"}</TableCell>
                 <TableCell className="text-xs">{STATUS_LABEL[x.status] || x.status}</TableCell>
               </TableRow>

@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
-import { format } from "date-fns";
 import { Trash2, FileText } from "lucide-react";
+import { formatDateBR } from "@/lib/date";
 
 type PedidoCompra = {
   id: string;
@@ -203,7 +203,7 @@ export function PedidoCompraEditDialog({
                   <div key={n.id} className="flex items-center justify-between rounded-md bg-background px-2 py-1.5 text-xs">
                     <span className="truncate">
                       <span className="font-medium">NF {n.numero_nf}</span>
-                      {" · "}{format(new Date(n.data_emissao), "dd/MM/yyyy")}
+                      {" · "}{formatDateBR(n.data_emissao)}
                       {" · "}{formatCurrency(n.valor)}
                     </span>
                     <Button size="sm" variant="ghost" className="h-7 px-2"

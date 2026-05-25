@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContaine
 import type { DashboardData } from "@/hooks/useDashboardData";
 import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST, OBRA_STATUS_COLOR, formatCurrency, type ObraStatus } from "@/lib/obra-helpers";
 import { shortMonthYear } from "@/lib/dashboard-helpers";
+import { parseDateString } from "@/lib/date";
 
 function buildMonthBuckets(months = 6) {
   const arr: { key: string; label: string; date: Date }[] = [];
@@ -15,6 +16,11 @@ function buildMonthBuckets(months = 6) {
 }
 
 export function ChartsBlock({ data }: { data: DashboardData }) {
+  const getMonthKey = (value?: string | null) => {
+    const date = parseDateString(value);
+    return date ? `${date.getUTCFullYear()}-${date.getUTCMonth()}` : null;
+  };
+
   const porEtapaQtd = OBRA_STATUS_LIST.map((s) => ({
     etapa: OBRA_STATUS_LABEL[s].slice(0, 12),
     qtd: data.porEtapa.get(s)?.qtd ?? 0,
@@ -25,17 +31,17 @@ export function ChartsBlock({ data }: { data: DashboardData }) {
   const buckets = buildMonthBuckets(6);
   const recebidosMes = buckets.map((b) => {
     const total = data.recebimentos
-      .filter((r) => r.data_recebido && new Date(r.data_recebido).getFullYear() === b.date.getFullYear() && new Date(r.data_recebido).getMonth() === b.date.getMonth())
+      .filter((r) => getMonthKey(r.data_recebido) === `${b.date.getFullYear()}-${b.date.getMonth()}`)
       .reduce((s, r) => s + Number(r.valor), 0);
     const previsto = data.recebimentos
-      .filter((r) => r.data_prevista && new Date(r.data_prevista).getFullYear() === b.date.getFullYear() && new Date(r.data_prevista).getMonth() === b.date.getMonth())
+      .filter((r) => getMonthKey(r.data_prevista) === `${b.date.getFullYear()}-${b.date.getMonth()}`)
       .reduce((s, r) => s + Number(r.valor), 0);
     return { mes: b.label, recebido: total, previsto };
   });
 
   const pagosMes = buckets.map((b) => {
     const total = data.parcelas
-      .filter((p) => p.status === "pago" && p.data_pagamento && new Date(p.data_pagamento).getFullYear() === b.date.getFullYear() && new Date(p.data_pagamento).getMonth() === b.date.getMonth())
+      .filter((p) => p.status === "pago" && getMonthKey(p.data_pagamento) === `${b.date.getFullYear()}-${b.date.getMonth()}`)
       .reduce((s, p) => s + Number(p.valor), 0);
     return { mes: b.label, pago: total };
   });

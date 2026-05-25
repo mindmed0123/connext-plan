@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 export function FaturamentoTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
-  const [rc, setRc] = useState({ numero_rc: "", data_rc: new Date().toISOString().slice(0, 10) });
-  const [pc, setPc] = useState({ numero_pedido: "", data_recebimento: new Date().toISOString().slice(0, 10), valor: "" });
-  const [nf, setNf] = useState({ numero_nf: "", data_emissao: new Date().toISOString().slice(0, 10), valor: "" });
+  const [rc, setRc] = useState({ numero_rc: "", data_rc: getTodayDateInputValue() });
+  const [pc, setPc] = useState({ numero_pedido: "", data_recebimento: getTodayDateInputValue(), valor: "" });
+  const [nf, setNf] = useState({ numero_nf: "", data_emissao: getTodayDateInputValue(), valor: "" });
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
 
   const { data: rcs } = useQuery({
@@ -87,7 +87,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
         data_prevista: rec.data_prevista || null, status: "a_receber",
       }]);
       if (error) throw error;
-      await log("Recebimento previsto", `${formatCurrency(rec.valor)}${rec.data_prevista ? ` em ${format(new Date(rec.data_prevista), "dd/MM/yyyy")}` : ""}`);
+      await log("Recebimento previsto", `${formatCurrency(rec.valor)}${rec.data_prevista ? ` em ${formatDateBR(rec.data_prevista)}` : ""}`);
     },
     onSuccess: () => {
       toast.success("Recebimento previsto"); qc.invalidateQueries({ queryKey: ["recs", obraId] });
@@ -106,7 +106,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
           <div><Label className="text-xs">Data</Label><Input type="date" value={rc.data_rc} onChange={(e) => setRc({ ...rc, data_rc: e.target.value })} /></div>
           <div className="flex items-end"><Button size="sm" className="w-full" onClick={() => addRc.mutate()} disabled={!rc.numero_rc}>Adicionar RC</Button></div>
         </div>
-        {rcs?.map((r) => <p key={r.id} className="text-xs text-muted-foreground">• RC {r.numero_rc} ({format(new Date(r.data_rc!), "dd/MM/yyyy")})</p>)}
+        {rcs?.map((r) => <p key={r.id} className="text-xs text-muted-foreground">• RC {r.numero_rc} ({formatDateBR(r.data_rc)})</p>)}
       </div>
 
       {/* PC */}
@@ -143,7 +143,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
         </div>
         {recs?.map((r) => (
           <p key={r.id} className="text-xs text-muted-foreground">
-            • {formatCurrency(r.valor)} — {r.status === "recebido" ? "✓ recebido" : `previsto ${r.data_prevista ? format(new Date(r.data_prevista), "dd/MM/yyyy") : "—"}`}
+            • {formatCurrency(r.valor)} — {r.status === "recebido" ? "✓ recebido" : `previsto ${formatDateBR(r.data_prevista)}`}
           </p>
         ))}
       </div>

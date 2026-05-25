@@ -4,6 +4,7 @@ import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { diffDays } from "@/lib/dashboard-helpers";
 import type { DashboardData } from "@/hooks/useDashboardData";
+import { parseDateString } from "@/lib/date";
 
 interface Alert {
   id: string;
@@ -102,7 +103,8 @@ export function AlertsList({ data }: { data: DashboardData }) {
   // Pagamento de terceirizado atrasado
   const hoje = new Date();
   for (const p of data.parcelas) {
-    if (p.status === "pendente" && p.data_prevista && new Date(p.data_prevista) < hoje) {
+    const dataPrevista = parseDateString(p.data_prevista);
+    if (p.status === "pendente" && dataPrevista && dataPrevista < hoje) {
       const c = data.contratacoes.find((x) => x.id === p.contratacao_id);
       const o = c ? data.obras.find((x) => x.id === c.obra_id) : null;
       alerts.push({

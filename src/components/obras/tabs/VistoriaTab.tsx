@@ -7,12 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 export function VistoriaTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    data_vistoria: new Date().toISOString().slice(0, 10),
+    data_vistoria: getTodayDateInputValue(),
     responsavel_vistoria: "",
     observacoes: "",
     status: "vistoriado" as "pendente" | "vistoriado",
@@ -34,7 +34,7 @@ export function VistoriaTab({ obraId }: { obraId: string }) {
       if (error) throw error;
       await supabase.from("obra_timeline").insert([{
         obra_id: obraId, user_id: u.user?.id, evento: "Vistoria registrada",
-        detalhes: `Por ${form.responsavel_vistoria} em ${format(new Date(form.data_vistoria), "dd/MM/yyyy")}`,
+        detalhes: `Por ${form.responsavel_vistoria} em ${formatDateBR(form.data_vistoria)}`,
       }]);
     },
     onSuccess: () => {
@@ -86,7 +86,7 @@ export function VistoriaTab({ obraId }: { obraId: string }) {
           <div key={v.id} className="rounded-md border bg-card p-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="font-medium">{v.responsavel_vistoria}</span>
-              <span className="text-xs text-muted-foreground">{format(new Date(v.data_vistoria), "dd/MM/yyyy")} • {v.status}</span>
+              <span className="text-xs text-muted-foreground">{formatDateBR(v.data_vistoria)} • {v.status}</span>
             </div>
             {v.observacoes && <p className="mt-1 text-xs text-muted-foreground">{v.observacoes}</p>}
           </div>

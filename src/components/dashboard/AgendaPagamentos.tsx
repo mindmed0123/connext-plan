@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR } from "@/lib/dashboard-helpers";
 import type { DashboardData } from "@/hooks/useDashboardData";
 import { Wallet } from "lucide-react";
+import { parseDateString } from "@/lib/date";
 
 export function AgendaPagamentos({ data }: { data: DashboardData }) {
   const obraMap = new Map(data.obras.map((o) => [o.id, o]));
@@ -23,7 +24,7 @@ export function AgendaPagamentos({ data }: { data: DashboardData }) {
 
   const proximos = data.parcelas
     .filter((p) => p.status === "pendente" && p.data_prevista)
-    .sort((a, b) => new Date(a.data_prevista!).getTime() - new Date(b.data_prevista!).getTime())
+    .sort((a, b) => (parseDateString(a.data_prevista)?.getTime() ?? 0) - (parseDateString(b.data_prevista)?.getTime() ?? 0))
     .slice(0, 10);
 
   const hoje = new Date();
@@ -45,7 +46,7 @@ export function AgendaPagamentos({ data }: { data: DashboardData }) {
               const c = contratacaoMap.get(p.contratacao_id);
               const o = c ? obraMap.get(c.obra_id) : null;
               const t = c ? pessoaMap.get(c.terceirizado_id) : null;
-              const atrasado = p.data_prevista && new Date(p.data_prevista) < hoje;
+              const atrasado = (parseDateString(p.data_prevista)?.getTime() ?? Number.POSITIVE_INFINITY) < hoje.getTime();
               const saldo = saldoByContratacao.get(p.contratacao_id) ?? 0;
               return (
                 <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/40">

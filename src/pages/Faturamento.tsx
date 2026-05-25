@@ -6,9 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/obra-helpers";
-import { format } from "date-fns";
 import { FaturamentoFormDialog } from "@/components/financeiro/FaturamentoFormDialog";
 import { PedidoCompraEditDialog } from "@/components/financeiro/PedidoCompraEditDialog";
+import { formatDateBR } from "@/lib/date";
 
 export default function Faturamento() {
   const [tab, setTab] = useState<"rcs" | "pcs" | "nfs">("rcs");
@@ -64,7 +64,7 @@ export default function Faturamento() {
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{chamado(r)}{!r.obras && r.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
                     <TableCell>{r.numero_rc}</TableCell>
-                    <TableCell>{r.data_rc && format(new Date(r.data_rc), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{formatDateBR(r.data_rc)}</TableCell>
                     <TableCell className="text-xs">{r.status}</TableCell>
                   </TableRow>
                 ))}
@@ -83,7 +83,7 @@ export default function Faturamento() {
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{chamado(p)}{!p.obras && p.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
                       <TableCell>{p.numero_pedido}</TableCell>
-                      <TableCell>{p.data_recebimento ? format(new Date(p.data_recebimento), "dd/MM/yyyy") : <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell>{p.data_recebimento ? formatDateBR(p.data_recebimento) : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell>{formatCurrency(p.valor)}</TableCell>
                       <TableCell className="text-xs">
                         {nfsLinked.length > 0
@@ -110,7 +110,7 @@ export default function Faturamento() {
                   <TableRow key={n.id}>
                     <TableCell className="font-medium">{chamado(n)}{!n.obras && n.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
                     <TableCell>{n.numero_nf}</TableCell>
-                    <TableCell>{format(new Date(n.data_emissao), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{formatDateBR(n.data_emissao)}</TableCell>
                     <TableCell>{formatCurrency(n.valor)}</TableCell>
                   </TableRow>
                 ))}

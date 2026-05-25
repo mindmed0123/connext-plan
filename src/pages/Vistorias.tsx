@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
+import { formatDateBR } from "@/lib/date";
 
 export default function Vistorias() {
   const { data } = useQuery({
@@ -40,7 +40,7 @@ export default function Vistorias() {
             {data?.map((v: any) => (
               <TableRow key={v.id}>
                 <TableCell className="font-medium">{v.obras?.codigo_chamado}</TableCell>
-                <TableCell>{format(new Date(v.data_vistoria), "dd/MM/yyyy")}</TableCell>
+                <TableCell>{formatDateBR(v.data_vistoria)}</TableCell>
                 <TableCell>{v.responsavel_vistoria}</TableCell>
                 <TableCell><span className="text-xs">{v.status}</span></TableCell>
                 <TableCell className="max-w-md truncate text-xs text-muted-foreground">{v.observacoes}</TableCell>
