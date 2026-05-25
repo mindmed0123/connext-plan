@@ -178,6 +178,34 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
               </Select>
             </div>
           )}
+
+          {tipo === "pc" && (
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                <input type="checkbox" checked={withNf} onChange={(e) => setWithNf(e.target.checked)} />
+                Já tenho a nota fiscal deste pedido
+              </label>
+              {withNf && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nº NF</Label>
+                      <Input value={nfNumero} onChange={(e) => setNfNumero(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Data emissão</Label>
+                      <Input type="date" value={nfData} onChange={(e) => setNfData(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Valor da NF (R$)</Label>
+                    <Input type="number" step="0.01" value={nfValor} onChange={(e) => setNfValor(e.target.value)}
+                      placeholder={valor || "0,00"} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
