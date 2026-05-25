@@ -19,6 +19,16 @@ export type PDFOrcamento = {
   cliente_email?: string | null;
   cliente_telefone?: string | null;
   valor_orcamento: number;
+  valor_total?: number | null;
+  valor_impostos?: number | null;
+  desconto_global_pct?: number | null;
+  objeto?: string | null;
+  local_execucao?: string | null;
+  prazo_execucao?: string | null;
+  condicao_pagamento?: string | null;
+  numero_parcelas?: number | null;
+  intervalo_parcelas?: number | null;
+  percentual_entrada?: number | null;
   codigo_chamado?: string | null;
   obras: { codigo_chamado: string } | null;
 };
@@ -30,6 +40,7 @@ export type PDFItem = {
   preco_unitario: number;
   desconto_pct: number;
   subtotal: number;
+  aliquota_iss?: number | null;
 };
 
 async function loadImageDataUrl(url: string): Promise<{ dataUrl: string; w: number; h: number; format: string } | null> {
