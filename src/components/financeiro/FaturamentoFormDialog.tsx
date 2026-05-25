@@ -27,6 +27,12 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [valor, setValor] = useState("");
   const [status, setStatus] = useState<string>(tipo === "nf" ? "" : "aguardando");
 
+  // NF opcional ao criar PC
+  const [withNf, setWithNf] = useState(false);
+  const [nfNumero, setNfNumero] = useState("");
+  const [nfData, setNfData] = useState("");
+  const [nfValor, setNfValor] = useState("");
+
   const obras = useQuery({
     queryKey: ["obras-select"],
     enabled: open && vinculo === "existente",
@@ -36,6 +42,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(""); setValor("");
     setStatus(tipo === "nf" ? "" : "aguardando");
+    setWithNf(false); setNfNumero(""); setNfData(""); setNfValor("");
   };
 
   const save = useMutation({
@@ -55,14 +62,24 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
         }]);
         if (error) throw error;
       } else if (tipo === "pc") {
-        const { error } = await supabase.from("pedidos_compra").insert([{
+        const { data: pcRow, error } = await supabase.from("pedidos_compra").insert([{
           ...baseObra,
           numero_pedido: numero || null,
           data_recebimento: data || null,
           valor: valor ? Number(valor) : 0,
           status: (status || "aguardando") as any,
-        }]);
+        }]).select("id").single();
         if (error) throw error;
+        if (withNf && nfNumero.trim() && nfData) {
+          const { error: nfErr } = await supabase.from("notas_fiscais").insert([{
+            ...baseObra,
+            pedido_compra_id: pcRow!.id,
+            numero_nf: nfNumero.trim(),
+            data_emissao: nfData,
+            valor: nfValor ? Number(nfValor) : (valor ? Number(valor) : 0),
+          }]);
+          if (nfErr) throw nfErr;
+        }
       } else {
         if (!numero.trim()) throw new Error("Informe o número da NF");
         if (!data) throw new Error("Informe a data de emissão");
@@ -159,6 +176,34 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
                   <SelectItem value="recebido">Recebido</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {tipo === "pc" && (
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                <input type="checkbox" checked={withNf} onChange={(e) => setWithNf(e.target.checked)} />
+                Já tenho a nota fiscal deste pedido
+              </label>
+              {withNf && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nº NF</Label>
+                      <Input value={nfNumero} onChange={(e) => setNfNumero(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Data emissão</Label>
+                      <Input type="date" value={nfData} onChange={(e) => setNfData(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Valor da NF (R$)</Label>
+                    <Input type="number" step="0.01" value={nfValor} onChange={(e) => setNfValor(e.target.value)}
+                      placeholder={valor || "0,00"} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

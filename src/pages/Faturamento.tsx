@@ -21,7 +21,7 @@ export default function Faturamento() {
   });
   const pcs = useQuery({
     queryKey: ["faturamento-pcs"],
-    queryFn: async () => (await supabase.from("pedidos_compra").select("*, obras(codigo_chamado)").order("created_at", { ascending: false })).data,
+    queryFn: async () => (await supabase.from("pedidos_compra").select("*, obras(codigo_chamado), notas_fiscais(id, numero_nf)").order("created_at", { ascending: false })).data,
   });
   const nfs = useQuery({
     queryKey: ["faturamento-nfs"],
@@ -75,20 +75,28 @@ export default function Faturamento() {
         <TabsContent value="pcs">
           <div className="rounded-lg border bg-card overflow-hidden">
             <Table>
-              <TableHeader><TableRow><TableHead>Chamado</TableHead><TableHead>Nº pedido</TableHead><TableHead>Recebimento</TableHead><TableHead>Valor</TableHead><TableHead>Status</TableHead><TableHead className="w-20 text-right">Ações</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Chamado</TableHead><TableHead>Nº pedido</TableHead><TableHead>Recebimento</TableHead><TableHead>Valor</TableHead><TableHead>NF</TableHead><TableHead>Status</TableHead><TableHead className="w-20 text-right">Ações</TableHead></TableRow></TableHeader>
               <TableBody>
-                {pcs.data?.map((p: any) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{chamado(p)}{!p.obras && p.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
-                    <TableCell>{p.numero_pedido}</TableCell>
-                    <TableCell>{p.data_recebimento ? format(new Date(p.data_recebimento), "dd/MM/yyyy") : <span className="text-muted-foreground">—</span>}</TableCell>
-                    <TableCell>{formatCurrency(p.valor)}</TableCell>
-                    <TableCell className="text-xs capitalize">{p.status}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => setEditPc(p)}>Editar</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {pcs.data?.map((p: any) => {
+                  const nfsLinked: any[] = p.notas_fiscais ?? [];
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{chamado(p)}{!p.obras && p.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
+                      <TableCell>{p.numero_pedido}</TableCell>
+                      <TableCell>{p.data_recebimento ? format(new Date(p.data_recebimento), "dd/MM/yyyy") : <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell>{formatCurrency(p.valor)}</TableCell>
+                      <TableCell className="text-xs">
+                        {nfsLinked.length > 0
+                          ? <span className="text-success font-medium">✓ {nfsLinked.map((n) => n.numero_nf).join(", ")}</span>
+                          : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="text-xs capitalize">{p.status}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="ghost" onClick={() => setEditPc(p)}>Editar</Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
