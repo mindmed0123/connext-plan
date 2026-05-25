@@ -201,7 +201,18 @@ export function OrcamentoFormDialog({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setClienteTelefone((orc as any).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
-      setNumero(orc.numero_orcamento);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const o = orc as any;
+      setNumero(o.numero || o.numero_orcamento || null);
+      setObjeto(o.objeto ?? "");
+      setPrazoExecucao(o.prazo_execucao ?? "");
+      setLocalExecucao(o.local_execucao ?? "");
+      setDescontoGlobalPct(Number(o.desconto_global_pct ?? 0));
+      setCondicaoPagamento(o.condicao_pagamento ?? "a_vista");
+      setNumeroParcelas(Number(o.numero_parcelas ?? 1));
+      setIntervaloParcelas(Number(o.intervalo_parcelas ?? 30));
+      setPercentualEntrada(Number(o.percentual_entrada ?? 0));
+      setObservacoesInternas(o.observacoes_internas ?? "");
       const { data: its } = await supabase.from("orcamento_itens").select("*").eq("orcamento_id", orcamentoId).order("ordem");
       setItens(((its ?? []) as ItemForm[]).map((i) => ({
         id: i.id, servico_id: i.servico_id, descricao: i.descricao, unidade: i.unidade,
