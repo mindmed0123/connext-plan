@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getTodayDateInputValue } from "@/lib/date";
 import { erroEmPortugues } from "@/lib/erros";
 import {
   Sparkles,
@@ -167,7 +168,7 @@ export default function Onboarding() {
         _engenheiro_responsavel: obraEngenheiro || nome || "—",
         _descricao_servico: obraDescricao || "—",
         _endereco: obraEndereco,
-        _data_recebimento: new Date().toISOString().slice(0, 10),
+        _data_recebimento: getTodayDateInputValue(),
       });
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["obras"] });
