@@ -165,7 +165,7 @@ export function OrcamentoFormDialog({
     setServicoSearch("");
     if (!orcamentoId) {
       setChamado(""); setTitulo(""); setDataOrcamento(getTodayDateInputValue());
-      setValidadeDias(30); setCondicoes(""); setClienteNome(""); setClienteCnpj("");
+      setValidadeDias(30); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
       setObservacoes(""); setItens([]); setNumero(null);
       setObjeto(""); setPrazoExecucao(""); setLocalExecucao("");
