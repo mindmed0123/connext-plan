@@ -182,7 +182,7 @@ export function OrcamentoFormDialog({
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? getTodayDateInputValue());
       setValidadeDias(orc.validade_dias ?? 30);
-      setCondicoes(orc.condicoes_pagamento ?? "");
+      // (condicoes_pagamento legado removido — usar condicao_pagamento estruturado)
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
