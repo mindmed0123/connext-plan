@@ -234,7 +234,7 @@ export default function Onboarding() {
       await refreshEmpresa();
       qc.invalidateQueries({ queryKey: ["empresa-onboarding"] });
       toast.success("Tudo pronto! Bem-vindo à Gestão de Obra 🎉");
-      navigate("/dashboard", { replace: true });
+      navigate("/obras", { replace: true });
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao finalizar");
     } finally {
@@ -247,7 +247,7 @@ export default function Onboarding() {
     await supabase.from("empresas").update({ onboarding_completo: true }).eq("id", empresaId);
     await refreshEmpresa();
     qc.invalidateQueries({ queryKey: ["empresa-onboarding"] });
-    navigate("/dashboard", { replace: true });
+    navigate("/obras", { replace: true });
   }
 
 
