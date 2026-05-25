@@ -15,6 +15,7 @@ import {
   CreditCard,
   Wrench,
   Settings,
+  ShoppingCart,
 } from "lucide-react";
 import iconLogo from "@/assets/icon.png";
 import {
