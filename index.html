@@ -31,6 +31,57 @@
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (() => {
+        const RELOAD_FLAG = "__asset_reload__";
+        const storage = (() => {
+          try {
+            return window.sessionStorage;
+          } catch {
+            return null;
+          }
+        })();
+
+        const reloadOnce = () => {
+          try {
+            if (storage?.getItem(RELOAD_FLAG)) return;
+            storage?.setItem(RELOAD_FLAG, "1");
+          } catch {}
+
+          const url = new URL(window.location.href);
+          url.searchParams.set("v", Date.now().toString());
+          window.location.replace(url.toString());
+        };
+
+        window.__reloadStaleAssets__ = reloadOnce;
+
+        window.addEventListener(
+          "error",
+          (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLScriptElement || target instanceof HTMLLinkElement)) return;
+
+            const assetUrl = target instanceof HTMLScriptElement ? target.src : target.href;
+            if (!assetUrl || !/\/assets\/.*\.(js|css)(\?|$)/i.test(assetUrl)) return;
+
+            reloadOnce();
+          },
+          true,
+        );
+
+        window.addEventListener("pageshow", () => {
+          setTimeout(() => {
+            try {
+              storage?.removeItem(RELOAD_FLAG);
+            } catch {}
+          }, 4000);
+        });
+      })();
+    </script>
+    <script
+      type="module"
+      src="/src/main.tsx"
+      onerror="window.__reloadStaleAssets__ && window.__reloadStaleAssets__()"
+    ></script>
   </body>
 </html>
