@@ -19,6 +19,16 @@ export type PDFOrcamento = {
   cliente_email?: string | null;
   cliente_telefone?: string | null;
   valor_orcamento: number;
+  valor_total?: number | null;
+  valor_impostos?: number | null;
+  desconto_global_pct?: number | null;
+  objeto?: string | null;
+  local_execucao?: string | null;
+  prazo_execucao?: string | null;
+  condicao_pagamento?: string | null;
+  numero_parcelas?: number | null;
+  intervalo_parcelas?: number | null;
+  percentual_entrada?: number | null;
   codigo_chamado?: string | null;
   obras: { codigo_chamado: string } | null;
 };
@@ -30,6 +40,7 @@ export type PDFItem = {
   preco_unitario: number;
   desconto_pct: number;
   subtotal: number;
+  aliquota_iss?: number | null;
 };
 
 async function loadImageDataUrl(url: string): Promise<{ dataUrl: string; w: number; h: number; format: string } | null> {
@@ -179,6 +190,33 @@ export async function gerarOrcamentoPDF(
 
   y = Math.max(yL, yR) + 6;
 
+  // ====== OBJETO (se houver) ======
+  if (orc.objeto) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Objeto", margin, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const objLines = doc.splitTextToSize(orc.objeto, pageW - margin * 2);
+    doc.text(objLines, margin, y);
+    y += objLines.length * 4 + 4;
+  }
+  if (orc.local_execucao || orc.prazo_execucao) {
+    doc.setFontSize(9);
+    if (orc.local_execucao) {
+      doc.setFont("helvetica", "bold"); doc.text("Local: ", margin, y);
+      doc.setFont("helvetica", "normal"); doc.text(orc.local_execucao, margin + 12, y);
+      y += 5;
+    }
+    if (orc.prazo_execucao) {
+      doc.setFont("helvetica", "bold"); doc.text("Prazo: ", margin, y);
+      doc.setFont("helvetica", "normal"); doc.text(orc.prazo_execucao, margin + 12, y);
+      y += 5;
+    }
+    y += 2;
+  }
+
   // ====== LISTA DE SERVIÇOS ======
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
@@ -186,28 +224,45 @@ export async function gerarOrcamentoPDF(
   doc.text("Lista dos Serviços", margin, y);
   y += 4;
 
-  const totalBruto = itens.reduce((s, i) => s + Number(i.quantidade) * Number(i.preco_unitario), 0);
-  const totalDesc = totalBruto - Number(orc.valor_orcamento);
+  const subtotalItens = itens.reduce((s, i) => s + Number(i.subtotal), 0);
+  const descontoGlobalPct = Number(orc.desconto_global_pct ?? 0);
+  const valorDescGlobal = subtotalItens * (descontoGlobalPct / 100);
+  const baseAposDesc = subtotalItens - valorDescGlobal;
+  const totalISS = itens.reduce((s, i) => {
+    const iss = Number(i.aliquota_iss ?? 0);
+    const baseItem = Number(i.subtotal) * (1 - descontoGlobalPct / 100);
+    return s + baseItem * (iss / 100);
+  }, 0);
+  const valorTotal = Number(orc.valor_total ?? baseAposDesc);
 
   autoTable(doc, {
     startY: y,
-    head: [["Descrição do Serviço", "Quantidade", "Valor Unit. (R$)", "Valor Total (R$)"]],
+    head: [["Descrição do Serviço", "Qtd", "Valor Unit. (R$)", "ISS%", "Valor Total (R$)"]],
     body: itens.map((item) => [
       item.descricao,
       Number(item.quantidade).toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
       BRL(Number(item.preco_unitario)),
+      `${Number(item.aliquota_iss ?? 0).toFixed(2)}%`,
       BRL(Number(item.subtotal)),
     ]),
-    foot: [
+    foot: ([
       [
-        { content: "Total:", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
-        { content: BRL(Number(orc.valor_orcamento)), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: "Subtotal:", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: BRL(subtotalItens), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+      ],
+      ...(descontoGlobalPct > 0 ? [[
+        { content: `Desconto global (${descontoGlobalPct.toFixed(2)}%):`, colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: `- ${BRL(valorDescGlobal)}`, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+      ]] : []),
+      [
+        { content: "Total do ISS:", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: BRL(totalISS), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
       ],
       [
-        { content: "Total do ISS:", colSpan: 3, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
-        { content: BRL(0), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT, textColor: TEXT } },
+        { content: "TOTAL:", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: TEAL, textColor: [255, 255, 255] } },
+        { content: BRL(valorTotal), styles: { halign: "right", fontStyle: "bold", fillColor: TEAL, textColor: [255, 255, 255] } },
       ],
-    ],
+    ] as unknown) as import("jspdf-autotable").RowInput[],
     theme: "plain",
     headStyles: {
       fillColor: TEAL,
@@ -220,9 +275,10 @@ export async function gerarOrcamentoPDF(
     alternateRowStyles: { fillColor: TEAL_LIGHT },
     columnStyles: {
       0: { cellWidth: "auto", halign: "left" },
-      1: { cellWidth: 28, halign: "right" },
-      2: { cellWidth: 32, halign: "right" },
-      3: { cellWidth: 32, halign: "right" },
+      1: { cellWidth: 20, halign: "right" },
+      2: { cellWidth: 30, halign: "right" },
+      3: { cellWidth: 18, halign: "right" },
+      4: { cellWidth: 32, halign: "right" },
     },
     margin: { left: margin, right: margin },
   });
@@ -230,37 +286,80 @@ export async function gerarOrcamentoPDF(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   y = (doc as any).lastAutoTable.finalY + 12;
 
-  // ====== VENCIMENTOS ======
+  // ====== VENCIMENTOS / PARCELAS ======
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(...TEXT);
   doc.text("Vencimentos", margin, y);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
+  const condLabel = {
+    a_vista: "À Vista",
+    parcelado: "Parcelado",
+    entrada_parcelas: "Entrada + Parcelas",
+    faturado: "Faturado",
+  }[(orc.condicao_pagamento ?? "a_vista")] ?? (orc.condicoes_pagamento || "À Vista");
   const vencW = doc.getTextWidth("Vencimentos");
-  doc.text(orc.condicoes_pagamento || "A Vista", margin + vencW + 4, y - 0.5);
+  doc.text(condLabel, margin + vencW + 4, y - 0.5);
   y += 4;
 
-  const dataVenc = format(addDays(parseISO(orc.data_orcamento), orc.validade_dias || 0), "dd/MM/yyyy", { locale: ptBR });
+  const baseDate = parseISO(orc.data_orcamento);
+  const numParcelas = Math.max(1, Number(orc.numero_parcelas ?? 1));
+  const intervalo = Math.max(1, Number(orc.intervalo_parcelas ?? 30));
+  const percEntrada = Math.max(0, Number(orc.percentual_entrada ?? 0));
+
+  type Parc = { numero: string; venc: string; valor: number };
+  const parcelas: Parc[] = [];
+  if (orc.condicao_pagamento === "a_vista" || (!orc.condicao_pagamento && numParcelas === 1)) {
+    parcelas.push({
+      numero: "1",
+      venc: format(addDays(baseDate, orc.validade_dias || 0), "dd/MM/yyyy", { locale: ptBR }),
+      valor: valorTotal,
+    });
+  } else if (orc.condicao_pagamento === "entrada_parcelas" && percEntrada > 0) {
+    const valorEntrada = valorTotal * (percEntrada / 100);
+    const restante = valorTotal - valorEntrada;
+    const valorParc = restante / numParcelas;
+    parcelas.push({ numero: "Entrada", venc: format(baseDate, "dd/MM/yyyy", { locale: ptBR }), valor: valorEntrada });
+    for (let i = 1; i <= numParcelas; i++) {
+      parcelas.push({
+        numero: String(i),
+        venc: format(addDays(baseDate, intervalo * i), "dd/MM/yyyy", { locale: ptBR }),
+        valor: valorParc,
+      });
+    }
+  } else {
+    const valorParc = valorTotal / numParcelas;
+    for (let i = 1; i <= numParcelas; i++) {
+      parcelas.push({
+        numero: String(i),
+        venc: format(addDays(baseDate, intervalo * i), "dd/MM/yyyy", { locale: ptBR }),
+        valor: valorParc,
+      });
+    }
+  }
+
   autoTable(doc, {
     startY: y,
-    body: [
-      ["Parcela", "1"],
-      ["Vencimento", dataVenc],
-      ["Valor (R$)", BRL(Number(orc.valor_orcamento))],
-    ],
+    head: [["Parcela", "Vencimento", "Valor (R$)"]],
+    body: parcelas.map((p) => [p.numero, p.venc, BRL(p.valor)]),
     theme: "plain",
+    headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9 },
     styles: { fontSize: 9, textColor: TEXT },
     columnStyles: {
-      0: { cellWidth: 30, halign: "right", fontStyle: "bold", fillColor: TEAL_LIGHT },
-      1: { cellWidth: 30, halign: "right", fillColor: TEAL_LIGHT },
+      0: { cellWidth: 30, halign: "center", fillColor: TEAL_LIGHT },
+      1: { cellWidth: 35, halign: "center", fillColor: TEAL_LIGHT },
+      2: { cellWidth: 35, halign: "right", fillColor: TEAL_LIGHT },
     },
     margin: { left: margin },
-    tableWidth: 60,
+    tableWidth: 100,
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   y = (doc as any).lastAutoTable.finalY + 10;
+
+  const dataVenc = parcelas.length > 0 ? parcelas[parcelas.length - 1].venc : format(baseDate, "dd/MM/yyyy", { locale: ptBR });
+
 
   // ====== OUTRAS INFORMAÇÕES ======
   doc.setFont("helvetica", "bold");
