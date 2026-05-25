@@ -61,7 +61,6 @@ export function OrcamentoFormDialog({
   const [titulo, setTitulo] = useState("");
   const [dataOrcamento, setDataOrcamento] = useState(getTodayDateInputValue());
   const [validadeDias, setValidadeDias] = useState(30);
-  const [condicoes, setCondicoes] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteCnpj, setClienteCnpj] = useState("");
   const [clienteIE, setClienteIE] = useState("");
@@ -76,6 +75,7 @@ export function OrcamentoFormDialog({
   const [itens, setItens] = useState<ItemForm[]>([]);
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
+  const [detalheAberto, setDetalheAberto] = useState<Record<number, boolean>>({});
 
   // Proposta comercial (campos extras Omie-like)
   const [objeto, setObjeto] = useState("");
