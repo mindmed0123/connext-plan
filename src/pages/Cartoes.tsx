@@ -22,7 +22,13 @@ type Cartao = {
 };
 
 const emptyCartao = { apelido: "", banco: "", bandeira: "", ultimos_4: "", titular: "", limite: "0", dia_fechamento: "", dia_vencimento: "" };
-const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: new Date().toISOString().slice(0, 10), parcelas: "1", observacoes: "" };
+const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: new Date().toISOString().slice(0, 10), parcelas: "1", observacoes: "", categoria: "" };
+
+const CATEGORIAS_DESPESA = [
+  "Almoço", "Café", "Mercado", "Combustível", "Transporte", "Estacionamento",
+  "Pedágio", "Material de construção", "Ferramentas", "EPI", "Hospedagem",
+  "Manutenção veículo", "Telefonia/Internet", "Escritório", "Outros",
+];
 
 export default function Cartoes() {
   const { empresaId } = useAuth();
