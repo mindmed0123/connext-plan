@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { format, addDays, parseISO } from "date-fns";
-import { Plus, Eye, Pencil, FileDown, Trash2 } from "lucide-react";
+import { Plus, Eye, Pencil, FileDown, Trash2, Copy, Search } from "lucide-react";
 import { OrcamentoFormDialog } from "@/components/orcamentos/OrcamentoFormDialog";
 import { OrcamentoDetailSheet } from "@/components/orcamentos/OrcamentoDetailSheet";
+import { Input } from "@/components/ui/input";
 import { ORC_STATUS_BADGE, ORC_STATUS_OPTIONS } from "@/components/orcamentos/orc-helpers";
 import { gerarOrcamentoPDF } from "@/lib/orcamento-pdf";
 import { toast } from "sonner";
