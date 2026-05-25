@@ -219,6 +219,7 @@ export default function Cartoes() {
               <TableHead>Data</TableHead>
               <TableHead>Cartão</TableHead>
               <TableHead>Descrição</TableHead>
+              <TableHead>Categoria</TableHead>
               <TableHead>Obra</TableHead>
               <TableHead>Comprador</TableHead>
               <TableHead>Parc.</TableHead>
@@ -232,6 +233,7 @@ export default function Cartoes() {
                 <TableCell>{format(new Date(d.data_compra), "dd/MM/yyyy")}</TableCell>
                 <TableCell>{d.cartoes_credito?.apelido ?? "—"}</TableCell>
                 <TableCell>{d.descricao}</TableCell>
+                <TableCell>{d.categoria ? <Badge variant="outline">{d.categoria}</Badge> : "—"}</TableCell>
                 <TableCell>{d.obras?.codigo_chamado ?? "—"}</TableCell>
                 <TableCell>{d.compradores?.nome ?? "—"}</TableCell>
                 <TableCell>{d.parcelas}x</TableCell>
@@ -244,7 +246,7 @@ export default function Cartoes() {
               </TableRow>
             ))}
             {(despesas as any[]).length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
