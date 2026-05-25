@@ -14,6 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 
 const STATUS = ["em_elaboracao", "enviado", "em_negociacao", "aprovado", "reprovado"] as const;
 type Status = typeof STATUS[number];
@@ -39,7 +40,7 @@ type FormState = {
 const emptyForm = (): FormState => ({
   numero_orcamento: "",
   valor_orcamento: "",
-  data_envio: new Date().toISOString().slice(0, 10),
+  data_envio: getTodayDateInputValue(),
   engenheiro_aprovador: "",
   status: "enviado",
   descricao: "",
@@ -221,7 +222,7 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
     setEditForm({
       numero_orcamento: o.numero_orcamento ?? "",
       valor_orcamento: String(o.valor_orcamento ?? ""),
-      data_envio: o.data_envio ?? new Date().toISOString().slice(0, 10),
+      data_envio: o.data_envio ?? getTodayDateInputValue(),
       engenheiro_aprovador: o.engenheiro_aprovador ?? "",
       status: o.status,
       descricao: o.descricao ?? "",
@@ -298,7 +299,7 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                       </div>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {LABEL[o.status as Status]}
-                        {o.data_envio && ` • Enviado ${format(new Date(o.data_envio), "dd/MM/yyyy")}`}
+                        {o.data_envio && ` • Enviado ${formatDateBR(o.data_envio)}`}
                         {o.engenheiro_aprovador && ` • Aprovador: ${o.engenheiro_aprovador}`}
                       </p>
                       {o.descricao && <p className="mt-1 text-xs">{o.descricao}</p>}
