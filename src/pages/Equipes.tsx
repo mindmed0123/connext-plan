@@ -19,9 +19,11 @@ import { useUserRole } from "@/hooks/useUserRole";
 
 function PessoasList({ tipo }: { tipo: PessoaTipo }) {
   const { isAdmin } = useUserRole();
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<any | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pessoas", tipo, search],
@@ -31,6 +33,27 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
       const { data, error } = await q;
       if (error) throw error;
       return data;
+    },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pessoas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cadastro excluído");
+      setDeleting(null);
+      qc.invalidateQueries({ queryKey: ["pessoas"] });
+      qc.invalidateQueries({ queryKey: ["pessoas-ativas"] });
+    },
+    onError: (e: any) => {
+      const msg = String(e?.message ?? "");
+      if (msg.includes("foreign key") || msg.toLowerCase().includes("violates")) {
+        toast.error("Não é possível excluir: existem vínculos (obras, contratações, etc.). Inative o cadastro.");
+      } else {
+        toast.error(msg || "Erro ao excluir");
+      }
     },
   });
 
