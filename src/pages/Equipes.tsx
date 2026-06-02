@@ -140,6 +140,28 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
         defaultTipo={tipo}
         pessoa={editing}
       />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cadastro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. {deleting?.nome ? `"${deleting.nome}"` : "Este cadastro"} será removido.
+              Se houver vínculos com obras ou contratações, considere inativar em vez de excluir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => { e.preventDefault(); if (deleting) deleteMut.mutate(deleting.id); }}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
