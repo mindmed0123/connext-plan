@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus } from "lucide-react";
+import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { PessoaFormDialog } from "@/components/equipes/PessoaFormDialog";
 import { InviteUserDialog } from "@/components/equipes/InviteUserDialog";
 import { PESSOA_TIPO_LABEL, PESSOA_TIPO_DESC, PessoaTipo } from "@/lib/pessoas-helpers";
@@ -14,9 +19,11 @@ import { useUserRole } from "@/hooks/useUserRole";
 
 function PessoasList({ tipo }: { tipo: PessoaTipo }) {
   const { isAdmin } = useUserRole();
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<any | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["pessoas", tipo, search],
@@ -26,6 +33,27 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
       const { data, error } = await q;
       if (error) throw error;
       return data;
+    },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pessoas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cadastro excluído");
+      setDeleting(null);
+      qc.invalidateQueries({ queryKey: ["pessoas"] });
+      qc.invalidateQueries({ queryKey: ["pessoas-ativas"] });
+    },
+    onError: (e: any) => {
+      const msg = String(e?.message ?? "");
+      if (msg.includes("foreign key") || msg.toLowerCase().includes("violates")) {
+        toast.error("Não é possível excluir: existem vínculos (obras, contratações, etc.). Inative o cadastro.");
+      } else {
+        toast.error(msg || "Erro ao excluir");
+      }
     },
   });
 
@@ -91,9 +119,14 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpenForm(true); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpenForm(true); }}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleting(p)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -107,6 +140,28 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
         defaultTipo={tipo}
         pessoa={editing}
       />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cadastro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. {deleting?.nome ? `"${deleting.nome}"` : "Este cadastro"} será removido.
+              Se houver vínculos com obras ou contratações, considere inativar em vez de excluir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => { e.preventDefault(); if (deleting) deleteMut.mutate(deleting.id); }}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
