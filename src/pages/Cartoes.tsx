@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { Badge } from "@/components/ui/badge";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { useDraftState } from "@/hooks/useDraftState";
+import { calcularFaturas, faturaDeCompra } from "@/lib/cartao-helpers";
 
 type Cartao = {
   id: string; apelido: string; banco: string | null; bandeira: string | null;
@@ -35,9 +37,10 @@ export default function Cartoes() {
   const qc = useQueryClient();
   const [cartaoDialog, setCartaoDialog] = useState(false);
   const [editingCartao, setEditingCartao] = useState<Cartao | null>(null);
-  const [cartaoForm, setCartaoForm] = useState(emptyCartao);
+  const [cartaoForm, setCartaoForm, clearCartaoDraft] = useDraftState("cartao-form", emptyCartao);
   const [despDialog, setDespDialog] = useState(false);
-  const [despForm, setDespForm] = useState(emptyDesp);
+  const [editingDespId, setEditingDespId] = useState<string | null>(null);
+  const [despForm, setDespForm, clearDespDraft] = useDraftState("desp-form", emptyDesp);
   const [filtroCartao, setFiltroCartao] = useState<string>("todos");
 
   const { data: cartoes = [] } = useQuery({
@@ -87,7 +90,9 @@ export default function Cartoes() {
     onSuccess: () => {
       toast.success(editingCartao ? "Cartão atualizado" : "Cartão criado");
       qc.invalidateQueries({ queryKey: ["cartoes", empresaId] });
-      setCartaoDialog(false); setEditingCartao(null); setCartaoForm(emptyCartao);
+      clearCartaoDraft();
+      setCartaoDialog(false);
+      setEditingCartao(null);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -114,15 +119,22 @@ export default function Cartoes() {
         observacoes: despForm.observacoes || null,
         categoria: despForm.categoria || null,
       };
-      const { error } = await supabase.from("cartao_despesas" as any).insert([payload]);
-      if (error) throw error;
+      if (editingDespId) {
+        const { error } = await supabase.from("cartao_despesas" as any).update(payload).eq("id", editingDespId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cartao_despesas" as any).insert([payload]);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Despesa registrada");
+      toast.success(editingDespId ? "Despesa atualizada" : "Despesa registrada");
       qc.invalidateQueries({ queryKey: ["cartao-despesas"] });
       qc.invalidateQueries({ queryKey: ["obra-financeiro-resumo"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setDespDialog(false); setDespForm(emptyDesp);
+      clearDespDraft();
+      setEditingDespId(null);
+      setDespDialog(false);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -145,6 +157,22 @@ export default function Cartoes() {
     return map;
   }, [despesas]);
 
+  const openEditDesp = (d: any) => {
+    setEditingDespId(d.id);
+    setDespForm({
+      cartao_id: d.cartao_id ?? "",
+      obra_id: d.obra_id ?? "",
+      comprador_id: d.comprador_id ?? "",
+      descricao: d.descricao ?? "",
+      valor: String(d.valor ?? ""),
+      data_compra: d.data_compra ?? getTodayDateInputValue(),
+      parcelas: String(d.parcelas ?? "1"),
+      observacoes: d.observacoes ?? "",
+      categoria: d.categoria ?? "",
+    });
+    setDespDialog(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -153,10 +181,10 @@ export default function Cartoes() {
           <p className="text-sm text-muted-foreground">Gerencie cartões e despesas vinculadas a obras</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setEditingCartao(null); setCartaoForm(emptyCartao); setCartaoDialog(true); }}>
+          <Button variant="outline" onClick={() => { setEditingCartao(null); clearCartaoDraft(); setCartaoDialog(true); }}>
             <CreditCard className="h-4 w-4" /> Novo cartão
           </Button>
-          <Button onClick={() => { setDespForm(emptyDesp); setDespDialog(true); }} disabled={cartoes.length === 0}>
+          <Button onClick={() => { setEditingDespId(null); clearDespDraft(); setDespDialog(true); }} disabled={cartoes.length === 0}>
             <Plus className="h-4 w-4" /> Nova despesa
           </Button>
         </div>
@@ -164,38 +192,74 @@ export default function Cartoes() {
 
       {/* Cartões */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {cartoes.map((c) => (
-          <Card key={c.id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between gap-2">
-                <CardTitle className="text-base">{c.apelido}</CardTitle>
-                <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => {
-                    setEditingCartao(c);
-                    setCartaoForm({
-                      apelido: c.apelido, banco: c.banco ?? "", bandeira: c.bandeira ?? "",
-                      ultimos_4: c.ultimos_4 ?? "", titular: c.titular ?? "",
-                      limite: String(c.limite), dia_fechamento: c.dia_fechamento?.toString() ?? "",
-                      dia_vencimento: c.dia_vencimento?.toString() ?? "",
-                    });
-                    setCartaoDialog(true);
-                  }}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+        {cartoes.map((c) => {
+          const info = c.dia_fechamento && c.dia_vencimento
+            ? calcularFaturas(c.dia_fechamento, c.dia_vencimento)
+            : null;
+          const despesasDoCartao = (despesas as any[]).filter((d) => d.cartao_id === c.id);
+          const totalFaturaAtual = info
+            ? despesasDoCartao
+                .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "atual")
+                .reduce((s, d) => s + Number(d.valor || 0), 0)
+            : 0;
+          const totalFaturaProxima = info
+            ? despesasDoCartao
+                .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "proxima")
+                .reduce((s, d) => s + Number(d.valor || 0), 0)
+            : 0;
+
+          return (
+            <Card key={c.id}>
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-base">{c.apelido}</CardTitle>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      setEditingCartao(c);
+                      setCartaoForm({
+                        apelido: c.apelido, banco: c.banco ?? "", bandeira: c.bandeira ?? "",
+                        ultimos_4: c.ultimos_4 ?? "", titular: c.titular ?? "",
+                        limite: String(c.limite), dia_fechamento: c.dia_fechamento?.toString() ?? "",
+                        dia_vencimento: c.dia_vencimento?.toString() ?? "",
+                      });
+                      setCartaoDialog(true);
+                    }}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              <p className="text-muted-foreground">{c.banco ?? "—"} • {c.bandeira ?? "—"} {c.ultimos_4 ? `• •••• ${c.ultimos_4}` : ""}</p>
-              <p>Limite: <span className="font-medium">{formatCurrency(c.limite)}</span></p>
-              <p className="text-xs text-muted-foreground">
-                Fech. dia {c.dia_fechamento ?? "—"} • Venc. dia {c.dia_vencimento ?? "—"}
-              </p>
-              <p className="pt-1">Gasto registrado: <Badge variant="secondary">{formatCurrency(totaisPorCartao.get(c.id) ?? 0)}</Badge></p>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p className="text-muted-foreground text-xs">{c.banco ?? "—"} • {c.bandeira ?? "—"} {c.ultimos_4 ? `• •••• ${c.ultimos_4}` : ""}</p>
+                <p className="text-xs">Limite: <span className="font-medium">{formatCurrency(c.limite)}</span></p>
+                {info ? (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="rounded-md bg-primary/5 border border-primary/20 p-2">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Fatura atual · {info.faturaAtual.label}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatDateBR(info.faturaAtual.abre.toISOString().slice(0, 10))} → {formatDateBR(info.faturaAtual.fecha.toISOString().slice(0, 10))}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Vence: {formatDateBR(info.faturaAtual.vence.toISOString().slice(0, 10))}</p>
+                      <p className="text-sm font-semibold tabular-nums mt-1">{formatCurrency(totalFaturaAtual)}</p>
+                    </div>
+                    <div className="rounded-md bg-muted/40 border p-2">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Próxima · {info.proximaFatura.label}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatDateBR(info.proximaFatura.abre.toISOString().slice(0, 10))} → {formatDateBR(info.proximaFatura.fecha.toISOString().slice(0, 10))}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Vence: {formatDateBR(info.proximaFatura.vence.toISOString().slice(0, 10))}</p>
+                      <p className="text-sm font-semibold tabular-nums mt-1">{formatCurrency(totalFaturaProxima)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Fech. dia {c.dia_fechamento ?? "—"} • Venc. dia {c.dia_vencimento ?? "—"}</p>
+                )}
+                <p className="pt-1 text-xs">Total registrado: <Badge variant="secondary">{formatCurrency(totaisPorCartao.get(c.id) ?? 0)}</Badge></p>
+              </CardContent>
+            </Card>
+          );
+        })}
         {cartoes.length === 0 && (
           <p className="text-sm text-muted-foreground">Nenhum cartão cadastrado.</p>
         )}
@@ -217,6 +281,7 @@ export default function Cartoes() {
           <TableHeader>
             <TableRow>
               <TableHead>Data</TableHead>
+              <TableHead>Fatura</TableHead>
               <TableHead>Cartão</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Categoria</TableHead>
@@ -224,36 +289,54 @@ export default function Cartoes() {
               <TableHead>Comprador</TableHead>
               <TableHead>Parc.</TableHead>
               <TableHead className="text-right">Valor</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(despesas as any[]).map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>{formatDateBR(d.data_compra)}</TableCell>
-                <TableCell>{d.cartoes_credito?.apelido ?? "—"}</TableCell>
-                <TableCell>{d.descricao}</TableCell>
-                <TableCell>{d.categoria ? <Badge variant="outline">{d.categoria}</Badge> : "—"}</TableCell>
-                <TableCell>{d.obras?.codigo_chamado ?? "—"}</TableCell>
-                <TableCell>{d.compradores?.nome ?? "—"}</TableCell>
-                <TableCell>{d.parcelas}x</TableCell>
-                <TableCell className="text-right font-medium">{formatCurrency(d.valor)}</TableCell>
-                <TableCell>
-                  <Button size="icon" variant="ghost" onClick={() => confirm("Excluir despesa?") && delDesp.mutate(d.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {(despesas as any[]).map((d) => {
+              const cartao = cartoes.find((c) => c.id === d.cartao_id);
+              let faturaCell: React.ReactNode = "—";
+              if (cartao?.dia_fechamento && cartao?.dia_vencimento) {
+                const qual = faturaDeCompra(d.data_compra, cartao.dia_fechamento, cartao.dia_vencimento);
+                const { faturaAtual, proximaFatura } = calcularFaturas(cartao.dia_fechamento, cartao.dia_vencimento);
+                if (qual === "atual") faturaCell = <Badge variant="default" className="text-[10px]">Atual · {faturaAtual.label}</Badge>;
+                else if (qual === "proxima") faturaCell = <Badge variant="secondary" className="text-[10px]">Próxima · {proximaFatura.label}</Badge>;
+                else if (qual === "anterior") faturaCell = <Badge variant="outline" className="text-[10px]">Anterior</Badge>;
+                else faturaCell = <Badge variant="outline" className="text-[10px]">Futura</Badge>;
+              }
+              return (
+                <TableRow key={d.id}>
+                  <TableCell>{formatDateBR(d.data_compra)}</TableCell>
+                  <TableCell>{faturaCell}</TableCell>
+                  <TableCell>{d.cartoes_credito?.apelido ?? "—"}</TableCell>
+                  <TableCell>{d.descricao}</TableCell>
+                  <TableCell>{d.categoria ? <Badge variant="outline">{d.categoria}</Badge> : "—"}</TableCell>
+                  <TableCell>{d.obras?.codigo_chamado ?? "—"}</TableCell>
+                  <TableCell>{d.compradores?.nome ?? "—"}</TableCell>
+                  <TableCell>{d.parcelas}x</TableCell>
+                  <TableCell className="text-right font-medium">{formatCurrency(d.valor)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEditDesp(d)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => confirm("Excluir despesa?") && delDesp.mutate(d.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {(despesas as any[]).length === 0 && (
-              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
       {/* Cartão dialog */}
-      <Dialog open={cartaoDialog} onOpenChange={setCartaoDialog}>
+      <Dialog open={cartaoDialog} onOpenChange={(v) => { setCartaoDialog(v); if (!v) setEditingCartao(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editingCartao ? "Editar cartão" : "Novo cartão"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3">
@@ -274,9 +357,9 @@ export default function Cartoes() {
       </Dialog>
 
       {/* Despesa dialog */}
-      <Dialog open={despDialog} onOpenChange={setDespDialog}>
+      <Dialog open={despDialog} onOpenChange={(v) => { setDespDialog(v); if (!v) setEditingDespId(null); }}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Nova despesa de cartão</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingDespId ? "Editar despesa" : "Nova despesa de cartão"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label>Cartão*</Label>
@@ -320,6 +403,24 @@ export default function Cartoes() {
               </Select>
             </div>
             <div className="col-span-2"><Label>Observações</Label><Input value={despForm.observacoes} onChange={(e) => setDespForm({ ...despForm, observacoes: e.target.value })} /></div>
+            {despForm.cartao_id && despForm.data_compra && (() => {
+              const cartao = cartoes.find((c) => c.id === despForm.cartao_id);
+              if (!cartao?.dia_fechamento || !cartao?.dia_vencimento) return null;
+              const qual = faturaDeCompra(despForm.data_compra, cartao.dia_fechamento, cartao.dia_vencimento);
+              const { faturaAtual, proximaFatura } = calcularFaturas(cartao.dia_fechamento, cartao.dia_vencimento);
+              const label = qual === "atual"
+                ? `Fatura atual (${faturaAtual.label}) · vence ${formatDateBR(faturaAtual.vence.toISOString().slice(0, 10))}`
+                : qual === "proxima"
+                ? `Próxima fatura (${proximaFatura.label}) · vence ${formatDateBR(proximaFatura.vence.toISOString().slice(0, 10))}`
+                : qual === "anterior"
+                ? "Fatura anterior (já vencida)"
+                : "Fatura futura";
+              return (
+                <div className="col-span-2 rounded-md bg-primary/5 border border-primary/20 p-2 text-xs">
+                  📅 Esta compra entra na <span className="font-medium">{label}</span>
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDespDialog(false)}>Cancelar</Button>
