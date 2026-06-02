@@ -2139,9 +2139,11 @@ export type Database = {
           created_at: string
           data_prevista: string | null
           data_recebido: string | null
+          descricao: string | null
           empresa_id: string
           id: string
-          obra_id: string
+          obra_id: string | null
+          observacoes: string | null
           pedido_compra_id: string | null
           status: Database["public"]["Enums"]["recebimento_status"]
           updated_at: string
@@ -2151,9 +2153,11 @@ export type Database = {
           created_at?: string
           data_prevista?: string | null
           data_recebido?: string | null
+          descricao?: string | null
           empresa_id?: string
           id?: string
-          obra_id: string
+          obra_id?: string | null
+          observacoes?: string | null
           pedido_compra_id?: string | null
           status?: Database["public"]["Enums"]["recebimento_status"]
           updated_at?: string
@@ -2163,9 +2167,11 @@ export type Database = {
           created_at?: string
           data_prevista?: string | null
           data_recebido?: string | null
+          descricao?: string | null
           empresa_id?: string
           id?: string
-          obra_id?: string
+          obra_id?: string | null
+          observacoes?: string | null
           pedido_compra_id?: string | null
           status?: Database["public"]["Enums"]["recebimento_status"]
           updated_at?: string
