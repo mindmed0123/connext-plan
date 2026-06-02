@@ -49,7 +49,7 @@ export function AgendaRecebimentos({ data }: { data: DashboardData }) {
               return (
                 <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/40">
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{o?.codigo_chamado ?? "—"}</p>
+                    <p className="truncate font-medium">{o?.codigo_chamado ?? (r as any).descricao ?? "Manual"}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {formatDateBR(r.data_prevista)} {nf && <>· NF {nf}</>}
                     </p>
