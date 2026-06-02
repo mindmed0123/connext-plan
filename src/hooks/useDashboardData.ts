@@ -166,7 +166,8 @@ export function useDashboardData(filters: DashboardFilters) {
         .filter((n) => obraIds.has(n.obra_id))
         .reduce((s, n) => s + Number(n.valor || 0), 0);
 
-      const recsFiltered = recs.filter((r) => obraIds.has(r.obra_id));
+      // Incluir recebimentos sem obra vinculada (manuais) + os das obras filtradas
+      const recsFiltered = recs.filter((r) => !r.obra_id || obraIds.has(r.obra_id));
       const valorRecebido = recsFiltered
         .filter((r) => r.status === "recebido")
         .reduce((s, r) => s + Number(r.valor || 0), 0);
