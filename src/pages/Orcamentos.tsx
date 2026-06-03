@@ -198,7 +198,7 @@ export default function Orcamentos() {
                 const validUntil = o.data_orcamento
                   ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
                   : "—";
-                const editable = o.status === "em_elaboracao" || o.status === "em_negociacao";
+                const editable = true;
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const numeroDisplay = (o as any).numero || o.numero_orcamento || "—";
                 return (
