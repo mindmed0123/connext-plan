@@ -155,9 +155,7 @@ export function OrcamentoDetailSheet({
 
             <div className="flex flex-wrap gap-2 pt-3 border-t">
               <Button variant="outline" onClick={handlePDF}><FileDown className="h-4 w-4" /> Gerar PDF</Button>
-              {orc.status === "em_elaboracao" && (
-                <Button variant="outline" onClick={() => onEdit(orc.id)}><Pencil className="h-4 w-4" /> Editar</Button>
-              )}
+              <Button variant="outline" onClick={() => onEdit(orc.id)}><Pencil className="h-4 w-4" /> Editar</Button>
               {orc.status === "enviado" && (
                 <Button variant="outline" onClick={() => updateStatus.mutate("em_negociacao")}>
                   <MessageSquare className="h-4 w-4" /> Em negociação
