@@ -251,10 +251,10 @@ export function useDashboardData(filters: DashboardFilters) {
         // KPIs
         totalAtivas: obrasFiltered.filter((o) => o.status !== "pago").length,
         qtdObrasExecutadas: obrasFiltered.filter((o) =>
-          ["em_execucao","finalizado","aguardando_rc","aguardando_pedido_compra","aguardando_nf","aguardando_pagamento","pago"].includes(o.status as string)
+          ["finalizado","aguardando_rc","aguardando_pedido_compra","aguardando_nf","aguardando_pagamento","pago"].includes(o.status as string)
         ).length,
         valorObrasExecutadas: obrasFiltered
-          .filter((o) => ["em_execucao","finalizado","aguardando_rc","aguardando_pedido_compra","aguardando_nf","aguardando_pagamento","pago"].includes(o.status as string))
+          .filter((o) => ["finalizado","aguardando_rc","aguardando_pedido_compra","aguardando_nf","aguardando_pagamento","pago"].includes(o.status as string))
           .reduce((s, o) => s + (valorPorObra.get(o.id) ?? 0), 0),
         valorEmOrcamento,
         valorEmExecucao,
