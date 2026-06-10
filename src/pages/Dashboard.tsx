@@ -82,6 +82,7 @@ export default function Dashboard() {
         <SectionTitle>Resumo executivo</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {showCard("obras_ativas") && <KpiCard title="Obras ativas" value={String(data?.totalAtivas ?? "—")} icon={HardHat} accent="primary" to="/obras" />}
+          {showCard("obras_executadas") && <KpiCard title="Obras executadas" value={String(data?.qtdObrasExecutadas ?? 0)} hint={formatCurrency(data?.valorObrasExecutadas)} icon={CheckCircle2} accent="success" to="/obras" />}
           {showCard("em_orcamento") && <KpiCard title="Em orçamento" value={formatCurrency(data?.valorEmOrcamento)} hint="Aguardando aprovação" icon={FileText} accent="status-orcamento" to="/orcamentos" />}
           {showCard("em_execucao") && <KpiCard title="Em execução" value={formatCurrency(data?.valorEmExecucao)} icon={Hammer} accent="status-execucao" to="/execucoes" />}
           {showCard("finalizadas") && <KpiCard title="Finalizadas aguardando" value={formatCurrency(data?.valorFinalizadasAguard)} hint={`${data?.qtdFinalizadasAguard ?? 0} obras travadas`} icon={CheckCircle2} accent="status-finalizado" />}

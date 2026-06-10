@@ -79,6 +79,7 @@ export default function Financeiro() {
   const [filtroStatus, setFiltroStatus] = useState("all");
   const [filtroObra, setFiltroObra] = useState("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"venc_asc" | "venc_desc" | "valor_desc" | "valor_asc" | "criado_desc" | "criado_asc">("venc_asc");
 
   // ── Queries ────────────────────────────────────────────────────────────
   const { data: fluxo = [] } = useQuery({
@@ -144,10 +145,14 @@ export default function Financeiro() {
     queryKey: ["obras-fin-select", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await supabase.from("obras").select("id, codigo_chamado").order("codigo_chamado");
+      const { data } = await supabase.from("obras").select("id, codigo_chamado, descricao_servico").order("codigo_chamado");
       return data ?? [];
     },
   });
+  const obraLabel = (o: any) => {
+    const desc = (o?.descricao_servico ?? "").trim();
+    return desc ? `${o.codigo_chamado} — ${desc.length > 60 ? desc.slice(0, 60) + "…" : desc}` : o.codigo_chamado;
+  };
 
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias-fin", empresaId],
@@ -194,7 +199,7 @@ export default function Financeiro() {
   }, [lancamentos, parcelas, recebimentos]);
 
   const lancFiltrados = useMemo(() => {
-    return (lancamentos as any[]).filter((l) => {
+    const arr = (lancamentos as any[]).filter((l) => {
       if (filtroTipo !== "all" && l.tipo !== filtroTipo) return false;
       if (filtroStatus !== "all" && l.status !== filtroStatus) return false;
       if (filtroObra !== "all" && l.obra_id !== filtroObra) return false;
@@ -207,7 +212,23 @@ export default function Financeiro() {
       }
       return true;
     });
-  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, search]);
+    const cmpDate = (a: string | null, b: string | null, dir: 1 | -1) => {
+      const va = a ? new Date(a).getTime() : (dir === 1 ? Infinity : -Infinity);
+      const vb = b ? new Date(b).getTime() : (dir === 1 ? Infinity : -Infinity);
+      return (va - vb) * dir;
+    };
+    arr.sort((a, b) => {
+      switch (sortBy) {
+        case "venc_asc":  return cmpDate(a.data_vencimento, b.data_vencimento, 1);
+        case "venc_desc": return cmpDate(a.data_vencimento, b.data_vencimento, -1);
+        case "valor_desc": return Number(b.valor) - Number(a.valor);
+        case "valor_asc":  return Number(a.valor) - Number(b.valor);
+        case "criado_desc": return cmpDate(a.created_at, b.created_at, -1);
+        case "criado_asc":  return cmpDate(a.created_at, b.created_at, 1);
+      }
+    });
+    return arr;
+  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, search, sortBy]);
 
   const proximosVenc = useMemo(() => {
     const hoje = new Date();
@@ -602,12 +623,23 @@ export default function Financeiro() {
               </SelectContent>
             </Select>
             <Select value={filtroObra} onValueChange={setFiltroObra}>
-              <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-[220px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as obras</SelectItem>
                 {(obras as any[]).map((o) => (
-                  <SelectItem key={o.id} value={o.id}>{o.codigo_chamado}</SelectItem>
+                  <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+              <SelectTrigger className="h-9 w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="venc_asc">Vencimento ↑ (próximos)</SelectItem>
+                <SelectItem value="venc_desc">Vencimento ↓</SelectItem>
+                <SelectItem value="valor_desc">Maior valor</SelectItem>
+                <SelectItem value="valor_asc">Menor valor</SelectItem>
+                <SelectItem value="criado_desc">Mais recentes</SelectItem>
+                <SelectItem value="criado_asc">Mais antigos</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -766,7 +798,7 @@ export default function Financeiro() {
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {(obras as any[]).map((o) => (
-                    <SelectItem key={o.id} value={o.id}>{o.codigo_chamado}</SelectItem>
+                    <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
