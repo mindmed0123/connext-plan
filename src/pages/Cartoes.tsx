@@ -49,8 +49,12 @@ export default function Cartoes() {
   });
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-min", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await supabase.from("obras").select("id, codigo_chamado").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("obras").select("id, codigo_chamado, descricao_servico").order("created_at", { ascending: false })).data ?? [],
   });
+  const obraLabel = (o: any) => {
+    const desc = (o?.descricao_servico ?? "").trim();
+    return desc ? `${o.codigo_chamado} — ${desc.length > 60 ? desc.slice(0,60) + "…" : desc}` : o.codigo_chamado;
+  };
   const { data: compradores = [] } = useQuery({
     queryKey: ["compradores", empresaId], enabled: !!empresaId,
     queryFn: async () => (await supabase.from("compradores" as any).select("id, nome").eq("ativo", true).order("nome")).data ?? [],
@@ -108,24 +112,42 @@ export default function Cartoes() {
 
   const saveDesp = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const totalParcelas = Math.max(1, parseInt(despForm.parcelas) || 1);
+      const valorTotal = parseFloat(despForm.valor) || 0;
+      const valorParcela = totalParcelas > 1 ? Math.round((valorTotal / totalParcelas) * 100) / 100 : valorTotal;
+      const basePayload = {
         cartao_id: despForm.cartao_id,
         obra_id: despForm.obra_id || null,
         comprador_id: despForm.comprador_id || null,
         descricao: despForm.descricao.trim() || despForm.categoria || "Despesa",
-        valor: parseFloat(despForm.valor) || 0,
         data_compra: despForm.data_compra,
-        parcelas: parseInt(despForm.parcelas) || 1,
+        parcelas: totalParcelas,
         observacoes: despForm.observacoes || null,
         categoria: despForm.categoria || null,
       };
       if (editingDespId) {
-        const { error } = await supabase.from("cartao_despesas" as any).update(payload).eq("id", editingDespId);
+        const { error } = await supabase.from("cartao_despesas" as any)
+          .update({ ...basePayload, valor: valorTotal }).eq("id", editingDespId);
         if (error) throw error;
-      } else {
-        const { error } = await supabase.from("cartao_despesas" as any).insert([payload]);
-        if (error) throw error;
+        return;
       }
+      // Cria N linhas (uma por fatura) quando parcelado
+      const base = new Date(despForm.data_compra + "T12:00:00");
+      const rows = Array.from({ length: totalParcelas }, (_, i) => {
+        const d = new Date(base);
+        d.setMonth(d.getMonth() + i);
+        const dataCompra = d.toISOString().slice(0, 10);
+        const descricao = totalParcelas > 1
+          ? `${basePayload.descricao} (${i + 1}/${totalParcelas})`
+          : basePayload.descricao;
+        // Última parcela ajusta diferença de arredondamento
+        const valor = (i === totalParcelas - 1 && totalParcelas > 1)
+          ? Math.round((valorTotal - valorParcela * (totalParcelas - 1)) * 100) / 100
+          : valorParcela;
+        return { ...basePayload, data_compra: dataCompra, descricao, valor };
+      });
+      const { error } = await supabase.from("cartao_despesas" as any).insert(rows);
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success(editingDespId ? "Despesa atualizada" : "Despesa registrada");
