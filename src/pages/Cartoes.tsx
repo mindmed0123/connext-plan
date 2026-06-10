@@ -393,7 +393,15 @@ export default function Cartoes() {
             <div className="col-span-2"><Label>Descrição</Label><Input value={despForm.descricao} onChange={(e) => setDespForm({ ...despForm, descricao: e.target.value })} /></div>
             <div><Label>Valor*</Label><Input type="number" step="0.01" value={despForm.valor} onChange={(e) => setDespForm({ ...despForm, valor: e.target.value })} /></div>
             <div><Label>Data</Label><Input type="date" value={despForm.data_compra} onChange={(e) => setDespForm({ ...despForm, data_compra: e.target.value })} /></div>
-            <div><Label>Parcelas</Label><Input type="number" min={1} value={despForm.parcelas} onChange={(e) => setDespForm({ ...despForm, parcelas: e.target.value })} /></div>
+            <div>
+              <Label>Parcelas</Label>
+              <Input type="number" min={1} value={despForm.parcelas} onChange={(e) => setDespForm({ ...despForm, parcelas: e.target.value })} disabled={!!editingDespId} />
+              {!editingDespId && parseInt(despForm.parcelas) > 1 && parseFloat(despForm.valor) > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {despForm.parcelas}x de {formatCurrency((parseFloat(despForm.valor) || 0) / (parseInt(despForm.parcelas) || 1))} — gera {despForm.parcelas} faturas mensais
+                </p>
+              )}
+            </div>
             <div className="col-span-2">
               <Label>Categoria</Label>
               <Select value={despForm.categoria || "none"} onValueChange={(v) => setDespForm({ ...despForm, categoria: v === "none" ? "" : v })}>
@@ -410,7 +418,7 @@ export default function Cartoes() {
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra —</SelectItem>
-                  {(obras as any[]).map((o) => <SelectItem key={o.id} value={o.id}>{o.codigo_chamado}</SelectItem>)}
+                  {(obras as any[]).map((o) => <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
