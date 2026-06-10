@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const TODOS_OS_CARDS = [
   { id: "obras_ativas", label: "Obras ativas" },
+  { id: "obras_executadas", label: "Obras executadas (total)" },
   { id: "em_orcamento", label: "Em orçamento (valor)" },
   { id: "em_execucao", label: "Em execução (valor)" },
   { id: "finalizadas", label: "Finalizadas aguardando" },
