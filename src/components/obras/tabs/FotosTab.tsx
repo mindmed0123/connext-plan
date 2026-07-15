@@ -16,19 +16,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Upload, ImageIcon, Trash2, Loader2, Download } from "lucide-react";
+import { Upload, ImageIcon, Trash2, Loader2, Download, FileText } from "lucide-react";
 import JSZip from "jszip";
+import { useAuth } from "@/contexts/AuthContext";
+import { gerarRelatorioFotograficoPDF } from "@/lib/relatorio-fotografico-pdf";
 
 const TIPO_LABEL = { antes: "Antes", durante: "Durante", depois: "Depois" } as const;
 const MAX_FOTOS = 50;
 
 export function FotosTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [tipo, setTipo] = useState<"antes" | "durante" | "depois">("durante");
   const [observacao, setObservacao] = useState("");
   const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
   const [fotoParaExcluir, setFotoParaExcluir] = useState<{ id: string; storage_path: string | null } | null>(null);
   const [baixando, setBaixando] = useState<{ feitas: number; total: number } | null>(null);
+  const [gerandoPDF, setGerandoPDF] = useState(false);
 
   const { data: fotos } = useQuery({
     queryKey: ["fotos", obraId],
@@ -205,6 +209,84 @@ export function FotosTab({ obraId }: { obraId: string }) {
     }
   };
 
+  const gerarRelatorio = async () => {
+    if (!fotos || fotos.length === 0) return;
+    setGerandoPDF(true);
+    try {
+      const [obraRes, empresaRes, countRes] = await Promise.all([
+        supabase
+          .from("obras")
+          .select("codigo_chamado, descricao_servico, endereco")
+          .eq("id", obraId)
+          .single(),
+        empresaId
+          ? supabase
+              .from("empresas")
+              .select("nome, logo_url")
+              .eq("id", empresaId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null } as any),
+        supabase
+          .from("obra_timeline")
+          .select("id", { count: "exact", head: true })
+          .eq("obra_id", obraId)
+          .eq("evento", "Relatório fotográfico gerado"),
+      ]);
+      if (obraRes.error) throw obraRes.error;
+      const numeroRelatorio = (countRes.count ?? 0) + 1;
+
+      // Assina URLs frescas (as da query podem estar expirando)
+      const paths = fotos
+        .map((f) => f.storage_path)
+        .filter(Boolean) as string[];
+      const urlMap = new Map<string, string>();
+      if (paths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("obras-fotos")
+          .createSignedUrls(paths, 60 * 60);
+        (signed ?? []).forEach((s) => {
+          if (s.path && s.signedUrl) urlMap.set(s.path, s.signedUrl);
+        });
+      }
+
+      await gerarRelatorioFotograficoPDF(
+        {
+          nome: empresaRes.data?.nome ?? "Empresa",
+          logo_url: empresaRes.data?.logo_url ?? null,
+        },
+        {
+          codigo_chamado: obraRes.data.codigo_chamado,
+          descricao_servico: obraRes.data.descricao_servico ?? null,
+          endereco: obraRes.data.endereco ?? null,
+        },
+        fotos.map((f) => ({
+          imagem_url:
+            (f.storage_path && urlMap.get(f.storage_path)) || f.imagem_url,
+          observacao: f.observacao ?? null,
+          tipo: f.tipo,
+          data_upload: f.data_upload,
+        })),
+        { numeroRelatorio, dataRelatorio: new Date() },
+      );
+
+      const { data: u } = await supabase.auth.getUser();
+      await supabase.from("obra_timeline").insert([
+        {
+          obra_id: obraId,
+          user_id: u.user?.id,
+          evento: "Relatório fotográfico gerado",
+          detalhes: `Relatório n° ${numeroRelatorio} — ${fotos.length} foto(s)`,
+        },
+      ]);
+      qc.invalidateQueries({ queryKey: ["timeline", obraId] });
+      toast.success("Relatório gerado");
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao gerar relatório");
+    } finally {
+      setGerandoPDF(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -255,19 +337,34 @@ export function FotosTab({ obraId }: { obraId: string }) {
             Galeria {fotos && fotos.length > 0 && <span className="text-muted-foreground font-normal">({fotos.length})</span>}
           </h3>
           {fotos && fotos.length > 0 && (
-            <Button size="sm" variant="outline" onClick={baixarTodas} disabled={!!baixando}>
-              {baixando ? (
-                <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Baixando {baixando.feitas}/{baixando.total}
-                </>
-              ) : (
-                <>
-                  <Download className="mr-1.5 h-3.5 w-3.5" />
-                  Baixar tudo
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={gerarRelatorio} disabled={gerandoPDF}>
+                {gerandoPDF ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-1.5 h-3.5 w-3.5" />
+                    Baixar relatório fotográfico
+                  </>
+                )}
+              </Button>
+              <Button size="sm" variant="outline" onClick={baixarTodas} disabled={!!baixando}>
+                {baixando ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Baixando {baixando.feitas}/{baixando.total}
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                    Baixar tudo
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
         {(fotos?.length ?? 0) === 0 && (

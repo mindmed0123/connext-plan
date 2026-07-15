@@ -2466,6 +2466,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      email_queue_dispatch: { Args: never; Returns: undefined }
       empresa_assinatura_ativa: {
         Args: { _empresa_id: string }
         Returns: boolean
