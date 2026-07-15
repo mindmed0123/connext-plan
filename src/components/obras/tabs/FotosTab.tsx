@@ -337,19 +337,34 @@ export function FotosTab({ obraId }: { obraId: string }) {
             Galeria {fotos && fotos.length > 0 && <span className="text-muted-foreground font-normal">({fotos.length})</span>}
           </h3>
           {fotos && fotos.length > 0 && (
-            <Button size="sm" variant="outline" onClick={baixarTodas} disabled={!!baixando}>
-              {baixando ? (
-                <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Baixando {baixando.feitas}/{baixando.total}
-                </>
-              ) : (
-                <>
-                  <Download className="mr-1.5 h-3.5 w-3.5" />
-                  Baixar tudo
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={gerarRelatorio} disabled={gerandoPDF}>
+                {gerandoPDF ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-1.5 h-3.5 w-3.5" />
+                    Baixar relatório fotográfico
+                  </>
+                )}
+              </Button>
+              <Button size="sm" variant="outline" onClick={baixarTodas} disabled={!!baixando}>
+                {baixando ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Baixando {baixando.feitas}/{baixando.total}
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                    Baixar tudo
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
         {(fotos?.length ?? 0) === 0 && (
