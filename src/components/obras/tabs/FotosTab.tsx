@@ -16,8 +16,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Upload, ImageIcon, Trash2, Loader2, Download } from "lucide-react";
+import { Upload, ImageIcon, Trash2, Loader2, Download, FileText } from "lucide-react";
 import JSZip from "jszip";
+import { useAuth } from "@/contexts/AuthContext";
+import { gerarRelatorioFotograficoPDF } from "@/lib/relatorio-fotografico-pdf";
 
 const TIPO_LABEL = { antes: "Antes", durante: "Durante", depois: "Depois" } as const;
 const MAX_FOTOS = 50;
