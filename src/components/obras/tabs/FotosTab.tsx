@@ -26,11 +26,13 @@ const MAX_FOTOS = 50;
 
 export function FotosTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [tipo, setTipo] = useState<"antes" | "durante" | "depois">("durante");
   const [observacao, setObservacao] = useState("");
   const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
   const [fotoParaExcluir, setFotoParaExcluir] = useState<{ id: string; storage_path: string | null } | null>(null);
   const [baixando, setBaixando] = useState<{ feitas: number; total: number } | null>(null);
+  const [gerandoPDF, setGerandoPDF] = useState(false);
 
   const { data: fotos } = useQuery({
     queryKey: ["fotos", obraId],
