@@ -2425,6 +2425,10 @@ export type Database = {
           empresa_id: string
         }[]
       }
+      can_access_contratacao: {
+        Args: { _contratacao_id: string; _uid: string }
+        Returns: boolean
+      }
       can_access_obra: {
         Args: { _obra_id: string; _uid: string }
         Returns: boolean
