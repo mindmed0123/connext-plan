@@ -25,6 +25,7 @@ export function useDashboardData(filters: DashboardFilters) {
       const [
         obrasRes,
         orcsRes,
+        adendosRes,
         contratacoesRes,
         parcelasRes,
         materiaisRes,
@@ -35,6 +36,7 @@ export function useDashboardData(filters: DashboardFilters) {
         timelineRes,
         fotosRes,
       ] = await Promise.all([
+
         supabase
           .from("obras")
           .select(
