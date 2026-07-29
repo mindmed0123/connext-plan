@@ -22,6 +22,8 @@ import { TimelineTab } from "./tabs/TimelineTab";
 import { EquipeTab } from "./tabs/EquipeTab";
 import { ContratacoesTab } from "./tabs/ContratacoesTab";
 import { MateriaisTab } from "./tabs/MateriaisTab";
+import { AdendosTab } from "./tabs/AdendosTab";
+
 import { useUserRole } from "@/hooks/useUserRole";
 import { formatDateBR } from "@/lib/date";
 
