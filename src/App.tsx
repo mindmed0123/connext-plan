@@ -29,6 +29,9 @@ import Onboarding from "./pages/Onboarding";
 import Configuracoes from "./pages/Configuracoes";
 import Cartoes from "./pages/Cartoes";
 import Compradores from "./pages/Compradores";
+import CompradorDetalhe from "./pages/CompradorDetalhe";
+import PessoaDetalhe from "./pages/PessoaDetalhe";
+
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { instalarErrosEmPortugues } from "@/lib/erros";
