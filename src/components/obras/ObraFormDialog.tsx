@@ -30,12 +30,15 @@ export function ObraFormDialog({
     data_recebimento: getTodayDateInputValue(),
   });
 
+  // Compradores cadastrados (fonte única de verdade — aba Compradores)
   const { data: origens } = useQuery({
-    queryKey: ["origens-obra"],
+    queryKey: ["compradores"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("origens_obra").select("*").order("nome");
+      const { data, error } = await (supabase.from("compradores" as any) as any)
+        .select("id, nome, ativo")
+        .order("nome");
       if (error) throw error;
-      return data;
+      return ((data ?? []) as any[]).filter((c) => c.ativo !== false);
     },
   });
 
@@ -58,12 +61,16 @@ export function ObraFormDialog({
 
   const addOrigem = useMutation({
     mutationFn: async (nome: string) => {
-      const { data, error } = await supabase.from("origens_obra").insert({ nome }).select().single();
+      const { data, error } = await (supabase.from("compradores" as any) as any)
+        .insert([{ nome, tipo_instituicao: "outro" }])
+        .select("id, nome")
+        .single();
       if (error) throw error;
-      return data;
+      return data as any;
     },
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["origens-obra"] });
+    onSuccess: (data: any) => {
+      qc.invalidateQueries({ queryKey: ["compradores"] });
+      qc.invalidateQueries({ queryKey: ["compradores-full"] });
       setForm((f) => ({ ...f, origem: data.nome }));
       setNovaOrigem("");
       setShowAddOrigem(false);
@@ -71,6 +78,7 @@ export function ObraFormDialog({
     },
     onError: (e: any) => toast.error(erroEmPortugues(e, "Erro ao adicionar comprador")),
   });
+
 
   const addRegiao = useMutation({
     mutationFn: async (nome: string) => {
