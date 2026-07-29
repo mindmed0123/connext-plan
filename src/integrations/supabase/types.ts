@@ -370,11 +370,76 @@ export type Database = {
         }
         Relationships: []
       }
+      comprador_contratos: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          comprador_id: string
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          empresa_id: string
+          id: string
+          numero_contrato: string | null
+          objeto: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          comprador_id: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          empresa_id?: string
+          id?: string
+          numero_contrato?: string | null
+          objeto: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          comprador_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          empresa_id?: string
+          id?: string
+          numero_contrato?: string | null
+          objeto?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comprador_contratos_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "compradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compradores: {
         Row: {
           ativo: boolean
+          bairro: string | null
           cargo: string | null
+          cep: string | null
           cidade: string | null
+          condicoes_comerciais: string | null
           cpf_cnpj: string | null
           created_at: string
           created_by: string | null
@@ -383,15 +448,25 @@ export type Database = {
           endereco: string | null
           estado: string | null
           id: string
+          inscricao_estadual: string | null
           nome: string
           observacoes: string | null
+          razao_social: string | null
+          responsavel_email: string | null
+          responsavel_nome: string | null
+          responsavel_telefone: string | null
+          site: string | null
           telefone: string | null
+          tipo_instituicao: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          bairro?: string | null
           cargo?: string | null
+          cep?: string | null
           cidade?: string | null
+          condicoes_comerciais?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
@@ -400,15 +475,25 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           id?: string
+          inscricao_estadual?: string | null
           nome: string
           observacoes?: string | null
+          razao_social?: string | null
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          site?: string | null
           telefone?: string | null
+          tipo_instituicao?: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          bairro?: string | null
           cargo?: string | null
+          cep?: string | null
           cidade?: string | null
+          condicoes_comerciais?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
@@ -417,9 +502,16 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           id?: string
+          inscricao_estadual?: string | null
           nome?: string
           observacoes?: string | null
+          razao_social?: string | null
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          site?: string | null
           telefone?: string | null
+          tipo_instituicao?: string
           updated_at?: string
         }
         Relationships: []
@@ -1280,6 +1372,77 @@ export type Database = {
           },
         ]
       }
+      obra_adendos: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          created_at: string
+          created_by: string | null
+          data_assinatura: string | null
+          data_inicio: string | null
+          descricao: string | null
+          empresa_id: string
+          id: string
+          numero: number
+          obra_id: string
+          observacoes: string | null
+          quantidade: number
+          status: string
+          titulo: string
+          updated_at: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_assinatura?: string | null
+          data_inicio?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          numero?: number
+          obra_id: string
+          observacoes?: string | null
+          quantidade?: number
+          status?: string
+          titulo: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_assinatura?: string | null
+          data_inicio?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          numero?: number
+          obra_id?: string
+          observacoes?: string | null
+          quantidade?: number
+          status?: string
+          titulo?: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_adendos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_responsaveis: {
         Row: {
           created_at: string
@@ -1383,6 +1546,10 @@ export type Database = {
       obras: {
         Row: {
           codigo_chamado: string
+          contrato_qtd_contratada: number
+          contrato_qtd_prevista: number
+          contrato_unidade: string | null
+          contrato_valor_unitario: number
           created_at: string
           created_by: string | null
           data_recebimento: string
@@ -1399,6 +1566,10 @@ export type Database = {
         }
         Insert: {
           codigo_chamado: string
+          contrato_qtd_contratada?: number
+          contrato_qtd_prevista?: number
+          contrato_unidade?: string | null
+          contrato_valor_unitario?: number
           created_at?: string
           created_by?: string | null
           data_recebimento?: string
@@ -1415,6 +1586,10 @@ export type Database = {
         }
         Update: {
           codigo_chamado?: string
+          contrato_qtd_contratada?: number
+          contrato_qtd_prevista?: number
+          contrato_unidade?: string | null
+          contrato_valor_unitario?: number
           created_at?: string
           created_by?: string | null
           data_recebimento?: string
@@ -1849,6 +2024,65 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pessoa_documentos: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          created_at: string
+          created_by: string | null
+          data_emissao: string | null
+          data_validade: string | null
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          numero: string | null
+          pessoa_id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome: string
+          numero?: string | null
+          pessoa_id: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          numero?: string | null
+          pessoa_id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pessoa_documentos_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
             referencedColumns: ["id"]
           },
         ]
@@ -2445,6 +2679,10 @@ export type Database = {
         }
         Returns: {
           codigo_chamado: string
+          contrato_qtd_contratada: number
+          contrato_qtd_prevista: number
+          contrato_unidade: string | null
+          contrato_valor_unitario: number
           created_at: string
           created_by: string | null
           data_recebimento: string
