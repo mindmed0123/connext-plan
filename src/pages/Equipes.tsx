@@ -189,7 +189,7 @@ export default function Equipes() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Equipes</h1>
-          <p className="text-sm text-muted-foreground">Cadastro de terceirizados, administrativos e operacionais</p>
+          <p className="text-sm text-muted-foreground">Cadastro de terceirizados, administrativos e funcionários CLT</p>
         </div>
         {isAdmin && (
           <Button onClick={() => setInviteOpen(true)}>
