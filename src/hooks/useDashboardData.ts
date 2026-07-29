@@ -25,6 +25,7 @@ export function useDashboardData(filters: DashboardFilters) {
       const [
         obrasRes,
         orcsRes,
+        adendosRes,
         contratacoesRes,
         parcelasRes,
         materiaisRes,
@@ -35,6 +36,7 @@ export function useDashboardData(filters: DashboardFilters) {
         timelineRes,
         fotosRes,
       ] = await Promise.all([
+
         supabase
           .from("obras")
           .select(
@@ -43,6 +45,10 @@ export function useDashboardData(filters: DashboardFilters) {
         supabase
           .from("orcamentos")
           .select("id,obra_id,valor_orcamento,status,data_envio,created_at,updated_at"),
+        supabase
+          .from("obra_adendos")
+          .select("id,obra_id,valor_total,status,data_assinatura,created_at"),
+
         supabase
           .from("contratacoes_terceirizado")
           .select(
@@ -66,6 +72,13 @@ export function useDashboardData(filters: DashboardFilters) {
 
       const obras = obrasRes.data ?? [];
       const orcs = orcsRes.data ?? [];
+      const adendos = (adendosRes.data ?? []) as Array<{
+        id: string;
+        obra_id: string;
+        valor_total: number;
+        status: string;
+      }>;
+
       const contratacoes = contratacoesRes.data ?? [];
       const parcelas = parcelasRes.data ?? [];
       const materiais = materiaisRes.data ?? [];
@@ -116,7 +129,8 @@ export function useDashboardData(filters: DashboardFilters) {
       });
       const obraIds = new Set(obrasFiltered.map((o) => o.id));
 
-      // Valor representativo da obra (orçamento aprovado > maior valor)
+      // Valor representativo da obra (orçamento aprovado > maior valor) + adendos ativos
+      const ADENDO_ATIVO = ["assinado", "em_execucao", "concluido"];
       const valorPorObra = new Map<string, number>();
       for (const o of orcs) {
         const v = Number(o.valor_orcamento || 0);
@@ -124,6 +138,18 @@ export function useDashboardData(filters: DashboardFilters) {
         if (o.status === "aprovado") valorPorObra.set(o.obra_id, Math.max(atual, v));
         else if (atual === 0) valorPorObra.set(o.obra_id, v);
       }
+      const valorAdendosPorObra = new Map<string, number>();
+      for (const a of adendos) {
+        if (!ADENDO_ATIVO.includes(a.status)) continue;
+        valorAdendosPorObra.set(
+          a.obra_id,
+          (valorAdendosPorObra.get(a.obra_id) ?? 0) + Number(a.valor_total || 0),
+        );
+      }
+      for (const [obraId, valorAdendo] of valorAdendosPorObra) {
+        valorPorObra.set(obraId, (valorPorObra.get(obraId) ?? 0) + valorAdendo);
+      }
+
 
       const sumValueByObras = (predicate: (s: ObraStatus) => boolean) =>
         obrasFiltered
@@ -143,13 +169,20 @@ export function useDashboardData(filters: DashboardFilters) {
       }
 
       // Financeiro
-      const valorTotalOrcado = orcs
-        .filter((o) => obraIds.has(o.obra_id))
-        .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0);
+      const valorAdendosFiltrados = Array.from(valorAdendosPorObra.entries())
+        .filter(([id]) => obraIds.has(id))
+        .reduce((s, [, v]) => s + v, 0);
 
-      const valorTotalAprovado = orcs
-        .filter((o) => obraIds.has(o.obra_id) && o.status === "aprovado")
-        .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0);
+      const valorTotalOrcado =
+        orcs
+          .filter((o) => obraIds.has(o.obra_id))
+          .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0) + valorAdendosFiltrados;
+
+      const valorTotalAprovado =
+        orcs
+          .filter((o) => obraIds.has(o.obra_id) && o.status === "aprovado")
+          .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0) + valorAdendosFiltrados;
+
 
       const valorEmOrcamento = sumValueByObras((s) =>
         STATUS_EM_ORCAMENTO.includes(s),

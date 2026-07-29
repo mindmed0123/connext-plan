@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -37,6 +37,13 @@ import { OnboardingGate } from "@/components/OnboardingGate";
 import { instalarErrosEmPortugues } from "@/lib/erros";
 
 const queryClient = new QueryClient({
+  // Qualquer mutação bem-sucedida em qualquer aba atualiza todas as telas,
+  // mantendo dashboard, obras, financeiro e recebimentos sempre em sincronia.
+  mutationCache: new MutationCache({
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 5 * 60_000,
@@ -46,6 +53,7 @@ const queryClient = new QueryClient({
     },
   },
 });
+
 instalarErrosEmPortugues();
 
 const App = () => (
