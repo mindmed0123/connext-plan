@@ -270,7 +270,6 @@ export function ObraFormDialog({
             onClick={() => mut.mutate()}
             disabled={
               mut.isPending ||
-              !form.codigo_chamado ||
               !form.origem ||
               !form.engenheiro_responsavel ||
               !form.endereco ||
