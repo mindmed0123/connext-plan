@@ -169,13 +169,20 @@ export function useDashboardData(filters: DashboardFilters) {
       }
 
       // Financeiro
-      const valorTotalOrcado = orcs
-        .filter((o) => obraIds.has(o.obra_id))
-        .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0);
+      const valorAdendosFiltrados = Array.from(valorAdendosPorObra.entries())
+        .filter(([id]) => obraIds.has(id))
+        .reduce((s, [, v]) => s + v, 0);
 
-      const valorTotalAprovado = orcs
-        .filter((o) => obraIds.has(o.obra_id) && o.status === "aprovado")
-        .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0);
+      const valorTotalOrcado =
+        orcs
+          .filter((o) => obraIds.has(o.obra_id))
+          .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0) + valorAdendosFiltrados;
+
+      const valorTotalAprovado =
+        orcs
+          .filter((o) => obraIds.has(o.obra_id) && o.status === "aprovado")
+          .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0) + valorAdendosFiltrados;
+
 
       const valorEmOrcamento = sumValueByObras((s) =>
         STATUS_EM_ORCAMENTO.includes(s),
