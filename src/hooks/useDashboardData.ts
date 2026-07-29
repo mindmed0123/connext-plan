@@ -129,7 +129,8 @@ export function useDashboardData(filters: DashboardFilters) {
       });
       const obraIds = new Set(obrasFiltered.map((o) => o.id));
 
-      // Valor representativo da obra (orçamento aprovado > maior valor)
+      // Valor representativo da obra (orçamento aprovado > maior valor) + adendos ativos
+      const ADENDO_ATIVO = ["assinado", "em_execucao", "concluido"];
       const valorPorObra = new Map<string, number>();
       for (const o of orcs) {
         const v = Number(o.valor_orcamento || 0);
@@ -137,6 +138,18 @@ export function useDashboardData(filters: DashboardFilters) {
         if (o.status === "aprovado") valorPorObra.set(o.obra_id, Math.max(atual, v));
         else if (atual === 0) valorPorObra.set(o.obra_id, v);
       }
+      const valorAdendosPorObra = new Map<string, number>();
+      for (const a of adendos) {
+        if (!ADENDO_ATIVO.includes(a.status)) continue;
+        valorAdendosPorObra.set(
+          a.obra_id,
+          (valorAdendosPorObra.get(a.obra_id) ?? 0) + Number(a.valor_total || 0),
+        );
+      }
+      for (const [obraId, valorAdendo] of valorAdendosPorObra) {
+        valorPorObra.set(obraId, (valorPorObra.get(obraId) ?? 0) + valorAdendo);
+      }
+
 
       const sumValueByObras = (predicate: (s: ObraStatus) => boolean) =>
         obrasFiltered
