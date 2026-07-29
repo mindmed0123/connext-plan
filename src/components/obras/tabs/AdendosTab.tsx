@@ -90,6 +90,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
     onSuccess: () => {
       toast.success("Contrato atualizado");
       qc.invalidateQueries({ queryKey: ["obra-contrato", obraId] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -142,6 +143,9 @@ export function AdendosTab({ obraId }: { obraId: string }) {
       qc.invalidateQueries({ queryKey: ["obra-adendos", obraId] });
       qc.invalidateQueries({ queryKey: ["obra-contrato", obraId] });
       qc.invalidateQueries({ queryKey: ["timeline", obraId] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      qc.invalidateQueries({ queryKey: ["obra", obraId] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -155,6 +159,8 @@ export function AdendosTab({ obraId }: { obraId: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["obra-adendos", obraId] });
       qc.invalidateQueries({ queryKey: ["obra-contrato", obraId] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
