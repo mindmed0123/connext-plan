@@ -27,7 +27,7 @@ export default function Obras() {
     queryFn: async () => {
       let q = supabase
         .from("obras")
-        .select("*, orcamentos(valor_orcamento, status, created_at)")
+        .select("*, orcamentos(valor_orcamento, status, created_at), obra_adendos(valor_total, status)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
       if (regiaoFilter !== "all") q = q.eq("regiao_label", regiaoFilter);
@@ -49,13 +49,28 @@ export default function Obras() {
   const formatBRL = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const getValorObra = (orcs: Array<{ valor_orcamento: number; status: string; created_at: string }> | null) => {
-    if (!orcs || orcs.length === 0) return null;
-    const aprovado = orcs.find((o) => o.status === "aprovado");
-    if (aprovado) return Number(aprovado.valor_orcamento);
-    const recente = [...orcs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-    return Number(recente.valor_orcamento);
+  const ADENDO_ATIVO = ["assinado", "em_execucao", "concluido"];
+
+  const getValorAdendos = (adendos: Array<{ valor_total: number; status: string }> | null) =>
+    (adendos ?? [])
+      .filter((a) => ADENDO_ATIVO.includes(a.status))
+      .reduce((s, a) => s + Number(a.valor_total || 0), 0);
+
+  const getValorObra = (
+    orcs: Array<{ valor_orcamento: number; status: string; created_at: string }> | null,
+    adendos: Array<{ valor_total: number; status: string }> | null,
+  ) => {
+    const valorAdendos = getValorAdendos(adendos);
+    let valorOrc: number | null = null;
+    if (orcs && orcs.length > 0) {
+      const aprovado = orcs.find((o) => o.status === "aprovado");
+      const recente = [...orcs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
+      valorOrc = Number((aprovado ?? recente).valor_orcamento);
+    }
+    if (valorOrc == null && valorAdendos === 0) return null;
+    return (valorOrc ?? 0) + valorAdendos;
   };
+
 
   return (
     <div className="space-y-5">
