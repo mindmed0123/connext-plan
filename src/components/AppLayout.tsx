@@ -3,9 +3,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TrialBanner } from "./TrialBanner";
 import { TrialPopup } from "./TrialPopup";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 export function AppLayout() {
+  useRealtimeSync();
   return (
+
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-surface">
         <AppSidebar />
