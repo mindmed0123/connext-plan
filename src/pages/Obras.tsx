@@ -135,8 +135,10 @@ export default function Obras() {
               <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">Nenhuma obra encontrada. Clique em "Nova obra" para criar.</TableCell></TableRow>
             )}
             {obras?.map((o: any) => {
-              const valor = getValorObra(o.orcamentos);
-              const isAprovado = o.orcamentos?.some((or: any) => or.status === "aprovado");
+              const valor = getValorObra(o.orcamentos, o.obra_adendos);
+              const isAprovado =
+                o.orcamentos?.some((or: any) => or.status === "aprovado") ||
+                getValorAdendos(o.obra_adendos) > 0;
               return (
                 <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => setSelectedId(o.id)}>
                   <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
