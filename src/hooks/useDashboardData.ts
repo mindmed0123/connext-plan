@@ -46,6 +46,10 @@ export function useDashboardData(filters: DashboardFilters) {
           .from("orcamentos")
           .select("id,obra_id,valor_orcamento,status,data_envio,created_at,updated_at"),
         supabase
+          .from("obra_adendos")
+          .select("id,obra_id,valor_total,status,data_assinatura,created_at"),
+
+        supabase
           .from("contratacoes_terceirizado")
           .select(
             "id,obra_id,terceirizado_id,valor_total,status_financeiro,created_at,updated_at",
@@ -68,6 +72,13 @@ export function useDashboardData(filters: DashboardFilters) {
 
       const obras = obrasRes.data ?? [];
       const orcs = orcsRes.data ?? [];
+      const adendos = (adendosRes.data ?? []) as Array<{
+        id: string;
+        obra_id: string;
+        valor_total: number;
+        status: string;
+      }>;
+
       const contratacoes = contratacoesRes.data ?? [];
       const parcelas = parcelasRes.data ?? [];
       const materiais = materiaisRes.data ?? [];
