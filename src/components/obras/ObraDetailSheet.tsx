@@ -194,7 +194,9 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <TabsContent value="contratacoes" className="mt-4"><ContratacoesTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="materiais" className="mt-4"><MateriaisTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="adendos" className="mt-4"><AdendosTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
+
               </Tabs>
             ) : (
               <Tabs defaultValue="fotos" className="mt-6">
