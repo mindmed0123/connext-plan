@@ -21,6 +21,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 
 function PessoasList({ tipo }: { tipo: PessoaTipo }) {
   const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
+
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [openForm, setOpenForm] = useState(false);
