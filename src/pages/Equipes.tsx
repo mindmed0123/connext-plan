@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus, Trash2, FolderOpen } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
