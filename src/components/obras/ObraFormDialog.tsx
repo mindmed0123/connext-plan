@@ -129,11 +129,11 @@ export function ObraFormDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Código do chamado *</Label>
+            <Label>Código do chamado</Label>
             <Input
               value={form.codigo_chamado}
               onChange={(e) => setForm({ ...form, codigo_chamado: e.target.value })}
-              placeholder="CSCR12345"
+              placeholder="Deixe em branco para gerar automaticamente"
             />
           </div>
           <div className="space-y-2">
@@ -270,7 +270,6 @@ export function ObraFormDialog({
             onClick={() => mut.mutate()}
             disabled={
               mut.isPending ||
-              !form.codigo_chamado ||
               !form.origem ||
               !form.engenheiro_responsavel ||
               !form.endereco ||
