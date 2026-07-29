@@ -105,7 +105,14 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
             )}
             {data?.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.nome}</TableCell>
+                <TableCell className="font-medium">
+                  <button
+                    className="text-left hover:underline"
+                    onClick={() => navigate(`/equipes/pessoa/${p.id}`)}
+                  >
+                    {p.nome}
+                  </button>
+                </TableCell>
                 <TableCell className="text-sm">{tipo === "terceirizado" ? (p.tipo_servico || "—") : (p.cargo || "—")}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   <div className="flex flex-col gap-0.5">
@@ -120,6 +127,9 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" title="Abrir ficha e documentos" onClick={() => navigate(`/equipes/pessoa/${p.id}`)}>
+                      <FolderOpen className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpenForm(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -128,6 +138,7 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
                     </Button>
                   </div>
                 </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
