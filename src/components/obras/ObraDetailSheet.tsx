@@ -22,6 +22,8 @@ import { TimelineTab } from "./tabs/TimelineTab";
 import { EquipeTab } from "./tabs/EquipeTab";
 import { ContratacoesTab } from "./tabs/ContratacoesTab";
 import { MateriaisTab } from "./tabs/MateriaisTab";
+import { AdendosTab } from "./tabs/AdendosTab";
+
 import { useUserRole } from "@/hooks/useUserRole";
 import { formatDateBR } from "@/lib/date";
 
@@ -181,7 +183,9 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                     <TabsTrigger value="contratacoes" className="text-xs px-3 py-1.5 whitespace-nowrap">Pagamentos</TabsTrigger>
                     <TabsTrigger value="materiais" className="text-xs px-3 py-1.5 whitespace-nowrap">Materiais</TabsTrigger>
                     <TabsTrigger value="faturamento" className="text-xs px-3 py-1.5 whitespace-nowrap">Faturamento</TabsTrigger>
-                    <TabsTrigger value="timeline" className="text-xs px-3 py-1.5 whitespace-nowrap">Histórico</TabsTrigger>
+                   <TabsTrigger value="adendos" className="text-xs px-3 py-1.5 whitespace-nowrap">Contrato / Adendos</TabsTrigger>
+                   <TabsTrigger value="timeline" className="text-xs px-3 py-1.5 whitespace-nowrap">Histórico</TabsTrigger>
+
                   </TabsList>
                 </div>
                 <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
@@ -192,7 +196,9 @@ export function ObraDetailSheet({ obraId, onClose }: { obraId: string | null; on
                 <TabsContent value="contratacoes" className="mt-4"><ContratacoesTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="materiais" className="mt-4"><MateriaisTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
+                <TabsContent value="adendos" className="mt-4"><AdendosTab obraId={obra.id} /></TabsContent>
                 <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
+
               </Tabs>
             ) : (
               <Tabs defaultValue="fotos" className="mt-6">

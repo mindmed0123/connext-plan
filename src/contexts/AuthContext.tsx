@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -108,11 +108,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setEmpresaNome(empresaNome);
   };
 
+  const authReadyRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (!authReady) return;
+
+      const nextId = sess?.user?.id ?? null;
+
+      // Eventos de manutenção de sessão (troca de aba, refresh de token, foco na
+      // janela) NÃO devem recarregar o app — isso apagava formulários abertos.
+      if (event === "TOKEN_REFRESHED" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
+        return;
+      }
+      if (nextId === userIdRef.current) return;
+      userIdRef.current = nextId;
+
+      if (!authReadyRef.current) return;
       setLoading(true);
       if (sess?.user) {
         setTimeout(async () => {
@@ -129,13 +143,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
+      userIdRef.current = sess?.user?.id ?? null;
       if (sess?.user) await loadEmpresa(sess.user.id);
+      authReadyRef.current = true;
       setAuthReady(true);
       setLoading(false);
     });
 
     return () => sub.subscription.unsubscribe();
-  }, [authReady]);
+  }, []);
+
 
   const refreshEmpresa = async () => {
     if (user?.id) await loadEmpresa(user.id);

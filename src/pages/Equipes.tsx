@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Search, Pencil, Mail, Phone, ShieldAlert, UserPlus, Trash2, FolderOpen } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +21,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 
 function PessoasList({ tipo }: { tipo: PessoaTipo }) {
   const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
+
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [openForm, setOpenForm] = useState(false);
@@ -105,7 +109,14 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
             )}
             {data?.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.nome}</TableCell>
+                <TableCell className="font-medium">
+                  <button
+                    className="text-left hover:underline"
+                    onClick={() => navigate(`/equipes/pessoa/${p.id}`)}
+                  >
+                    {p.nome}
+                  </button>
+                </TableCell>
                 <TableCell className="text-sm">{tipo === "terceirizado" ? (p.tipo_servico || "—") : (p.cargo || "—")}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   <div className="flex flex-col gap-0.5">
@@ -120,6 +131,9 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" title="Abrir ficha e documentos" onClick={() => navigate(`/equipes/pessoa/${p.id}`)}>
+                      <FolderOpen className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpenForm(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -128,6 +142,7 @@ function PessoasList({ tipo }: { tipo: PessoaTipo }) {
                     </Button>
                   </div>
                 </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
@@ -174,7 +189,7 @@ export default function Equipes() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Equipes</h1>
-          <p className="text-sm text-muted-foreground">Cadastro de terceirizados, administrativos e operacionais</p>
+          <p className="text-sm text-muted-foreground">Cadastro de terceirizados, administrativos e funcionários CLT</p>
         </div>
         {isAdmin && (
           <Button onClick={() => setInviteOpen(true)}>
