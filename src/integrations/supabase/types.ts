@@ -333,6 +333,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          aliquota_iss: number
           cnpj: string
           created_at: string
           email: string | null
@@ -340,11 +341,18 @@ export type Database = {
           endereco: string | null
           id: string
           inscricao_estadual: string | null
+          municipio: string | null
           nome: string
+          prazo_pagamento_dias: number
+          retem_csrf: boolean
+          retem_inss: boolean
+          retem_irrf: boolean
+          retem_iss: boolean
           telefone: string | null
           updated_at: string
         }
         Insert: {
+          aliquota_iss?: number
           cnpj: string
           created_at?: string
           email?: string | null
@@ -352,11 +360,18 @@ export type Database = {
           endereco?: string | null
           id?: string
           inscricao_estadual?: string | null
+          municipio?: string | null
           nome: string
+          prazo_pagamento_dias?: number
+          retem_csrf?: boolean
+          retem_inss?: boolean
+          retem_irrf?: boolean
+          retem_iss?: boolean
           telefone?: string | null
           updated_at?: string
         }
         Update: {
+          aliquota_iss?: number
           cnpj?: string
           created_at?: string
           email?: string | null
@@ -364,7 +379,13 @@ export type Database = {
           endereco?: string | null
           id?: string
           inscricao_estadual?: string | null
+          municipio?: string | null
           nome?: string
+          prazo_pagamento_dias?: number
+          retem_csrf?: boolean
+          retem_inss?: boolean
+          retem_irrf?: boolean
+          retem_iss?: boolean
           telefone?: string | null
           updated_at?: string
         }
@@ -604,6 +625,7 @@ export type Database = {
           objeto: string
           obra_id: string | null
           observacoes: string | null
+          prazo_pagamento_dias: number | null
           status: Database["public"]["Enums"]["contrato_cliente_status"]
           updated_at: string
           valor_global: number
@@ -622,6 +644,7 @@ export type Database = {
           objeto: string
           obra_id?: string | null
           observacoes?: string | null
+          prazo_pagamento_dias?: number | null
           status?: Database["public"]["Enums"]["contrato_cliente_status"]
           updated_at?: string
           valor_global?: number
@@ -640,6 +663,7 @@ export type Database = {
           objeto?: string
           obra_id?: string | null
           observacoes?: string | null
+          prazo_pagamento_dias?: number | null
           status?: Database["public"]["Enums"]["contrato_cliente_status"]
           updated_at?: string
           valor_global?: number
@@ -837,6 +861,7 @@ export type Database = {
           cidade: string | null
           cnpj: string | null
           created_at: string
+          data_saldo_inicial: string | null
           email: string | null
           endereco: string | null
           id: string
@@ -845,6 +870,10 @@ export type Database = {
           nome: string
           onboarding_completo: boolean
           plano: string
+          regime_tributario:
+            | Database["public"]["Enums"]["regime_tributario"]
+            | null
+          saldo_inicial: number
           slug: string
           telefone: string | null
           uf: string | null
@@ -857,6 +886,7 @@ export type Database = {
           cidade?: string | null
           cnpj?: string | null
           created_at?: string
+          data_saldo_inicial?: string | null
           email?: string | null
           endereco?: string | null
           id?: string
@@ -865,6 +895,10 @@ export type Database = {
           nome: string
           onboarding_completo?: boolean
           plano?: string
+          regime_tributario?:
+            | Database["public"]["Enums"]["regime_tributario"]
+            | null
+          saldo_inicial?: number
           slug: string
           telefone?: string | null
           uf?: string | null
@@ -877,6 +911,7 @@ export type Database = {
           cidade?: string | null
           cnpj?: string | null
           created_at?: string
+          data_saldo_inicial?: string | null
           email?: string | null
           endereco?: string | null
           id?: string
@@ -885,6 +920,10 @@ export type Database = {
           nome?: string
           onboarding_completo?: boolean
           plano?: string
+          regime_tributario?:
+            | Database["public"]["Enums"]["regime_tributario"]
+            | null
+          saldo_inicial?: number
           slug?: string
           telefone?: string | null
           uf?: string | null
@@ -2909,6 +2948,11 @@ export type Database = {
       pessoa_tipo: "terceirizado" | "administrativo" | "operacional"
       rc_status: "aguardando" | "recebido"
       recebimento_status: "a_receber" | "recebido"
+      regime_tributario:
+        | "simples_anexo_iii_v"
+        | "simples_anexo_iv"
+        | "lucro_presumido"
+        | "lucro_real"
       vistoria_status: "pendente" | "vistoriado"
     }
     CompositeTypes: {
@@ -3137,6 +3181,12 @@ export const Constants = {
       pessoa_tipo: ["terceirizado", "administrativo", "operacional"],
       rc_status: ["aguardando", "recebido"],
       recebimento_status: ["a_receber", "recebido"],
+      regime_tributario: [
+        "simples_anexo_iii_v",
+        "simples_anexo_iv",
+        "lucro_presumido",
+        "lucro_real",
+      ],
       vistoria_status: ["pendente", "vistoriado"],
     },
   },
