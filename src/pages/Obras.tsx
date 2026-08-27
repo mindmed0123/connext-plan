@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Search } from "lucide-react";
@@ -11,16 +12,15 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
 import { ObraFormDialog } from "@/components/obras/ObraFormDialog";
-import { ObraDetailSheet } from "@/components/obras/ObraDetailSheet";
 import { formatDateBR } from "@/lib/date";
 
 export default function Obras() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [regiaoFilter, setRegiaoFilter] = useState<string>("all");
   const [openForm, setOpenForm] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: obras, isLoading } = useQuery({
     queryKey: ["obras", { search, statusFilter, regiaoFilter }],
@@ -140,7 +140,7 @@ export default function Obras() {
                 o.orcamentos?.some((or: any) => or.status === "aprovado") ||
                 getValorAdendos(o.obra_adendos) > 0;
               return (
-                <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => setSelectedId(o.id)}>
+                <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => navigate(`/obras/${o.id}`)}>
                   <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
                   <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
                   <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
@@ -162,7 +162,6 @@ export default function Obras() {
         onOpenChange={setOpenForm}
         onCreated={() => qc.invalidateQueries({ queryKey: ["obras"] })}
       />
-      <ObraDetailSheet obraId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }

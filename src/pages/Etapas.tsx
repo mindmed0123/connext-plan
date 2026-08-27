@@ -19,7 +19,7 @@ import {
   REGIAO_LABEL,
   type ObraStatus,
 } from "@/lib/obra-helpers";
-import { ObraDetailSheet } from "@/components/obras/ObraDetailSheet";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { GripVertical } from "lucide-react";
 
@@ -114,7 +114,7 @@ function Column({
 
 export default function Etapas() {
   const qc = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -219,7 +219,7 @@ export default function Etapas() {
                 key={status}
                 status={status}
                 items={grouped[status]}
-                onCardClick={(id) => setSelectedId(id)}
+                onCardClick={(id) => navigate("/obras/" + id)}
               />
             ))}
           </div>
@@ -227,7 +227,6 @@ export default function Etapas() {
         <DragOverlay>{activeObra ? <ObraCard obra={activeObra} dragging /> : null}</DragOverlay>
       </DndContext>
 
-      <ObraDetailSheet obraId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }
