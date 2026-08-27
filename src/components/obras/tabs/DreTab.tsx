@@ -234,18 +234,19 @@ export function DreTab({ obraId }: { obraId: string }) {
               <TableHead>Origem</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {(lancamentos?.length ?? 0) === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                   Nenhum lançamento vinculado a esta obra.
                 </TableCell>
               </TableRow>
             )}
             {lancamentos?.map((l, i) => (
-              <TableRow key={i}>
+              <TableRow key={`${l.origem}-${l.id}-${i}`}>
                 <TableCell className="text-sm">{l.data ? formatDateBR(l.data) : "—"}</TableCell>
                 <TableCell className="text-sm font-medium">{l.descricao}</TableCell>
                 <TableCell className="text-sm">{l.categoria}</TableCell>
@@ -259,6 +260,18 @@ export function DreTab({ obraId }: { obraId: string }) {
                   className={`text-right text-sm font-medium tabular-nums ${l.tipo === "receita" ? "text-success" : "text-destructive"}`}
                 >
                   {l.tipo === "receita" ? "+" : "-"} {formatCurrency(l.valor)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                    title="Excluir lançamento"
+                    disabled={excluir.isPending}
+                    onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
