@@ -326,8 +326,10 @@ export default function Financeiro() {
       } else if (l?.origem === "parcela" && l?.origem_id) {
         throw new Error("Este lançamento vem de uma parcela de contratação. Exclua a parcela na obra.");
       }
-      const { error } = await (supabase as any).from("lancamentos_financeiros").delete().eq("id", l.id);
+      const { data, error } = await (supabase as any)
+        .from("lancamentos_financeiros").delete().eq("id", l.id).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este lançamento.");
     },
     onSuccess: () => {
       toast.success("Lançamento excluído");
