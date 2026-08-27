@@ -141,8 +141,11 @@ export function DreTab({ obraId }: { obraId: string }) {
 
       if (!tabela) throw new Error("Este lançamento vem de uma parcela de contratação. Exclua na aba Pagamentos.");
 
-      const { error } = await (supabase as any).from(tabela).delete().eq("id", l.id);
+      const { data, error } = await (supabase as any).from(tabela).delete().eq("id", l.id).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Você não tem permissão para excluir este lançamento.");
+      }
     },
     onSuccess: () => {
       toast.success("Lançamento excluído");
