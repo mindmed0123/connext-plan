@@ -718,7 +718,7 @@ export default function Financeiro() {
                         Editar
                       </Button>
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
-                              onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l.id); }}>
+                              onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l); }}>
                         Excluir
                       </Button>
                     </TableCell>
