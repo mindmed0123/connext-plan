@@ -153,6 +153,13 @@ export default function Financeiro() {
     const desc = (o?.descricao_servico ?? "").trim();
     return desc ? `${o.codigo_chamado} — ${desc.length > 60 ? desc.slice(0, 60) + "…" : desc}` : o.codigo_chamado;
   };
+  const [buscaObra, setBuscaObra] = useState("");
+  const obrasFiltradas = useMemo(() => {
+    const s = buscaObra.trim().toLowerCase();
+    if (!s) return obras as any[];
+    return (obras as any[]).filter((o) => obraLabel(o).toLowerCase().includes(s));
+  }, [obras, buscaObra]);
+
 
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias-fin", empresaId],
