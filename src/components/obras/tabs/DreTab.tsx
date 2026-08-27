@@ -1,11 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR } from "@/lib/date";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 type Lancamento = {
+  id: string;
   data: string | null;
   descricao: string;
   categoria: string;
@@ -13,6 +17,7 @@ type Lancamento = {
   status: string;
   valor: number;
   origem: string;
+  origemId?: string | null;
 };
 
 function Kpi({ label, value, tone }: { label: string; value: number; tone?: "receita" | "despesa" | "saldo" }) {
