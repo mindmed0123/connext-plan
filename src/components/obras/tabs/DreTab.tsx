@@ -39,17 +39,21 @@ export function DreTab({ obraId }: { obraId: string }) {
   const { data: lancamentos } = useQuery({
     queryKey: ["obra-dre-lancamentos", obraId],
     queryFn: async (): Promise<Lancamento[]> => {
-      const [fin, mat, cart] = await Promise.all([
+      const [fin, mat, cart, nfs, receb] = await Promise.all([
         supabase
           .from("lancamentos_financeiros")
           .select("descricao, tipo, status, valor, data_competencia, data_realizado, data_vencimento, origem, categorias_financeiras(nome)")
           .eq("obra_id", obraId),
         supabase.from("materiais_obra").select("descricao, fornecedor, valor_total, data_compra").eq("obra_id", obraId),
         supabase.from("cartao_despesas").select("descricao, categoria, valor, data_compra").eq("obra_id", obraId),
+        supabase.from("notas_fiscais").select("numero_nf, valor, data_emissao").eq("obra_id", obraId),
+        supabase.from("recebimentos").select("descricao, valor, status, data_recebido, data_prevista").eq("obra_id", obraId),
       ]);
 
       const list: Lancamento[] = [];
       for (const l of fin.data ?? []) {
+        if ((l as any).origem === "recebimento") continue; // já listado a partir de Recebimentos
+
         list.push({
           data: (l as any).data_realizado ?? (l as any).data_vencimento ?? (l as any).data_competencia,
           descricao: l.descricao,
@@ -82,9 +86,32 @@ export function DreTab({ obraId }: { obraId: string }) {
           origem: "cartao",
         });
       }
+      for (const n of nfs.data ?? []) {
+        list.push({
+          data: (n as any).data_emissao,
+          descricao: `NF ${(n as any).numero_nf ?? ""}`.trim(),
+          categoria: "Faturamento",
+          tipo: "receita",
+          status: "faturado",
+          valor: Number((n as any).valor || 0),
+          origem: "nota_fiscal",
+        });
+      }
+      for (const r of receb.data ?? []) {
+        list.push({
+          data: (r as any).data_recebido ?? (r as any).data_prevista,
+          descricao: (r as any).descricao || "Recebimento",
+          categoria: "Recebimentos",
+          tipo: "receita",
+          status: (r as any).status === "recebido" ? "realizado" : "previsto",
+          valor: Number((r as any).valor || 0),
+          origem: "recebimento",
+        });
+      }
       return list.sort((a, b) => (String(a.data) < String(b.data) ? 1 : -1));
     },
   });
+
 
   const r = resumo ?? {};
   const receitaOrcada = Number(r.receita_orcada || 0);
