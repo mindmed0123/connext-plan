@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Obras from "./pages/Obras";
+import ObraDetalhe from "./pages/ObraDetalhe";
 import Etapas from "./pages/Etapas";
 import Vistorias from "./pages/Vistorias";
 import Orcamentos from "./pages/Orcamentos";
@@ -92,6 +93,7 @@ const App = () => (
             >
               <Route path="/dashboard" element={<RequirePermission modulo="dashboard"><Dashboard /></RequirePermission>} />
               <Route path="/obras" element={<RequirePermission modulo="obras"><Obras /></RequirePermission>} />
+              <Route path="/obras/:id" element={<RequirePermission modulo="obras"><ObraDetalhe /></RequirePermission>} />
               <Route path="/etapas" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
               <Route path="/kanban" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
               <Route path="/vistorias" element={<RequirePermission modulo="vistorias"><Vistorias /></RequirePermission>} />
