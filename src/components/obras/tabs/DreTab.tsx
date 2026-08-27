@@ -32,8 +32,12 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone?: "rec
 }
 
 export function DreTab({ obraId }: { obraId: string }) {
+  const qc = useQueryClient();
+
   const { data: resumo } = useQuery({
     queryKey: ["obra-dre-resumo", obraId],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_obra_financeiro_resumo" as any, { _obra_id: obraId });
       if (error) throw error;
@@ -43,16 +47,18 @@ export function DreTab({ obraId }: { obraId: string }) {
 
   const { data: lancamentos } = useQuery({
     queryKey: ["obra-dre-lancamentos", obraId],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async (): Promise<Lancamento[]> => {
       const [fin, mat, cart, nfs, receb] = await Promise.all([
         supabase
           .from("lancamentos_financeiros")
-          .select("descricao, tipo, status, valor, data_competencia, data_realizado, data_vencimento, origem, categorias_financeiras(nome)")
+          .select("id, descricao, tipo, status, valor, data_competencia, data_realizado, data_vencimento, origem, origem_id, categorias_financeiras(nome)")
           .eq("obra_id", obraId),
-        supabase.from("materiais_obra").select("descricao, fornecedor, valor_total, data_compra").eq("obra_id", obraId),
-        supabase.from("cartao_despesas").select("descricao, categoria, valor, data_compra").eq("obra_id", obraId),
-        supabase.from("notas_fiscais").select("numero_nf, valor, data_emissao").eq("obra_id", obraId),
-        supabase.from("recebimentos").select("descricao, valor, status, data_recebido, data_prevista").eq("obra_id", obraId),
+        supabase.from("materiais_obra").select("id, descricao, fornecedor, valor_total, data_compra").eq("obra_id", obraId),
+        supabase.from("cartao_despesas").select("id, descricao, categoria, valor, data_compra").eq("obra_id", obraId),
+        supabase.from("notas_fiscais").select("id, numero_nf, valor, data_emissao").eq("obra_id", obraId),
+        supabase.from("recebimentos").select("id, descricao, valor, status, data_recebido, data_prevista").eq("obra_id", obraId),
       ]);
 
       const list: Lancamento[] = [];
@@ -60,6 +66,7 @@ export function DreTab({ obraId }: { obraId: string }) {
         if ((l as any).origem === "recebimento") continue; // já listado a partir de Recebimentos
 
         list.push({
+          id: (l as any).id,
           data: (l as any).data_realizado ?? (l as any).data_vencimento ?? (l as any).data_competencia,
           descricao: l.descricao,
           categoria: (l as any).categorias_financeiras?.nome ?? "—",
@@ -67,10 +74,12 @@ export function DreTab({ obraId }: { obraId: string }) {
           status: l.status,
           valor: Number(l.valor || 0),
           origem: (l as any).origem ?? "financeiro",
+          origemId: (l as any).origem_id ?? null,
         });
       }
       for (const m of mat.data ?? []) {
         list.push({
+          id: (m as any).id,
           data: m.data_compra,
           descricao: m.descricao + (m.fornecedor ? ` — ${m.fornecedor}` : ""),
           categoria: "Materiais",
@@ -82,6 +91,7 @@ export function DreTab({ obraId }: { obraId: string }) {
       }
       for (const c of cart.data ?? []) {
         list.push({
+          id: (c as any).id,
           data: c.data_compra,
           descricao: c.descricao || c.categoria || "Despesa de cartão",
           categoria: c.categoria || "Cartão de crédito",
@@ -93,6 +103,7 @@ export function DreTab({ obraId }: { obraId: string }) {
       }
       for (const n of nfs.data ?? []) {
         list.push({
+          id: (n as any).id,
           data: (n as any).data_emissao,
           descricao: `NF ${(n as any).numero_nf ?? ""}`.trim(),
           categoria: "Faturamento",
@@ -104,6 +115,7 @@ export function DreTab({ obraId }: { obraId: string }) {
       }
       for (const r of receb.data ?? []) {
         list.push({
+          id: (r as any).id,
           data: (r as any).data_recebido ?? (r as any).data_prevista,
           descricao: (r as any).descricao || "Recebimento",
           categoria: "Recebimentos",
@@ -115,6 +127,28 @@ export function DreTab({ obraId }: { obraId: string }) {
       }
       return list.sort((a, b) => (String(a.data) < String(b.data) ? 1 : -1));
     },
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (l: Lancamento) => {
+      const tabela =
+        l.origem === "material" ? "materiais_obra"
+        : l.origem === "cartao" ? "cartao_despesas"
+        : l.origem === "nota_fiscal" ? "notas_fiscais"
+        : l.origem === "recebimento" ? "recebimentos"
+        : l.origem === "parcela" ? null
+        : "lancamentos_financeiros";
+
+      if (!tabela) throw new Error("Este lançamento vem de uma parcela de contratação. Exclua na aba Pagamentos.");
+
+      const { error } = await (supabase as any).from(tabela).delete().eq("id", l.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Lançamento excluído");
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao excluir"),
   });
 
 
