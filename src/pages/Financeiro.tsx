@@ -153,6 +153,13 @@ export default function Financeiro() {
     const desc = (o?.descricao_servico ?? "").trim();
     return desc ? `${o.codigo_chamado} — ${desc.length > 60 ? desc.slice(0, 60) + "…" : desc}` : o.codigo_chamado;
   };
+  const [buscaObra, setBuscaObra] = useState("");
+  const obrasFiltradas = useMemo(() => {
+    const s = buscaObra.trim().toLowerCase();
+    if (!s) return obras as any[];
+    return (obras as any[]).filter((o) => obraLabel(o).toLowerCase().includes(s));
+  }, [obras, buscaObra]);
+
 
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias-fin", empresaId],
@@ -792,17 +799,42 @@ export default function Financeiro() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Obra</Label>
-              <Select value={form.obra_id ?? ""} onValueChange={(v) => setForm({ ...form, obra_id: v || null })}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {(obras as any[]).map((o) => (
+            <div className="col-span-2">
+              <Label>
+                Obra vinculada {form.tipo === "despesa" && <span className="text-muted-foreground">(recomendado)</span>}
+              </Label>
+              <Select
+                value={form.obra_id ?? "__none__"}
+                onValueChange={(v) => setForm({ ...form, obra_id: v === "__none__" ? null : v })}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione a obra..." /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <div className="p-2">
+                    <Input
+                      autoFocus
+                      placeholder="Buscar obra..."
+                      value={buscaObra}
+                      onChange={(e) => setBuscaObra(e.target.value)}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      className="h-8"
+                    />
+                  </div>
+                  <SelectItem value="__none__">Sem obra (despesa geral)</SelectItem>
+                  {obrasFiltradas.map((o: any) => (
                     <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>
                   ))}
+                  {obrasFiltradas.length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">Nenhuma obra encontrada</p>
+                  )}
                 </SelectContent>
               </Select>
+              {form.tipo === "despesa" && !form.obra_id && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Sem obra vinculada esta despesa não entra no balanço de nenhuma obra.
+                </p>
+              )}
             </div>
+
             <div>
               <Label>Fornecedor / cliente</Label>
               <Input value={form.fornecedor_nome ?? ""}
