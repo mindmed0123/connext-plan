@@ -52,6 +52,8 @@ export function DreTab({ obraId }: { obraId: string }) {
 
       const list: Lancamento[] = [];
       for (const l of fin.data ?? []) {
+        if ((l as any).origem === "recebimento") continue; // já listado a partir de Recebimentos
+
         list.push({
           data: (l as any).data_realizado ?? (l as any).data_vencimento ?? (l as any).data_competencia,
           descricao: l.descricao,
