@@ -317,13 +317,21 @@ export default function Financeiro() {
   });
 
   const excluir = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("lancamentos_financeiros").delete().eq("id", id);
+    mutationFn: async (l: any) => {
+      // Lançamentos gerados por outras abas (recebimentos/parcelas) precisam ter
+      // a origem apagada também, senão o DRE da obra continua mostrando o valor.
+      if (l?.origem === "recebimento" && l?.origem_id) {
+        const { error } = await (supabase as any).from("recebimentos").delete().eq("id", l.origem_id);
+        if (error) throw error;
+      } else if (l?.origem === "parcela" && l?.origem_id) {
+        throw new Error("Este lançamento vem de uma parcela de contratação. Exclua a parcela na obra.");
+      }
+      const { error } = await (supabase as any).from("lancamentos_financeiros").delete().eq("id", l.id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Lançamento excluído");
-      qc.invalidateQueries({ queryKey: ["lancamentos"] });
+      qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message),
   });
