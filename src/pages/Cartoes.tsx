@@ -282,6 +282,7 @@ export default function Cartoes() {
 
   const openEditDesp = (d: any) => {
     setEditingDespId(d.id);
+    setEditingDesp(d);
     setDespForm({
       cartao_id: d.cartao_id ?? "",
       obra_id: d.obra_id ?? "",
