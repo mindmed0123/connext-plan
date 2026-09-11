@@ -51,3 +51,27 @@ export function calcularTotaisOrcamento(
   );
   return { subtotal, descGlobal, iss, total: arredondar2(subtotal - descGlobal + iss) };
 }
+
+/**
+ * BDI (Benefícios e Despesas Indiretas) — DEMONSTRATIVO.
+ * Não altera o total do orçamento; serve apenas para compor a proposta.
+ *
+ * BDI = [(1+AC+S+R)(1+DF)(1+L)/(1−I)] − 1
+ * Todos os parâmetros em percentual (ex.: 5 = 5%). Retorna percentual.
+ */
+export interface BdiComposicao {
+  ac?: number | null;
+  s?: number | null;
+  r?: number | null;
+  df?: number | null;
+  l?: number | null;
+  i?: number | null;
+}
+
+export function calcularBdiPct(c: BdiComposicao): number {
+  const p = (v: number | null | undefined) => (Number(v) || 0) / 100;
+  const i = p(c.i);
+  if (i >= 1) return 0;
+  const bdi = ((1 + p(c.ac) + p(c.s) + p(c.r)) * (1 + p(c.df)) * (1 + p(c.l))) / (1 - i) - 1;
+  return arredondar2(bdi * 100);
+}

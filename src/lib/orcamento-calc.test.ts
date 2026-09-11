@@ -53,3 +53,13 @@ describe("cálculo do orçamento", () => {
     expect(t.total).toBe(104.99);
   });
 });
+
+describe("calcularBdiPct", () => {
+  it("retorna 0 sem composição", () => {
+    expect(calcularBdiPct({})).toBe(0);
+  });
+  it("calcula a fórmula clássica", () => {
+    const bdi = calcularBdiPct({ ac: 4, s: 0.8, r: 1.2, df: 1, l: 7, i: 8.65 });
+    expect(bdi).toBeCloseTo(25.36, 1);
+  });
+});
