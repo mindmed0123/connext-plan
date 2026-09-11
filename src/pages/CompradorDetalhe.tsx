@@ -171,8 +171,8 @@ export default function CompradorDetalhe() {
   if (!form) return <p className="text-sm text-muted-foreground">Carregando...</p>;
 
   const totalContratos = contratos.reduce((s, c: any) => s + Number(c.valor || 0), 0);
-  const totalHistorico = (historico?.pcs ?? []).reduce((s: number, p: any) => s + Number(p.valor || 0), 0)
-    + (historico?.mats ?? []).reduce((s: number, m: any) => s + Number(m.valor_total || 0), 0)
+  const totalPedidos = (historico?.pcs ?? []).reduce((s: number, p: any) => s + Number(p.valor || 0), 0);
+  const totalGastos = (historico?.mats ?? []).reduce((s: number, m: any) => s + Number(m.valor_total || 0), 0)
     + (historico?.cards ?? []).reduce((s: number, c: any) => s + Number(c.valor || 0), 0);
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
@@ -319,9 +319,15 @@ export default function CompradorDetalhe() {
         </TabsContent>
 
         <TabsContent value="historico" className="mt-4 space-y-4">
-          <div className="rounded-lg border bg-card p-3">
-            <p className="text-sm text-muted-foreground">Total movimentado</p>
-            <p className="text-2xl font-semibold">{formatCurrency(totalHistorico)}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border bg-card p-3">
+              <p className="text-sm text-muted-foreground">Pedidos (receita)</p>
+              <p className="text-2xl font-semibold">{formatCurrency(totalPedidos)}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <p className="text-sm text-muted-foreground">Gastos (custo)</p>
+              <p className="text-2xl font-semibold">{formatCurrency(totalGastos)}</p>
+            </div>
           </div>
           <section>
             <h3 className="mb-2 text-sm font-semibold">Pedidos de compra ({historico?.pcs.length ?? 0})</h3>
