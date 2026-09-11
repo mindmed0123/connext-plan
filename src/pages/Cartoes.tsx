@@ -469,16 +469,11 @@ export default function Cartoes() {
           </TableHeader>
           <TableBody>
             {(despesas as any[]).map((d) => {
-              const cartao = cartoes.find((c) => c.id === d.cartao_id);
-              let faturaCell: React.ReactNode = "—";
-              if (cartao?.dia_fechamento && cartao?.dia_vencimento) {
-                const qual = faturaDeCompra(d.data_compra, cartao.dia_fechamento, cartao.dia_vencimento);
-                const { faturaAtual, proximaFatura } = calcularFaturas(cartao.dia_fechamento, cartao.dia_vencimento);
-                if (qual === "atual") faturaCell = <Badge variant="default" className="text-[10px]">Atual · {faturaAtual.label}</Badge>;
-                else if (qual === "proxima") faturaCell = <Badge variant="secondary" className="text-[10px]">Próxima · {proximaFatura.label}</Badge>;
-                else if (qual === "anterior") faturaCell = <Badge variant="outline" className="text-[10px]">Anterior</Badge>;
-                else faturaCell = <Badge variant="outline" className="text-[10px]">Futura</Badge>;
-              }
+              const faturaCell: React.ReactNode = d.fatura_vencimento ? (
+                <Badge variant={d.fatura_paga ? "outline" : "secondary"} className="text-[10px]">
+                  Vence {formatDateBR(d.fatura_vencimento)}{d.fatura_paga ? " · paga" : ""}
+                </Badge>
+              ) : "—";
               return (
                 <TableRow key={d.id}>
                   <TableCell>{formatDateBR(d.data_compra)}</TableCell>
