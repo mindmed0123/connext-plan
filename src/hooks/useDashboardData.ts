@@ -51,7 +51,7 @@ export function useDashboardData(filters: DashboardFilters) {
         fetchAllRows<any>((f, t) =>
           supabase
             .from("orcamentos")
-            .select("id,obra_id,valor_orcamento,status,data_envio,created_at,updated_at")
+            .select("id,obra_id,valor_orcamento,valor_total,status,data_envio,created_at,updated_at")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
@@ -162,14 +162,19 @@ export function useDashboardData(filters: DashboardFilters) {
       });
       const obraIds = new Set(obrasFiltered.map((o) => o.id));
 
-      // Valor representativo da obra (orçamento aprovado > maior valor) + adendos ativos
+      // Receita contratada = orçamento APROVADO (único por obra) + adendos assinados.
+      // Sem orçamento aprovado, usa a versão mais recente apenas como previsão.
       const ADENDO_ATIVO = ["assinado", "em_execucao", "concluido"];
       const valorPorObra = new Map<string, number>();
+      const temAprovado = new Set<string>();
       for (const o of orcs) {
-        const v = Number(o.valor_orcamento || 0);
-        const atual = valorPorObra.get(o.obra_id) ?? 0;
-        if (o.status === "aprovado") valorPorObra.set(o.obra_id, Math.max(atual, v));
-        else if (atual === 0) valorPorObra.set(o.obra_id, v);
+        const v = Number((o as { valor_total?: number }).valor_total ?? o.valor_orcamento ?? 0);
+        if (o.status === "aprovado") {
+          valorPorObra.set(o.obra_id, v);
+          temAprovado.add(o.obra_id);
+        } else if (!temAprovado.has(o.obra_id) && !valorPorObra.has(o.obra_id)) {
+          valorPorObra.set(o.obra_id, v);
+        }
       }
       const valorAdendosPorObra = new Map<string, number>();
       for (const a of adendos) {
@@ -206,15 +211,16 @@ export function useDashboardData(filters: DashboardFilters) {
         .filter(([id]) => obraIds.has(id))
         .reduce((s, [, v]) => s + v, 0);
 
-      const valorTotalOrcado =
-        orcs
-          .filter((o) => obraIds.has(o.obra_id))
-          .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0) + valorAdendosFiltrados;
+      // Um valor por obra (orçamento aprovado quando existe), nunca a soma de versões
+      const valorTotalOrcado = Array.from(valorPorObra.entries())
+        .filter(([id]) => obraIds.has(id))
+        .reduce((s, [, v]) => s + v, 0);
 
       const valorTotalAprovado =
         orcs
           .filter((o) => obraIds.has(o.obra_id) && o.status === "aprovado")
-          .reduce((s, o) => s + Number(o.valor_orcamento || 0), 0) + valorAdendosFiltrados;
+          .reduce((s, o) => s + Number(o.valor_total ?? o.valor_orcamento ?? 0), 0) +
+        valorAdendosFiltrados;
 
 
       const valorEmOrcamento = sumValueByObras((s) =>

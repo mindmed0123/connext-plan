@@ -22,6 +22,8 @@ export type PDFOrcamento = {
   valor_orcamento: number;
   valor_total?: number | null;
   valor_impostos?: number | null;
+  subtotal?: number | null;
+  desconto_global_valor?: number | null;
   desconto_global_pct?: number | null;
   objeto?: string | null;
   local_execucao?: string | null;
@@ -227,16 +229,27 @@ export async function gerarOrcamentoPDF(
   doc.text("Lista dos Serviços", margin, y);
   y += 4;
 
-  const subtotalItens = itens.reduce((s, i) => s + Number(i.subtotal), 0);
+  // Usa os valores calculados e gravados no banco (regra única do sistema)
   const descontoGlobalPct = Number(orc.desconto_global_pct ?? 0);
-  const valorDescGlobal = subtotalItens * (descontoGlobalPct / 100);
-  const baseAposDesc = subtotalItens - valorDescGlobal;
-  const totalISS = itens.reduce((s, i) => {
-    const iss = Number(i.aliquota_iss ?? 0);
-    const baseItem = Number(i.subtotal) * (1 - descontoGlobalPct / 100);
-    return s + baseItem * (iss / 100);
-  }, 0);
-  const valorTotal = Number(orc.valor_total ?? baseAposDesc);
+  const somaItens = arredondar2(itens.reduce((s, i) => s + Number(i.subtotal), 0));
+  const subtotalItens = Number(orc.subtotal ?? somaItens);
+  const valorDescGlobal = Number(
+    orc.desconto_global_valor ?? arredondar2(subtotalItens * (descontoGlobalPct / 100)),
+  );
+  const totalISS = Number(
+    orc.valor_impostos ??
+      arredondar2(
+        itens.reduce(
+          (s, i) =>
+            s +
+            arredondar2(
+              Number(i.subtotal) * (1 - descontoGlobalPct / 100) * (Number(i.aliquota_iss ?? 0) / 100),
+            ),
+          0,
+        ),
+      ),
+  );
+  const valorTotal = Number(orc.valor_total ?? subtotalItens - valorDescGlobal + totalISS);
 
   autoTable(doc, {
     startY: y,

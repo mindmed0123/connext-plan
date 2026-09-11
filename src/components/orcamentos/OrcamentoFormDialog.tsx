@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
 import { getTodayDateInputValue } from "@/lib/date";
+import { arredondar2 } from "@/lib/money";
 
 type ItemForm = {
   id?: string;
@@ -216,7 +217,21 @@ export function OrcamentoFormDialog({
     })();
   }, [open, orcamentoId]);
 
-  const total = useMemo(() => itens.reduce((s, i) => s + subtotal(i), 0), [itens]);
+  // Regra única (igual ao banco e ao PDF): ISS incide após o desconto global
+  const totais = useMemo(() => {
+    const sub = arredondar2(itens.reduce((s, i) => s + subtotal(i), 0));
+    const pct = Number(descontoGlobalPct) || 0;
+    const descGlobal = arredondar2(sub * (pct / 100));
+    const iss = arredondar2(
+      itens.reduce(
+        (s, i) =>
+          s + arredondar2(subtotal(i) * (1 - pct / 100) * ((Number(i.aliquota_iss) || 0) / 100)),
+        0,
+      ),
+    );
+    return { subtotal: sub, descGlobal, iss, total: arredondar2(sub - descGlobal + iss) };
+  }, [itens, descontoGlobalPct]);
+  const total = totais.total;
 
   const updateItem = (idx: number, patch: Partial<ItemForm>) => {
     setItens((arr) => arr.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -309,24 +324,15 @@ export function OrcamentoFormDialog({
         intervalo_parcelas: Number(intervaloParcelas) || 30,
         percentual_entrada: Number(percentualEntrada) || 0,
         status: novoStatus,
-        valor_orcamento: total,
         data_envio: novoStatus === "enviado" ? getTodayDateInputValue() : null,
       };
 
-      let id = orcamentoId;
-      if (id) {
-        const { error } = await supabase.from("orcamentos").update(payload).eq("id", id);
-        if (error) throw error;
-        await supabase.from("orcamento_itens").delete().eq("orcamento_id", id);
-      } else {
-        const { data, error } = await supabase.from("orcamentos").insert(payload).select("id").single();
-        if (error) throw error;
-        id = data.id;
-      }
-
-      const { error } = await supabase.from("orcamento_itens").insert(
-        itens.map((it, idx) => ({
-          orcamento_id: id!, empresa_id: empresaId,
+      // Salva orçamento + itens numa única transação no banco (os totais são
+      // calculados pelo próprio banco, nunca pelo front)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc("salvar_orcamento", {
+        _orcamento: { ...payload, id: orcamentoId ?? null },
+        _itens: itens.map((it, idx) => ({
           servico_id: it.servico_id || null,
           codigo: it.codigo || null,
           tipo: "servico",
@@ -338,8 +344,8 @@ export function OrcamentoFormDialog({
           desconto_pct: Number(it.desconto_pct) || 0,
           aliquota_iss: Number(it.aliquota_iss) || 0,
           ordem: idx,
-        }))
-      );
+        })),
+      });
       if (error) throw error;
     },
     onSuccess: (_d, status) => {
@@ -706,6 +712,11 @@ export function OrcamentoFormDialog({
 
             <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 border-t bg-background px-6 py-3 flex items-center justify-between flex-wrap gap-3">
               <div className="text-right">
+                <div className="text-xs text-muted-foreground">
+                  Subtotal {formatCurrency(totais.subtotal)}
+                  {totais.descGlobal > 0 && <> • Desconto -{formatCurrency(totais.descGlobal)}</>}
+                  {totais.iss > 0 && <> • ISS {formatCurrency(totais.iss)}</>}
+                </div>
                 <div className="text-xs text-muted-foreground">Total do orçamento</div>
                 <div className="text-2xl font-bold text-primary">{formatCurrency(total)}</div>
               </div>
