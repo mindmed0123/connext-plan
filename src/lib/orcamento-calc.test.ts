@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularTotaisOrcamento, subtotalItem } from "./orcamento-calc";
+import { calcularBdiPct, calcularTotaisOrcamento, subtotalItem } from "./orcamento-calc";
 
 describe("cálculo do orçamento", () => {
   it("subtotal 10.000, desconto global 10%, ISS 5% = 9.450", () => {
