@@ -3091,6 +3091,7 @@ export type Database = {
         Args: { _nome_empresa: string }
         Returns: string
       }
+      tenant_can_write: { Args: { _empresa_id: string }; Returns: boolean }
       tenant_match: { Args: { _empresa_id: string }; Returns: boolean }
       verificar_razao: {
         Args: never
