@@ -33,8 +33,7 @@ type ItemForm = {
   aliquota_iss?: number;
 };
 
-const subtotal = (i: ItemForm) =>
-  Number(i.quantidade) * Number(i.preco_unitario) * (1 - Number(i.desconto_pct) / 100);
+const subtotal = (i: ItemForm) => subtotalItem(i);
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
