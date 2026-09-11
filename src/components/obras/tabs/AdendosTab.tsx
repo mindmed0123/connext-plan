@@ -13,6 +13,7 @@ import { Download, FileSignature, Plus, Save, Trash2, Upload } from "lucide-reac
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { arredondar2 } from "@/lib/money";
 
 const BUCKET = "obras-contratos";
 
