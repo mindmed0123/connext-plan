@@ -38,6 +38,7 @@ export default function Recebimentos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm, clearDraft] = useDraftState<RecForm>("recebimento-form", emptyRec);
+  const [filtro, setFiltro] = useState<"todos" | "pc_recebidos">("todos");
 
   const { data } = useQuery({
     queryKey: ["all-recebimentos"],
@@ -56,16 +57,24 @@ export default function Recebimentos() {
       (await supabase.from("obras").select("id, codigo_chamado").order("codigo_chamado")).data ?? [],
   });
 
+  const lista = useMemo(() => {
+    const rows = (data ?? []) as any[];
+    if (filtro === "pc_recebidos") {
+      return rows.filter((r) => r.pedido_compra_id && r.status === "recebido");
+    }
+    return rows;
+  }, [data, filtro]);
+
   const totais = useMemo(() => {
     let aReceber = 0;
     let recebido = 0;
-    for (const r of (data ?? []) as any[]) {
+    for (const r of lista) {
       const v = Number(r.valor || 0);
       if (r.status === "recebido") recebido += v;
       else aReceber += v;
     }
     return { aReceber, recebido };
-  }, [data]);
+  }, [lista]);
 
   const marcarRecebido = useMutation({
     mutationFn: async (r: any) => {
@@ -155,12 +164,25 @@ export default function Recebimentos() {
         <div>
           <h1 className="text-2xl font-semibold">Recebimentos</h1>
           <p className="text-sm text-muted-foreground">
-            Fluxo de caixa previsto e realizado · Inclui pedidos de compra com data de recebimento
+            {filtro === "pc_recebidos"
+              ? "Revise um a um: estes vieram de pedidos de compra antigos e podem não ter sido pagos de fato"
+              : "Fluxo de caixa previsto e realizado · Inclui pedidos de compra com data de recebimento"}
           </p>
         </div>
-        <Button onClick={openNovo}>
-          <Plus className="h-4 w-4 mr-1" /> Nova entrada
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={filtro} onValueChange={(v: "todos" | "pc_recebidos") => setFiltro(v)}>
+            <SelectTrigger className="h-9 w-[320px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os recebimentos</SelectItem>
+              <SelectItem value="pc_recebidos">Gerados por PC e marcados como recebidos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={openNovo}>
+            <Plus className="h-4 w-4 mr-1" /> Nova entrada
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -192,14 +214,16 @@ export default function Recebimentos() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(data?.length ?? 0) === 0 && (
+            {lista.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
-                  Sem recebimentos
+                  {filtro === "pc_recebidos"
+                    ? "Nenhum recebimento gerado por pedido de compra está marcado como recebido"
+                    : "Sem recebimentos"}
                 </TableCell>
               </TableRow>
             )}
-            {data?.map((r: any) => {
+            {lista.map((r: any) => {
               const pc = r.pedidos_compra;
               const chamado =
                 r.obras?.codigo_chamado ?? pc?.codigo_chamado_avulso ?? r.descricao ?? "Manual";
