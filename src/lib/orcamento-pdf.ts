@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format, addDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { arredondar2, dividirParcelas } from "@/lib/money";
+import { calcularBdiPct } from "@/lib/orcamento-calc";
 
 const BRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace("R$", "").trim();
@@ -34,6 +35,12 @@ export type PDFOrcamento = {
   intervalo_parcelas?: number | null;
   percentual_entrada?: number | null;
   codigo_chamado?: string | null;
+  bdi_ac?: number | null;
+  bdi_s?: number | null;
+  bdi_r?: number | null;
+  bdi_df?: number | null;
+  bdi_l?: number | null;
+  bdi_i?: number | null;
   obras: { codigo_chamado: string } | null;
 };
 
@@ -300,6 +307,34 @@ export async function gerarOrcamentoPDF(
   });
 
   y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
+
+  // ====== BDI (demonstrativo — não altera o total) ======
+  const bdiComp = {
+    ac: Number(orc.bdi_ac ?? 0), s: Number(orc.bdi_s ?? 0), r: Number(orc.bdi_r ?? 0),
+    df: Number(orc.bdi_df ?? 0), l: Number(orc.bdi_l ?? 0), i: Number(orc.bdi_i ?? 0),
+  };
+  const temBdi = Object.values(bdiComp).some((v) => v > 0);
+  if (temBdi) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(...TEXT);
+    doc.text("Composição do BDI", margin, y);
+    y += 2;
+    autoTable(doc, {
+      startY: y + 2,
+      head: [["Adm. central", "Seguro", "Risco", "Desp. financ.", "Lucro", "Impostos", "BDI"]],
+      body: [[
+        `${bdiComp.ac.toFixed(2)}%`, `${bdiComp.s.toFixed(2)}%`, `${bdiComp.r.toFixed(2)}%`,
+        `${bdiComp.df.toFixed(2)}%`, `${bdiComp.l.toFixed(2)}%`, `${bdiComp.i.toFixed(2)}%`,
+        `${calcularBdiPct(bdiComp).toFixed(2)}%`,
+      ]],
+      theme: "grid",
+      styles: { fontSize: 8, halign: "center" },
+      headStyles: { fillColor: TEAL, textColor: [255, 255, 255], fontSize: 8 },
+      margin: { left: margin, right: margin },
+    });
+    y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+  }
 
   // ====== VENCIMENTOS / PARCELAS ======
   doc.setFont("helvetica", "bold");

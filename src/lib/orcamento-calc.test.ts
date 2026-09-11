@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularTotaisOrcamento, subtotalItem } from "./orcamento-calc";
+import { calcularBdiPct, calcularTotaisOrcamento, subtotalItem } from "./orcamento-calc";
 
 describe("cálculo do orçamento", () => {
   it("subtotal 10.000, desconto global 10%, ISS 5% = 9.450", () => {
@@ -51,5 +51,15 @@ describe("cálculo do orçamento", () => {
     );
     expect(t.subtotal).toBe(99.99);
     expect(t.total).toBe(104.99);
+  });
+});
+
+describe("calcularBdiPct", () => {
+  it("retorna 0 sem composição", () => {
+    expect(calcularBdiPct({})).toBe(0);
+  });
+  it("calcula a fórmula clássica", () => {
+    const bdi = calcularBdiPct({ ac: 4, s: 0.8, r: 1.2, df: 1, l: 7, i: 8.65 });
+    expect(bdi).toBeCloseTo(25.36, 1);
   });
 });

@@ -11,11 +11,13 @@ import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { erroEmPortugues } from "@/lib/erros";
 import { getTodayDateInputValue } from "@/lib/date";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function ObraFormDialog({
   open, onOpenChange, onCreated,
 }: { open: boolean; onOpenChange: (v: boolean) => void; onCreated?: () => void }) {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [novaOrigem, setNovaOrigem] = useState("");
   const [showAddOrigem, setShowAddOrigem] = useState(false);
   const [novaRegiao, setNovaRegiao] = useState("");
