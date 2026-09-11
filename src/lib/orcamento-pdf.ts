@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format, addDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { arredondar2, dividirParcelas } from "@/lib/money";
+import { calcularBdiPct } from "@/lib/orcamento-calc";
 
 const BRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace("R$", "").trim();
