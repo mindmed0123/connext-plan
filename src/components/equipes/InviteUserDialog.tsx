@@ -20,8 +20,8 @@ export function InviteUserDialog({ open, onOpenChange }: { open: boolean; onOpen
       body: { email, nome, role },
     });
     setBusy(false);
-    if (error || (data as any)?.error) {
-      toast.error((data as any)?.error ?? error?.message ?? "Erro ao convidar");
+    if (error || (data)?.error) {
+      toast.error((data)?.error ?? error?.message ?? "Erro ao convidar");
       return;
     }
     toast.success(`Convite enviado para ${email}`);

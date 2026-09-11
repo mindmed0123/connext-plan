@@ -35,8 +35,8 @@ export default function Unsubscribe() {
     const { data, error } = await supabase.functions.invoke("handle-email-unsubscribe", { body: { token } });
     setSubmitting(false);
     if (error) setState("error");
-    else if ((data as any)?.success) setState("success");
-    else if ((data as any)?.reason === "already_unsubscribed") setState("already");
+    else if ((data)?.success) setState("success");
+    else if ((data)?.reason === "already_unsubscribed") setState("already");
     else setState("error");
   };
 

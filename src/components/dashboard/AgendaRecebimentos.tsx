@@ -49,14 +49,14 @@ export function AgendaRecebimentos({ data }: { data: DashboardData }) {
               return (
                 <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/40">
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{o?.codigo_chamado ?? (r as any).descricao ?? "Manual"}</p>
+                    <p className="truncate font-medium">{o?.codigo_chamado ?? (r).descricao ?? "Manual"}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {formatDateBR(r.data_prevista)} {nf && <>· NF {nf}</>}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[11px]">{r.status === "parcial" ? "Parcial" : "A receber"}</Badge>
-                    <span className="text-sm font-semibold tabular-nums">{formatCurrency(Math.max(0, Number(r.valor) - Number((r as any).valor_recebido || 0)))}</span>
+                    <span className="text-sm font-semibold tabular-nums">{formatCurrency(Math.max(0, Number(r.valor) - Number((r).valor_recebido || 0)))}</span>
                   </div>
                 </div>
               );

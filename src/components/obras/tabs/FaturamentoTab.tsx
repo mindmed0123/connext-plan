@@ -21,7 +21,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   useEffect(() => {
     void (async () => {
       const [{ data: obra }, { data: empresa }] = await Promise.all([
-        (supabase.from("obras") as any).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
+        (supabase.from("obras")).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
         supabase.from("empresas").select("cprb").limit(1).single(),
       ]);
       setRegrasNf({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
