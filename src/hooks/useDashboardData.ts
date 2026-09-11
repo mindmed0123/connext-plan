@@ -82,13 +82,13 @@ export function useDashboardData(filters: DashboardFilters) {
         fetchAllRows<any>((f, t) =>
           supabase
             .from("notas_fiscais")
-            .select("id,obra_id,numero_nf,valor,data_emissao")
+            .select("id,obra_id,numero_nf,valor,valor_bruto,valor_liquido,data_emissao")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
           supabase
             .from("recebimentos")
-            .select("id,obra_id,valor,status,data_prevista,data_recebido")
+            .select("id,obra_id,valor,valor_recebido,status,data_prevista,data_recebido")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
@@ -249,9 +249,10 @@ export function useDashboardData(filters: DashboardFilters) {
             .filter((r) => !r.obra_id && r.status === "recebido")
             .reduce((s, r) => s + Number(r.valor || 0), 0);
       const valorAReceber = recsFiltered
-        .filter((r) => r.status === "a_receber")
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-      const valorEmAberto = Math.max(0, valorTotalFaturado - valorRecebido);
+        .filter((r) => r.status !== "recebido")
+        .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
+      const liquidoFaturado = nfs.filter((n) => obraIds.has(n.obra_id)).reduce((s, n: any) => s + Number(n.valor_liquido ?? n.valor ?? 0), 0);
+      const valorEmAberto = Math.max(0, liquidoFaturado - valorRecebido);
 
       const hoje = new Date();
       const hojeKey = toDateKey(hoje);
@@ -260,11 +261,11 @@ export function useDashboardData(filters: DashboardFilters) {
       const em15Key = toDateKey(em15);
       const valorReceber15d = recsFiltered
         .filter((r) => {
-          if (r.status !== "a_receber" || !r.data_prevista) return false;
+           if (r.status === "recebido" || !r.data_prevista) return false;
           const k = String(r.data_prevista).slice(0, 10);
           return k >= hojeKey && k <= em15Key;
         })
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
+         .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
 
       // Terceirizados
       const contratacoesFiltered = contratacoes.filter((c) => obraIds.has(c.obra_id));
@@ -291,11 +292,11 @@ export function useDashboardData(filters: DashboardFilters) {
         recsFiltered
           .filter(
             (r) =>
-              r.status === "a_receber" &&
+               r.status !== "recebido" &&
               r.data_prevista &&
               String(r.data_prevista).slice(0, 10) === toDateKey(alvo),
           )
-          .reduce((s, r) => s + Number(r.valor || 0), 0);
+           .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
       const totalDia1 = somaNoDia(dia1);
       const totalDia15 = somaNoDia(dia15);
 
