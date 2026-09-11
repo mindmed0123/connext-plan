@@ -331,6 +331,51 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_intents: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          periodo: string
+          plano_id: string
+          usado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          periodo: string
+          plano_id: string
+          usado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          periodo?: string
+          plano_id?: string
+          usado_em?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_intents_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_intents_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           aliquota_iss: number
