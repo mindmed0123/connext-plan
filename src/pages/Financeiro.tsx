@@ -32,7 +32,8 @@ import {
   ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { formatDateBR, getTodayDateInputValue, isVencido } from "@/lib/date";
+import { abrirOrigemPath } from "@/lib/origem-nav";
 
 const fmt = formatCurrency;
 const fmtDate = (d?: string | null) => formatDateBR(d);
@@ -129,6 +130,7 @@ export default function Financeiro() {
           .from("lancamentos_financeiros")
           .select("*, categorias_financeiras(nome, cor), obras(codigo_chamado)")
           .order("data_vencimento", { ascending: true, nullsFirst: false })
+          .order("id")
           .range(f, t),
       ),
   });
@@ -142,6 +144,7 @@ export default function Financeiro() {
           .from("parcelas_pagamento")
           .select("*, contratacoes_terceirizado(obra_id, obras(codigo_chamado), pessoas:terceirizado_id(nome))")
           .order("data_prevista", { ascending: true })
+          .order("id")
           .range(f, t),
       ),
   });
@@ -155,6 +158,7 @@ export default function Financeiro() {
           .from("recebimentos")
           .select("*, obras(codigo_chamado)")
           .order("data_prevista", { ascending: true })
+          .order("id")
           .range(f, t),
       ),
   });
@@ -275,7 +279,7 @@ export default function Financeiro() {
           tipo: l.origem === "parcela_pagamento" ? "Parcela"
             : l.origem === "cartao" ? "Cartão"
             : l.origem === "material" ? "Material" : "Despesa",
-          vencido: isBefore(d, hoje),
+          vencido: isVencido(l.data_vencimento),
         });
       }
     });
@@ -626,8 +630,8 @@ export default function Financeiro() {
                   <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">Sem parcelas</TableCell></TableRow>
                 )}
                 {(parcelas as any[]).map((p) => {
-                  const venc = p.data_prevista ? parseISO(p.data_prevista) : null;
-                  const vencido = p.status === "pendente" && venc && isBefore(venc, new Date());
+                  
+                  const vencido = p.status === "pendente" && isVencido(p.data_prevista);
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="text-sm">{p.contratacoes_terceirizado?.obras?.codigo_chamado ?? "—"}</TableCell>
@@ -754,10 +758,8 @@ export default function Financeiro() {
                           className="h-7 px-2"
                           title="Este lançamento é gerado automaticamente. Edite na origem."
                           onClick={() => {
-                            if (l.origem === "recebimento") navigate("/recebimentos");
-                            else if (l.origem === "cartao") navigate("/cartoes");
-                            else if (l.origem === "material" && l.obra_id) navigate(`/obras/${l.obra_id}?tab=materiais`);
-                            else if (l.obra_id) navigate(`/obras/${l.obra_id}?tab=contratacoes`);
+                            const destino = abrirOrigemPath(l.origem, l.obra_id);
+                            if (destino) navigate(destino);
                             else toast.info("Lançamento gerado automaticamente em outra tela.");
                           }}
                         >

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { abrirOrigemPath } from "@/lib/origem-nav";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR } from "@/lib/date";
@@ -35,6 +36,7 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone?: "rec
 
 export function DreTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
 
   const { data: resumo } = useQuery({
@@ -94,21 +96,10 @@ export function DreTab({ obraId }: { obraId: string }) {
     },
   });
 
-  const excluir = useMutation({
+  const excluirManual = useMutation({
     mutationFn: async (l: Lancamento) => {
-      if (l.origem === "parcela_pagamento") {
-        throw new Error("Este lançamento vem de uma parcela de contratação. Exclua na aba Pagamentos.");
-      }
-      const tabelasOrigem: Record<string, string> = {
-        material: "materiais_obra",
-        cartao: "cartao_despesas",
-        recebimento: "recebimentos",
-      };
-      // Registros gerados por outra tela são apagados na origem (o gatilho limpa o razão)
-      const tabela = l.origem === "nota_fiscal" ? "notas_fiscais" : tabelasOrigem[l.origem] ?? "lancamentos_financeiros";
-      const alvo = tabelasOrigem[l.origem] ? l.origemId ?? l.id : l.id;
-
-      const { data, error } = await (supabase as any).from(tabela).delete().eq("id", alvo).select("id");
+      const { data, error } = await (supabase as any)
+        .from("lancamentos_financeiros").delete().eq("id", l.id).select("id");
       if (error) throw error;
       if (!data || data.length === 0) {
         throw new Error("Você não tem permissão para excluir este lançamento.");
@@ -120,6 +111,7 @@ export function DreTab({ obraId }: { obraId: string }) {
     },
     onError: (e: any) => toast.error(e?.message ?? "Erro ao excluir"),
   });
+
 
 
   const r = resumo ?? {};
@@ -240,13 +232,19 @@ export function DreTab({ obraId }: { obraId: string }) {
                   {l.tipo === "receita" ? "+" : "-"} {formatCurrency(l.valor)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {l.origem === "parcela_pagamento" ? (
+                  {l.origem && l.origem !== "financeiro" ? (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2 text-xs"
-                      title="Gerado pela contratação. Altere na aba Pagamentos."
-                      onClick={() => setSearchParams({ tab: "contratacoes" }, { replace: true })}
+                      title="Lançamento gerado automaticamente. Altere na tela de origem."
+                      onClick={() => {
+                        const destino = abrirOrigemPath(l.origem, obraId);
+                        if (!destino) return;
+                        const mesmaObra = destino.startsWith(`/obras/${obraId}?tab=`);
+                        if (mesmaObra) setSearchParams({ tab: destino.split("tab=")[1] }, { replace: true });
+                        else navigate(destino);
+                      }}
                     >
                       Abrir origem
                     </Button>
@@ -256,8 +254,8 @@ export function DreTab({ obraId }: { obraId: string }) {
                       variant="ghost"
                       className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
                       title="Excluir lançamento"
-                      disabled={excluir.isPending}
-                      onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
+                      disabled={excluirManual.isPending}
+                      onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluirManual.mutate(l); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

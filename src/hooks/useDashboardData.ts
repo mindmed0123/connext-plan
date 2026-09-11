@@ -46,18 +46,21 @@ export function useDashboardData(filters: DashboardFilters) {
               "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
             )
             .eq("arquivada", false)
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
           supabase
             .from("orcamentos")
             .select("id,obra_id,valor_orcamento,valor_total,status,data_envio,created_at,updated_at")
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
           supabase
             .from("obra_adendos")
             .select("id,obra_id,valor_total,status,data_assinatura,created_at")
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
@@ -66,6 +69,7 @@ export function useDashboardData(filters: DashboardFilters) {
             .select(
               "id,obra_id,terceirizado_id,valor_total,status_financeiro,created_at,updated_at",
             )
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
@@ -74,6 +78,7 @@ export function useDashboardData(filters: DashboardFilters) {
             .select(
               "id,contratacao_id,numero_parcela,valor,status,data_prevista,data_pagamento,created_at",
             )
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
@@ -83,12 +88,14 @@ export function useDashboardData(filters: DashboardFilters) {
           supabase
             .from("notas_fiscais")
             .select("id,obra_id,numero_nf,valor,valor_bruto,valor_liquido,data_emissao")
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
           supabase
             .from("recebimentos")
             .select("id,obra_id,nota_fiscal_id,valor,valor_recebido,status,data_prevista,data_recebido")
+            .order("id")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
