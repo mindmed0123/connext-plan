@@ -103,10 +103,31 @@ export default function Cartoes() {
 
   const delCartao = useMutation({
     mutationFn: async (id: string) => {
+      const { count } = await supabase
+        .from("cartao_despesas" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("cartao_id", id);
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Este cartão tem ${count} despesa(s) lançada(s) e não pode ser excluído. Use "Desativar" para tirá-lo de uso mantendo o histórico.`,
+        );
+      }
       const { error } = await supabase.from("cartoes_credito" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Cartão removido"); qc.invalidateQueries({ queryKey: ["cartoes", empresaId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleAtivoCartao = useMutation({
+    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+      const { error } = await supabase.from("cartoes_credito" as any).update({ ativo }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.ativo ? "Cartão reativado" : "Cartão desativado");
+      qc.invalidateQueries({ queryKey: ["cartoes", empresaId] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
