@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR } from "@/lib/date";
@@ -33,6 +34,7 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone?: "rec
 
 export function DreTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
+  const [, setSearchParams] = useSearchParams();
 
   const { data: resumo } = useQuery({
     queryKey: ["obra-dre-resumo", obraId],
@@ -136,7 +138,7 @@ export function DreTab({ obraId }: { obraId: string }) {
         : l.origem === "cartao" ? "cartao_despesas"
         : l.origem === "nota_fiscal" ? "notas_fiscais"
         : l.origem === "recebimento" ? "recebimentos"
-        : l.origem === "parcela" ? null
+        : l.origem === "parcela_pagamento" ? null
         : "lancamentos_financeiros";
 
       if (!tabela) throw new Error("Este lançamento vem de uma parcela de contratação. Exclua na aba Pagamentos.");
@@ -265,16 +267,28 @@ export function DreTab({ obraId }: { obraId: string }) {
                   {l.tipo === "receita" ? "+" : "-"} {formatCurrency(l.valor)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                    title="Excluir lançamento"
-                    disabled={excluir.isPending}
-                    onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {l.origem === "parcela_pagamento" ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      title="Gerado pela contratação. Altere na aba Pagamentos."
+                      onClick={() => setSearchParams({ tab: "contratacoes" }, { replace: true })}
+                    >
+                      Abrir origem
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                      title="Excluir lançamento"
+                      disabled={excluir.isPending}
+                      onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

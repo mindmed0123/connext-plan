@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,6 +71,7 @@ const emptyForm: LancamentoForm = {
 export default function Financeiro() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [tab, setTab] = useState("visao-geral");
   const [openLanc, setOpenLanc] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -171,25 +173,23 @@ export default function Financeiro() {
     },
   });
 
-  // ── KPIs ────────────────────────────────────────────────────────────────
+  // ── KPIs (fonte única no banco) ─────────────────────────────────────────
+  const { data: kpiRow } = useQuery({
+    queryKey: ["financeiro-kpis", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_financeiro_kpis" as any, {});
+      if (error) throw error;
+      return (Array.isArray(data) ? data[0] : data) as any;
+    },
+  });
+
   const kpis = useMemo(() => {
-    const all = lancamentos as any[];
-    const receita_real =
-      all.filter((l) => l.tipo === "receita" && l.status === "realizado").reduce((s, l) => s + Number(l.valor), 0)
-      + (recebimentos as any[]).filter((r) => r.status === "recebido").reduce((s, r) => s + Number(r.valor), 0);
-
-    const despesa_real =
-      all.filter((l) => l.tipo === "despesa" && l.status === "realizado").reduce((s, l) => s + Number(l.valor), 0)
-      + (parcelas as any[]).filter((p) => p.status === "pago").reduce((s, p) => s + Number(p.valor), 0);
-
-    const receita_prev =
-      all.filter((l) => l.tipo === "receita" && l.status === "previsto").reduce((s, l) => s + Number(l.valor), 0)
-      + (recebimentos as any[]).filter((r) => r.status === "a_receber").reduce((s, r) => s + Number(r.valor), 0);
-
-    const despesa_prev =
-      all.filter((l) => l.tipo === "despesa" && l.status === "previsto").reduce((s, l) => s + Number(l.valor), 0)
-      + (parcelas as any[]).filter((p) => p.status === "pendente").reduce((s, p) => s + Number(p.valor), 0);
-
+    const k = kpiRow ?? {};
+    const receita_real = Number(k.receita_realizada || 0);
+    const despesa_real = Number(k.despesa_realizada || 0);
+    const receita_prev = Number(k.receita_prevista || 0);
+    const despesa_prev = Number(k.despesa_prevista || 0);
     const margem = receita_real - despesa_real;
     const margem_pct = receita_real > 0 ? (margem / receita_real) * 100 : 0;
 
@@ -197,13 +197,17 @@ export default function Financeiro() {
     const limite7 = addDays(hoje, 7);
     const vencendo = (parcelas as any[])
       .filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), limite7))
-      .reduce((s, p) => s + Number(p.valor), 0);
-    const vencidos =
-      (parcelas as any[]).filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), hoje)).length
-      + all.filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.data_vencimento && isBefore(parseISO(l.data_vencimento), hoje)).length;
+      .reduce((s, p) => s + Number(p.valor), 0)
+      + (lancamentos as any[])
+        .filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.origem !== "parcela_pagamento"
+          && l.data_vencimento && isBefore(parseISO(l.data_vencimento), limite7))
+        .reduce((s, l) => s + Number(l.valor), 0);
 
-    return { receita_real, despesa_real, receita_prev, despesa_prev, margem, margem_pct, vencendo, vencidos };
-  }, [lancamentos, parcelas, recebimentos]);
+    return {
+      receita_real, despesa_real, receita_prev, despesa_prev, margem, margem_pct,
+      vencendo, vencidos: Number(k.vencidos_qtd || 0),
+    };
+  }, [kpiRow, parcelas, lancamentos]);
 
   const lancFiltrados = useMemo(() => {
     const arr = (lancamentos as any[]).filter((l) => {
@@ -255,7 +259,10 @@ export default function Financeiro() {
       }
     });
 
-    (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.data_vencimento).forEach((l) => {
+    // Não repetir a mesma parcela: lançamentos com origem 'parcela_pagamento' já
+    // aparecem acima a partir da própria parcela.
+    (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto"
+      && l.origem !== "parcela_pagamento" && l.data_vencimento).forEach((l) => {
       const d = parseISO(l.data_vencimento);
       if (isBefore(d, limite)) {
         itens.push({
@@ -296,6 +303,7 @@ export default function Financeiro() {
       qc.invalidateQueries({ queryKey: ["lancamentos"] });
       qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
       qc.invalidateQueries({ queryKey: ["dre-obras"] });
+      qc.invalidateQueries({ queryKey: ["financeiro-kpis"] });
       setOpenLanc(false); setEditId(null); setForm(emptyForm);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
@@ -313,17 +321,22 @@ export default function Financeiro() {
       qc.invalidateQueries({ queryKey: ["lancamentos"] });
       qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
       qc.invalidateQueries({ queryKey: ["dre-obras"] });
+      qc.invalidateQueries({ queryKey: ["financeiro-kpis"] });
     },
   });
 
   const excluir = useMutation({
     mutationFn: async (l: any) => {
-      // Lançamentos gerados por outras abas (recebimentos/parcelas) precisam ter
-      // a origem apagada também, senão o DRE da obra continua mostrando o valor.
+      // Lançamentos gerados por outras abas: apaga na origem — o gatilho remove o
+      // lançamento do razão automaticamente.
       if (l?.origem === "recebimento" && l?.origem_id) {
-        const { error } = await (supabase as any).from("recebimentos").delete().eq("id", l.origem_id);
+        const { data, error } = await (supabase as any)
+          .from("recebimentos").delete().eq("id", l.origem_id).select("id");
         if (error) throw error;
-      } else if (l?.origem === "parcela" && l?.origem_id) {
+        if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este recebimento.");
+        return;
+      }
+      if (l?.origem === "parcela_pagamento" && l?.origem_id) {
         throw new Error("Este lançamento vem de uma parcela de contratação. Exclua a parcela na obra.");
       }
       const { data, error } = await (supabase as any)
@@ -710,19 +723,37 @@ export default function Financeiro() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-1">
-                      {l.status === "previsto" && (
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-emerald-700"
-                                onClick={() => realizar.mutate(l.id)} title="Marcar como realizado">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                      {l.origem ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          title="Este lançamento é gerado automaticamente. Edite na origem."
+                          onClick={() => {
+                            if (l.origem === "recebimento") navigate("/recebimentos");
+                            else if (l.obra_id) navigate(`/obras/${l.obra_id}?tab=contratacoes`);
+                            else toast.info("Lançamento gerado automaticamente pela contratação.");
+                          }}
+                        >
+                          Abrir origem
                         </Button>
+                      ) : (
+                        <>
+                          {l.status === "previsto" && (
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-emerald-700"
+                                    onClick={() => realizar.mutate(l.id)} title="Marcar como realizado">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEditar(l)}>
+                            Editar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
+                                  onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l); }}>
+                            Excluir
+                          </Button>
+                        </>
                       )}
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEditar(l)}>
-                        Editar
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
-                              onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l); }}>
-                        Excluir
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
