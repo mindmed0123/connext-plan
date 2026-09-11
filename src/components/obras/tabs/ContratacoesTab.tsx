@@ -157,7 +157,10 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
       qc.invalidateQueries({ queryKey: ["financeiro-stats"] });
       qc.invalidateQueries({ queryKey: ["financeiro-contratacoes"] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) =>
+      toast.error("Não foi possível excluir", {
+        description: e?.message ?? "Erro ao excluir contratação",
+      }),
   });
 
   return (
