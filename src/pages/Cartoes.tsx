@@ -148,8 +148,7 @@ export default function Cartoes() {
   const saveDesp = useMutation({
     mutationFn: async () => {
       const totalParcelas = Math.max(1, parseInt(despForm.parcelas) || 1);
-      const valorTotal = parseFloat(despForm.valor) || 0;
-      const valorParcela = totalParcelas > 1 ? Math.round((valorTotal / totalParcelas) * 100) / 100 : valorTotal;
+      const valorInformado = parseFloat(despForm.valor) || 0;
       const basePayload = {
         cartao_id: despForm.cartao_id,
         obra_id: despForm.obra_id || null,
@@ -161,23 +160,57 @@ export default function Cartoes() {
         categoria: despForm.categoria || null,
       };
       if (editingDespId) {
-        const { error } = await supabase.from("cartao_despesas" as any)
-          .update({ ...basePayload, valor: valorTotal }).eq("id", editingDespId);
-        if (error) throw error;
+        const atual: any = editingDesp ?? {};
+        const grupo = atual.grupo_parcelamento as string | null;
+        const nParcelas = Number(atual.total_parcelas ?? 0);
+        let todoParcelamento = false;
+        if (grupo && nParcelas > 1) {
+          todoParcelamento = confirm(
+            `Esta compra está dividida em ${nParcelas} parcelas.\n\nOK = aplicar a TODO o parcelamento (o valor informado é o total da compra e será redividido).\nCancelar = alterar somente esta parcela.`,
+          );
+        }
+        if (!todoParcelamento) {
+          const { error } = await supabase.from("cartao_despesas" as any)
+            .update({ ...basePayload, parcelas: atual.parcelas ?? totalParcelas, valor: valorInformado })
+            .eq("id", editingDespId);
+          if (error) throw error;
+          return;
+        }
+        const { data: irmas, error: e1 } = await supabase.from("cartao_despesas" as any)
+          .select("id, parcela_num, descricao")
+          .eq("grupo_parcelamento", grupo)
+          .order("parcela_num", { ascending: true });
+        if (e1) throw e1;
+        const linhas = (irmas ?? []) as any[];
+        const valores = dividirParcelas(arredondar2(valorInformado), linhas.length);
+        for (let i = 0; i < linhas.length; i++) {
+          const { error } = await supabase.from("cartao_despesas" as any)
+            .update({
+              obra_id: basePayload.obra_id,
+              comprador_id: basePayload.comprador_id,
+              categoria: basePayload.categoria,
+              observacoes: basePayload.observacoes,
+              descricao: `${basePayload.descricao.replace(/\s*\(\d+\/\d+\)$/, "")} (${i + 1}/${linhas.length})`,
+              valor: valores[i],
+            })
+            .eq("id", linhas[i].id);
+          if (error) throw error;
+        }
         return;
       }
-      // Cria N linhas (uma por fatura) quando parcelado
+      // Cria N linhas (uma por fatura) quando parcelado — a data da compra é sempre a real
       const base = parseDateString(despForm.data_compra) ?? new Date();
-      const valores = dividirParcelas(arredondar2(valorTotal), totalParcelas);
-      const rows = Array.from({ length: totalParcelas }, (_, i) => {
-        const d = new Date(base);
-        d.setMonth(d.getMonth() + i);
-        const dataCompra = toDateKey(d);
-        const descricao = totalParcelas > 1
-          ? `${basePayload.descricao} (${i + 1}/${totalParcelas})`
-          : basePayload.descricao;
-        return { ...basePayload, data_compra: dataCompra, descricao, valor: valores[i] };
-      });
+      const valores = dividirParcelas(arredondar2(valorInformado), totalParcelas);
+      const grupo = totalParcelas > 1 ? crypto.randomUUID() : null;
+      const rows = Array.from({ length: totalParcelas }, (_, i) => ({
+        ...basePayload,
+        descricao: totalParcelas > 1 ? `${basePayload.descricao} (${i + 1}/${totalParcelas})` : basePayload.descricao,
+        valor: valores[i],
+        competencia_fatura: toDateKey(somarMeses(base, i)),
+        grupo_parcelamento: grupo,
+        parcela_num: i + 1,
+        total_parcelas: totalParcelas,
+      }));
       const { error } = await supabase.from("cartao_despesas" as any).insert(rows);
       if (error) throw error;
     },
