@@ -144,6 +144,9 @@ export type Database = {
           data_compra: string
           descricao: string
           empresa_id: string
+          fatura_paga: boolean
+          fatura_paga_em: string | null
+          fatura_vencimento: string | null
           id: string
           obra_id: string | null
           observacoes: string | null
@@ -161,6 +164,9 @@ export type Database = {
           data_compra?: string
           descricao: string
           empresa_id?: string
+          fatura_paga?: boolean
+          fatura_paga_em?: string | null
+          fatura_vencimento?: string | null
           id?: string
           obra_id?: string | null
           observacoes?: string | null
@@ -178,6 +184,9 @@ export type Database = {
           data_compra?: string
           descricao?: string
           empresa_id?: string
+          fatura_paga?: boolean
+          fatura_paga_em?: string | null
+          fatura_vencimento?: string | null
           id?: string
           obra_id?: string | null
           observacoes?: string | null
@@ -2790,6 +2799,10 @@ export type Database = {
         }[]
       }
       aprovar_orcamento: { Args: { _id: string }; Returns: undefined }
+      calc_fatura_vencimento: {
+        Args: { _data_compra: string; _dia_fech: number; _dia_venc: number }
+        Returns: string
+      }
       can_access_contratacao: {
         Args: { _contratacao_id: string; _uid: string }
         Returns: boolean
@@ -2944,6 +2957,18 @@ export type Database = {
         }
         Returns: number
       }
+      pagar_fatura_cartao: {
+        Args: {
+          _cartao_id: string
+          _data_pagamento?: string
+          _vencimento: string
+        }
+        Returns: number
+      }
+      reabrir_fatura_cartao: {
+        Args: { _cartao_id: string; _vencimento: string }
+        Returns: number
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -2965,6 +2990,16 @@ export type Database = {
         Returns: string
       }
       tenant_match: { Args: { _empresa_id: string }; Returns: boolean }
+      verificar_razao: {
+        Args: never
+        Returns: {
+          diferenca: number
+          obra_id: string
+          origem: string
+          soma_origem: number
+          soma_razao: number
+        }[]
+      }
     }
     Enums: {
       app_acao: "view" | "create" | "edit" | "delete"

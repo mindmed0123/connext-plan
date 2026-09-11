@@ -192,9 +192,43 @@ export default function Cartoes() {
     },
   });
 
+  const pagarFatura = useMutation({
+    mutationFn: async ({ cartaoId, vencimento, pagar }: { cartaoId: string; vencimento: string; pagar: boolean }) => {
+      const fn = pagar ? "pagar_fatura_cartao" : "reabrir_fatura_cartao";
+      const args = pagar
+        ? { _cartao_id: cartaoId, _vencimento: vencimento, _data_pagamento: getTodayDateInputValue() }
+        : { _cartao_id: cartaoId, _vencimento: vencimento };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc(fn, args);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.pagar ? "Fatura marcada como paga" : "Fatura reaberta");
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const totaisPorCartao = useMemo(() => {
     const map = new Map<string, number>();
     (despesas as any[]).forEach((d) => map.set(d.cartao_id, (map.get(d.cartao_id) ?? 0) + Number(d.valor || 0)));
+    return map;
+  }, [despesas]);
+
+  // Faturas por cartão (agrupadas pelo vencimento calculado no banco)
+  const faturasPorCartao = useMemo(() => {
+    const map = new Map<string, Map<string, { total: number; paga: boolean; qtd: number }>>();
+    (despesas as any[]).forEach((d) => {
+      const venc = d.fatura_vencimento as string | null;
+      if (!venc) return;
+      const porCartao = map.get(d.cartao_id) ?? new Map();
+      const cur = porCartao.get(venc) ?? { total: 0, paga: true, qtd: 0 };
+      cur.total += Number(d.valor || 0);
+      cur.qtd += 1;
+      if (!d.fatura_paga) cur.paga = false;
+      porCartao.set(venc, cur);
+      map.set(d.cartao_id, porCartao);
+    });
     return map;
   }, [despesas]);
 
@@ -314,6 +348,40 @@ export default function Cartoes() {
                   <p className="text-xs text-muted-foreground">Fech. dia {c.dia_fechamento ?? "—"} • Venc. dia {c.dia_vencimento ?? "—"}</p>
                 )}
                 <p className="pt-1 text-xs">Total registrado: <Badge variant="secondary">{formatCurrency(totaisPorCartao.get(c.id) ?? 0)}</Badge></p>
+
+                {/* Faturas: pagar marca as despesas como realizadas no financeiro */}
+                {(() => {
+                  const faturas = Array.from(faturasPorCartao.get(c.id)?.entries() ?? [])
+                    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+                    .filter(([venc, f]) => !f.paga || venc >= toDateKey(new Date(new Date().setMonth(new Date().getMonth() - 2))))
+                    .slice(0, 6);
+                  if (faturas.length === 0) return null;
+                  return (
+                    <div className="pt-2 space-y-1">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Faturas</p>
+                      {faturas.map(([venc, f]) => (
+                        <div key={venc} className="flex items-center justify-between gap-2 rounded-md border px-2 py-1">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium">Vence {formatDateBR(venc)}</p>
+                            <p className="text-[10px] text-muted-foreground">{f.qtd} lançamento(s) · {formatCurrency(f.total)}</p>
+                          </div>
+                          {f.paga ? (
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]"
+                              onClick={() => pagarFatura.mutate({ cartaoId: c.id, vencimento: venc, pagar: false })}>
+                              Paga · reabrir
+                            </Button>
+                          ) : (
+                            <Button size="sm" className="h-7 px-2 text-[11px]"
+                              disabled={pagarFatura.isPending}
+                              onClick={() => pagarFatura.mutate({ cartaoId: c.id, vencimento: venc, pagar: true })}>
+                              Pagar fatura
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           );

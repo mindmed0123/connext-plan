@@ -64,6 +64,7 @@ export default function Configuracoes() {
     nome: "", cnpj: "", inscricao_estadual: "", endereco: "",
     bairro: "", cidade: "", uf: "", cep: "", telefone: "", email: "",
   });
+  const [saldoForm, setSaldoForm] = useState({ saldo_inicial: "0", data_saldo_inicial: "" });
   const [buscando, setBuscando] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoUrl = (empresa as any)?.logo_url as string | null | undefined;
@@ -120,7 +121,31 @@ export default function Configuracoes() {
       telefone: e.telefone ?? "",
       email: e.email ?? "",
     });
+    setSaldoForm({
+      saldo_inicial: String(e.saldo_inicial ?? 0),
+      data_saldo_inicial: e.data_saldo_inicial ?? "",
+    });
   }, [empresa]);
+
+  const salvarSaldo = useMutation({
+    mutationFn: async () => {
+      if (!empresaId) throw new Error("Empresa não identificada");
+      const { error } = await supabase
+        .from("empresas")
+        .update({
+          saldo_inicial: Number(saldoForm.saldo_inicial) || 0,
+          data_saldo_inicial: saldoForm.data_saldo_inicial || null,
+        } as any)
+        .eq("id", empresaId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Saldo inicial salvo!");
+      qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] });
+      qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const set = <K extends keyof typeof form>(k: K, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -289,6 +314,43 @@ export default function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Saldo inicial de caixa</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Quanto a empresa tinha em caixa numa data de partida. O fluxo de caixa começa desse valor e soma tudo o que entrou e saiu depois dessa data.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label>Saldo inicial (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={saldoForm.saldo_inicial}
+                onChange={(e) => setSaldoForm((s) => ({ ...s, saldo_inicial: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Data do saldo</Label>
+              <Input
+                type="date"
+                value={saldoForm.data_saldo_inicial}
+                onChange={(e) => setSaldoForm((s) => ({ ...s, data_saldo_inicial: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => salvarSaldo.mutate()} disabled={salvarSaldo.isPending}>
+              <Save className="h-4 w-4" /> Salvar saldo inicial
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+
 
       <Card>
         <CardHeader>
