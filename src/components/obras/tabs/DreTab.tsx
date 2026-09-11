@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR } from "@/lib/date";
@@ -33,6 +34,7 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone?: "rec
 
 export function DreTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
+  const [, setSearchParams] = useSearchParams();
 
   const { data: resumo } = useQuery({
     queryKey: ["obra-dre-resumo", obraId],
