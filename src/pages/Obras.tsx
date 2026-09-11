@@ -151,7 +151,14 @@ export default function Obras() {
                 getValorAdendos(o.obra_adendos) > 0;
               return (
                 <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => navigate(`/obras/${o.id}`)}>
-                  <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
+                  <TableCell className="font-medium">
+                    {o.codigo_chamado}
+                    {o.arquivada && (
+                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+                        Arquivada
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
                   <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
                   <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
