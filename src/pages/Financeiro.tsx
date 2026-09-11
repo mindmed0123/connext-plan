@@ -321,11 +321,16 @@ export default function Financeiro() {
     mutationFn: async (l: any) => {
       // Lançamentos gerados por outras abas: apaga na origem — o gatilho remove o
       // lançamento do razão automaticamente.
-      if (l?.origem === "recebimento" && l?.origem_id) {
+      const tabelaOrigem: Record<string, string> = {
+        recebimento: "recebimentos",
+        material: "materiais_obra",
+        cartao: "cartao_despesas",
+      };
+      if (l?.origem && tabelaOrigem[l.origem] && l?.origem_id) {
         const { data, error } = await (supabase as any)
-          .from("recebimentos").delete().eq("id", l.origem_id).select("id");
+          .from(tabelaOrigem[l.origem]).delete().eq("id", l.origem_id).select("id");
         if (error) throw error;
-        if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este recebimento.");
+        if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este registro.");
         return;
       }
       if (l?.origem === "parcela_pagamento" && l?.origem_id) {
