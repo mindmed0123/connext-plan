@@ -64,7 +64,7 @@ export default function Recebimentos() {
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-rec-select"],
     queryFn: async () =>
-      (await (supabase.from("obras")).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
+      (await (supabase.from("obras") as any).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
 
   // Pagamentos do recebimento aberto no diálogo
@@ -83,7 +83,7 @@ export default function Recebimentos() {
   });
 
   const lista = useMemo(() => {
-    const rows = (data ?? [])[];
+    const rows = (data ?? []) as any[];
     if (filtro === "pc_recebidos") {
       return rows.filter((r) => r.pedido_compra_id && r.status === "recebido");
     }
@@ -217,7 +217,7 @@ export default function Recebimentos() {
   };
 
   const recAtual = useMemo(
-    () => (pagRec ? (lista[]).find((r) => r.id === pagRec.id) ?? pagRec : null),
+    () => (pagRec ? (lista as any[]).find((r) => r.id === pagRec.id) ?? pagRec : null),
     [lista, pagRec],
   );
   const saldoAtual = recAtual ? Math.max(0, Number(recAtual.valor || 0) - Number(recAtual.valor_recebido || 0)) : 0;
@@ -363,10 +363,10 @@ export default function Recebimentos() {
           )}
 
           <div className="rounded-md border divide-y">
-            {(pagamentos[]).length === 0 && (
+            {(pagamentos as any[]).length === 0 && (
               <p className="p-3 text-sm text-muted-foreground">Nenhum pagamento registrado.</p>
             )}
-            {(pagamentos[]).map((p) => (
+            {(pagamentos as any[]).map((p) => (
               <div key={p.id} className="flex items-center justify-between px-3 py-2 text-sm">
                 <span>{formatDateBR(p.data)}</span>
                 <span className="tabular-nums font-medium">{formatCurrency(Number(p.valor))}</span>
@@ -465,7 +465,7 @@ export default function Recebimentos() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra (manual) —</SelectItem>
-                  {(obras[]).map((o) => (
+                  {(obras as any[]).map((o) => (
                     <SelectItem key={o.id} value={o.id}>
                       {o.codigo_chamado}
                     </SelectItem>

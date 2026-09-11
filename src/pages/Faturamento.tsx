@@ -100,7 +100,7 @@ export default function Faturamento() {
         </div>
         {novoBtn()}
       </div>
-      <Tabs value={tab} onValueChange={(v) => setTab(v)}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
         <TabsList>
           <TabsTrigger value="rcs">RCs</TabsTrigger>
           <TabsTrigger value="pcs">Pedidos de compra</TabsTrigger>

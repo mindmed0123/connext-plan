@@ -144,7 +144,7 @@ export async function gerarOrcamentoPDF(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(...TEXT);
-  const numeroRaw = (orc).numero || orc.numero_orcamento || "";
+  const numeroRaw = (orc as any).numero || orc.numero_orcamento || "";
   const numero = numeroRaw ? numeroRaw.replace(/^ORC-?/i, "") : "—";
   doc.text(`Orçamento Nº ${numero}`, margin, y);
   y += 8;
@@ -298,7 +298,8 @@ export async function gerarOrcamentoPDF(
     margin: { left: margin, right: margin },
   });
 
-  y = (doc).lastAutoTable.finalY + 12;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  y = (doc as any).lastAutoTable.finalY + 12;
 
   // ====== VENCIMENTOS / PARCELAS ======
   doc.setFont("helvetica", "bold");
@@ -369,7 +370,8 @@ export async function gerarOrcamentoPDF(
     tableWidth: 100,
   });
 
-  y = (doc).lastAutoTable.finalY + 10;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  y = (doc as any).lastAutoTable.finalY + 10;
 
   const dataVenc = parcelas.length > 0 ? parcelas[parcelas.length - 1].venc : format(baseDate, "dd/MM/yyyy", { locale: ptBR });
 
@@ -424,6 +426,6 @@ export async function gerarOrcamentoPDF(
   doc.text(`Gerado em ${geradoEm}`, pageW / 2, pageH - 14, { align: "center" });
   doc.text("Página 1 de 1", pageW / 2, pageH - 9, { align: "center" });
 
-  const numForFile = (orc).numero || orc.numero_orcamento || "proposta";
+  const numForFile = (orc as any).numero || orc.numero_orcamento || "proposta";
   doc.save(`orcamento-${numForFile}-${format(new Date(), "yyyyMMdd")}.pdf`);
 }

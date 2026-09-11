@@ -57,7 +57,7 @@ export default function ObraDetalhe() {
 
   const updateCliente = useMutation({
     mutationFn: async (cliente_id: string | null) => {
-      const { error } = await supabase.from("obras").update({ cliente_id }).eq("id", obraId!);
+      const { error } = await supabase.from("obras").update({ cliente_id } as any).eq("id", obraId!);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -87,7 +87,7 @@ export default function ObraDetalhe() {
 
   const toggleArquivar = useMutation({
     mutationFn: async (arquivar: boolean) => {
-      const { error } = await (supabase.from("obras"))
+      const { error } = await (supabase.from("obras") as any)
         .update({ arquivada: arquivar, arquivada_em: arquivar ? new Date().toISOString() : null })
         .eq("id", obraId!);
       if (error) throw error;
@@ -155,10 +155,10 @@ export default function ObraDetalhe() {
                 size="sm"
                 className="h-9"
                 disabled={toggleArquivar.isPending}
-                onClick={() => toggleArquivar.mutate(!(obra).arquivada)}
+                onClick={() => toggleArquivar.mutate(!(obra as any).arquivada)}
               >
                 <Archive className="mr-1.5 h-3.5 w-3.5" />
-                {(obra).arquivada ? "Desarquivar" : "Arquivar obra"}
+                {(obra as any).arquivada ? "Desarquivar" : "Arquivar obra"}
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -196,13 +196,13 @@ export default function ObraDetalhe() {
             <span className="text-muted-foreground">Cliente: </span>
             {isAdmin ? (
               <Select
-                value={(obra).cliente_id ?? "none"}
+                value={(obra as any).cliente_id ?? "none"}
                 onValueChange={(v) => updateCliente.mutate(v === "none" ? null : v)}
               >
                 <SelectTrigger className="h-8 w-[220px] text-xs"><SelectValue placeholder="Sem cliente" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem cliente —</SelectItem>
-                  {(clientes[]).map((c) => (
+                  {(clientes as any[]).map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}{c.prazo_pagamento_dias ? ` · ${c.prazo_pagamento_dias} dias` : ""}
                     </SelectItem>
@@ -210,11 +210,11 @@ export default function ObraDetalhe() {
                 </SelectContent>
               </Select>
             ) : (
-              <span>{(clientes[]).find((c) => c.id === (obra).cliente_id)?.nome ?? "—"}</span>
+              <span>{(clientes as any[]).find((c) => c.id === (obra as any).cliente_id)?.nome ?? "—"}</span>
             )}
           </div>
           <div><span className="text-muted-foreground">Origem: </span>{ORIGEM_LABEL[obra.origem]}</div>
-          <div><span className="text-muted-foreground">Região: </span>{getRegiaoLabel(obra)}</div>
+          <div><span className="text-muted-foreground">Região: </span>{getRegiaoLabel(obra as any)}</div>
           <div><span className="text-muted-foreground">Engenheiro: </span>{obra.engenheiro_responsavel || "—"}</div>
           <div><span className="text-muted-foreground">Recebido: </span>{formatDateBR(obra.data_recebimento)}</div>
           <div className="sm:col-span-2 lg:col-span-4">

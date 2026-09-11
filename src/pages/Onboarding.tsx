@@ -85,7 +85,7 @@ export default function Onboarding() {
         setNome(prof.nome ?? "");
         setTelefone(prof.telefone ?? "");
       } else {
-        setNome((user?.user_metadata)?.nome ?? "");
+        setNome((user?.user_metadata as any)?.nome ?? "");
       }
       if (emp) {
         setEmpresaNomeEdit(emp.nome ?? "");

@@ -34,7 +34,7 @@ export default function Configuracoes() {
   const [novaRegiaoCfg, setNovaRegiaoCfg] = useState("");
   const addRegiaoCfg = async () => {
     if (!novaRegiaoCfg.trim()) return;
-    const { error } = await supabase.from("regioes_obra").insert({ nome: novaRegiaoCfg.trim() });
+    const { error } = await supabase.from("regioes_obra").insert({ nome: novaRegiaoCfg.trim() } as any);
     if (error) return toast.error(error.message);
     setNovaRegiaoCfg("");
     qc.invalidateQueries({ queryKey: ["regioes-obra"] });
@@ -68,7 +68,7 @@ export default function Configuracoes() {
   const [cprb, setCprb] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const logoUrl = (empresa)?.logo_url as string | null | undefined;
+  const logoUrl = (empresa as any)?.logo_url as string | null | undefined;
 
   const handleLogoUpload = async (file: File) => {
     if (!empresaId) return;
@@ -108,7 +108,7 @@ export default function Configuracoes() {
 
   useEffect(() => {
     if (!empresa) return;
-    const e = empresa;
+    const e = empresa as any;
     setForm({
       nome: e.nome ?? "",
       cnpj: e.cnpj ?? "",
@@ -136,7 +136,7 @@ export default function Configuracoes() {
         .update({
           saldo_inicial: Number(saldoForm.saldo_inicial) || 0,
           data_saldo_inicial: saldoForm.data_saldo_inicial || null,
-        })
+        } as any)
         .eq("id", empresaId);
       if (error) throw error;
     },
@@ -151,7 +151,7 @@ export default function Configuracoes() {
   const salvarFiscal = useMutation({
     mutationFn: async () => {
       if (!empresaId) throw new Error("Empresa não identificada");
-      const { error } = await supabase.from("empresas").update({ cprb }).eq("id", empresaId);
+      const { error } = await supabase.from("empresas").update({ cprb } as any).eq("id", empresaId);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Configuração fiscal salva!"); qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] }); },

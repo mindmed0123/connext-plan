@@ -117,7 +117,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
           terceirizado_id: form.terceirizado_id,
           valor_total,
           quantidade_parcelas: qtd,
-          forma_pagamento_prevista: (form.forma_pagamento_prevista || null),
+          forma_pagamento_prevista: (form.forma_pagamento_prevista || null) as any,
           observacoes: form.observacoes || null,
           created_by: u.user?.id,
         }])
@@ -130,7 +130,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
         numero_parcela: i + 1,
         valor: parseFloat(p.valor) || 0,
         data_prevista: p.data_prevista || null,
-        forma_pagamento: (form.forma_pagamento_prevista || null),
+        forma_pagamento: (form.forma_pagamento_prevista || null) as any,
       }));
       const { error: pErr } = await supabase.from("parcelas_pagamento").insert(parcelas);
       if (pErr) throw pErr;

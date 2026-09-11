@@ -91,11 +91,11 @@ export default function Financeiro() {
     queryKey: ["fluxo-caixa-mensal", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal", {
+      const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal" as any, {
         _empresa_id: empresaId!, _meses_atras: 5, _meses_frente: 3,
       });
       if (error) throw error;
-      return (data ?? [])[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -103,9 +103,9 @@ export default function Financeiro() {
     queryKey: ["dre-obras", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_dre_obra", { _empresa_id: empresaId! });
+      const { data, error } = await supabase.rpc("get_dre_obra" as any, { _empresa_id: empresaId! });
       if (error) throw error;
-      return (data ?? [])[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -113,11 +113,11 @@ export default function Financeiro() {
     queryKey: ["retencoes-mensais", empresaId, anoAtual],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_retencoes_mensais", {
+      const { data, error } = await supabase.rpc("get_retencoes_mensais" as any, {
         _inicio: `${anoAtual}-01-01`, _fim: `${anoAtual}-12-31`,
       });
       if (error) throw error;
-      return (data ?? [])[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -167,7 +167,7 @@ export default function Financeiro() {
     queryKey: ["obras-fin-select", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await (supabase.from("obras"))
+      const { data } = await (supabase.from("obras") as any)
         .select("id, codigo_chamado, descricao_servico")
         .eq("arquivada", false)
         .order("codigo_chamado");
@@ -181,8 +181,8 @@ export default function Financeiro() {
   const [buscaObra, setBuscaObra] = useState("");
   const obrasFiltradas = useMemo(() => {
     const s = buscaObra.trim().toLowerCase();
-    if (!s) return obras[];
-    return (obras[]).filter((o) => obraLabel(o).toLowerCase().includes(s));
+    if (!s) return obras as any[];
+    return (obras as any[]).filter((o) => obraLabel(o).toLowerCase().includes(s));
   }, [obras, buscaObra]);
 
 
@@ -192,7 +192,7 @@ export default function Financeiro() {
     queryFn: async () => {
       const { data } = await supabase
         .from("categorias_financeiras").select("*").eq("ativo", true).order("nome");
-      return (data ?? [])[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -201,9 +201,9 @@ export default function Financeiro() {
     queryKey: ["financeiro-kpis", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_financeiro_kpis", {});
+      const { data, error } = await supabase.rpc("get_financeiro_kpis" as any, {});
       if (error) throw error;
-      return (Array.isArray(data) ? data[0] : data);
+      return (Array.isArray(data) ? data[0] : data) as any;
     },
   });
 
@@ -219,7 +219,7 @@ export default function Financeiro() {
     const hoje = new Date();
     const limite7 = addDays(hoje, 7);
     // Razão único: parcelas, materiais e cartão já estão em lancamentos_financeiros
-    const vencendo = (lancamentos[])
+    const vencendo = (lancamentos as any[])
       .filter((l) => l.tipo === "despesa" && l.status === "previsto"
         && l.data_vencimento && isBefore(parseISO(l.data_vencimento), limite7))
       .reduce((s, l) => s + Number(l.valor), 0);
@@ -231,7 +231,7 @@ export default function Financeiro() {
   }, [kpiRow, lancamentos]);
 
   const lancFiltrados = useMemo(() => {
-    const arr = (lancamentos[]).filter((l) => {
+    const arr = (lancamentos as any[]).filter((l) => {
       if (filtroTipo !== "all" && l.tipo !== filtroTipo) return false;
       if (filtroStatus !== "all" && l.status !== filtroStatus) return false;
       if (filtroObra !== "all" && l.obra_id !== filtroObra) return false;
@@ -268,7 +268,7 @@ export default function Financeiro() {
     const itens: Array<{ data: Date; descricao: string; valor: number; tipo: string; vencido: boolean }> = [];
 
     // Fonte única: o razão já contém parcelas, materiais e cartão
-    (lancamentos[]).filter((l) => l.tipo === "despesa" && l.status === "previsto"
+    (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto"
       && l.data_vencimento).forEach((l) => {
       const d = parseISO(l.data_vencimento);
       if (isBefore(d, limite)) {
@@ -378,7 +378,7 @@ export default function Financeiro() {
     setOpenLanc(true);
   };
 
-  const categoriasFiltradas = (categorias[]).filter((c) => c.tipo === form.tipo);
+  const categoriasFiltradas = (categorias as any[]).filter((c) => c.tipo === form.tipo);
 
   return (
     <div className="space-y-6">
@@ -546,7 +546,7 @@ export default function Financeiro() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(fluxo[]).map((m) => (
+                {(fluxo as any[]).map((m) => (
                   <TableRow key={`${m.ano}-${m.mes_num}`}>
                     <TableCell className="font-medium">{m.mes}</TableCell>
                     <TableCell className="text-right">{fmt(m.receitas_prev)}</TableCell>
@@ -581,10 +581,10 @@ export default function Financeiro() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(dre[]).length === 0 && (
+                {(dre as any[]).length === 0 && (
                   <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-8">Sem dados de DRE ainda</TableCell></TableRow>
                 )}
-                {(dre[]).map((row) => (
+                {(dre as any[]).map((row) => (
                   <TableRow key={row.obra_id}>
                     <TableCell className="font-medium">{row.obra_codigo}</TableCell>
                     <TableCell className="text-right">{fmt(row.receita_contratada)}</TableCell>
@@ -626,10 +626,10 @@ export default function Financeiro() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(parcelas[]).length === 0 && (
+                {(parcelas as any[]).length === 0 && (
                   <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">Sem parcelas</TableCell></TableRow>
                 )}
-                {(parcelas[]).map((p) => {
+                {(parcelas as any[]).map((p) => {
                   
                   const vencido = p.status === "pendente" && isVencido(p.data_prevista);
                   return (
@@ -684,7 +684,7 @@ export default function Financeiro() {
               <SelectTrigger className="h-9 w-[220px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as obras</SelectItem>
-                {(obras[]).map((o) => (
+                {(obras as any[]).map((o) => (
                   <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>
                 ))}
               </SelectContent>

@@ -110,7 +110,7 @@ export function useDashboardData(filters: DashboardFilters) {
         fetchAllRows<any>((f, t) =>
           supabase.from("fotos_obra").select("obra_id,data_upload").range(f, t),
         ),
-        supabase.rpc("get_obra_financeiro_resumo", { _obra_id: null }),
+        supabase.rpc("get_obra_financeiro_resumo" as any, { _obra_id: null }),
       ]);
 
       const adendos = adendosRaw as Array<{
@@ -120,7 +120,7 @@ export function useDashboardData(filters: DashboardFilters) {
         status: string;
       }>;
 
-      const resumoFin = ((resumoRes)?.data ?? []) as Array<{
+      const resumoFin = ((resumoRes as any)?.data ?? []) as Array<{
         obra_id: string;
         receita_faturada: number;
         receita_recebida: number;
@@ -150,7 +150,7 @@ export function useDashboardData(filters: DashboardFilters) {
       const obrasFiltered = obras.filter((o) => {
         if (!inRange(o.created_at)) return false;
         if (filters.regiao && filters.regiao !== "todas") {
-          const label = (o).regiao_label ?? (REGIAO_LABEL)[o.regiao] ?? o.regiao;
+          const label = (o as any).regiao_label ?? (REGIAO_LABEL as any)[o.regiao] ?? o.regiao;
           if (label !== filters.regiao) return false;
         }
         if (
@@ -244,7 +244,7 @@ export function useDashboardData(filters: DashboardFilters) {
       // Totais financeiros vindos do banco (fonte única, sem duplicidade)
       const resumoFiltrado = resumoFin.filter((r) => obraIds.has(r.obra_id));
       const somaResumo = (campo: keyof (typeof resumoFin)[number]) =>
-        resumoFiltrado.reduce((s, r) => s + Number((r)[campo] || 0), 0);
+        resumoFiltrado.reduce((s, r) => s + Number((r as any)[campo] || 0), 0);
 
       const valorTotalFaturado = somaResumo("receita_faturada");
 
@@ -257,7 +257,7 @@ export function useDashboardData(filters: DashboardFilters) {
             .reduce((s, r) => s + Number(r.valor || 0), 0);
       const valorAReceber = recsFiltered
         .filter((r) => r.status !== "recebido")
-        .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r).valor_recebido || 0)), 0);
+        .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
       const nfsFiltradas = nfs.filter((n) => obraIds.has(n.obra_id));
       const nfIds = new Set(nfsFiltradas.map((n) => n.id));
       const liquidoFaturado = nfsFiltradas.reduce((s, n: any) => s + Number(n.valor_liquido ?? n.valor ?? 0), 0);
@@ -276,7 +276,7 @@ export function useDashboardData(filters: DashboardFilters) {
           const k = String(r.data_prevista).slice(0, 10);
           return k >= hojeKey && k <= em15Key;
         })
-         .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r).valor_recebido || 0)), 0);
+         .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
 
       // Terceirizados
       const contratacoesFiltered = contratacoes.filter((c) => obraIds.has(c.obra_id));
@@ -307,7 +307,7 @@ export function useDashboardData(filters: DashboardFilters) {
               r.data_prevista &&
               String(r.data_prevista).slice(0, 10) === toDateKey(alvo),
           )
-           .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r).valor_recebido || 0)), 0);
+           .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
       const totalDia1 = somaNoDia(dia1);
       const totalDia15 = somaNoDia(dia15);
 

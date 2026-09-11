@@ -75,7 +75,7 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
         valor_unitario: vUnit,
         valor_total: vTotal,
         data_compra: form.data_compra,
-        forma_pagamento: (form.forma_pagamento || null),
+        forma_pagamento: (form.forma_pagamento || null) as any,
         numero_nf: form.numero_nf || null,
         observacoes: form.observacoes || null,
         anexo_path,

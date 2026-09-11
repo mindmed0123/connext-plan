@@ -66,7 +66,7 @@ export default function Orcamentos() {
       const { data: itens } = await supabase
         .from("orcamento_itens").select("*").eq("orcamento_id", id);
 
-      const o = original;
+      const o = original as any;
       const payload = {
         ...o,
         id: undefined,
@@ -89,6 +89,7 @@ export default function Orcamentos() {
 
       if (itens && itens.length > 0) {
         await supabase.from("orcamento_itens").insert(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           itens.map(({ id: _i, orcamento_id: _o, created_at: _c, subtotal: _s, ...rest }: any) => ({
             ...rest, orcamento_id: novo.id,
           }))
@@ -110,7 +111,7 @@ export default function Orcamentos() {
       supabase.from("empresas").select("*").eq("id", empresaId).single(),
     ]);
     if (!orc) return;
-    const e = (empresa ?? {});
+    const e = (empresa ?? {}) as any;
     await gerarOrcamentoPDF(orc, itens ?? [], {
       nome: e.nome ?? "Empresa",
       cnpj: e.cnpj ?? null,
@@ -181,7 +182,7 @@ export default function Orcamentos() {
             ) : (() => {
               const q = busca.trim().toLowerCase();
               const filtered = !q ? data : data.filter((o) => {
-                const oo = o;
+                const oo = o as any;
                 return [
                   oo.numero, oo.numero_orcamento, oo.codigo_chamado, oo.titulo,
                   oo.cliente_nome, oo.obras?.codigo_chamado,
@@ -195,7 +196,7 @@ export default function Orcamentos() {
                   ? format(addDays(parseISO(o.data_orcamento), o.validade_dias ?? 30), "dd/MM/yyyy")
                   : "—";
                 const editable = true;
-                const numeroDisplay = (o).numero || o.numero_orcamento || "—";
+                const numeroDisplay = (o as any).numero || o.numero_orcamento || "—";
                 return (
                   <TableRow key={o.id}>
                     <TableCell className="font-mono text-xs">{numeroDisplay}</TableCell>

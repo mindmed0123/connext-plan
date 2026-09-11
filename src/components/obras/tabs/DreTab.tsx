@@ -44,9 +44,9 @@ export function DreTab({ obraId }: { obraId: string }) {
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_obra_financeiro_resumo", { _obra_id: obraId });
+      const { data, error } = await supabase.rpc("get_obra_financeiro_resumo" as any, { _obra_id: obraId });
       if (error) throw error;
-      return (Array.isArray(data) ? data[0] : data);
+      return (Array.isArray(data) ? data[0] : data) as any;
     },
   });
 
@@ -68,28 +68,28 @@ export function DreTab({ obraId }: { obraId: string }) {
       const list: Lancamento[] = [];
       for (const l of fin.data ?? []) {
         list.push({
-          id: (l).id,
-          data: (l).data_realizado ?? (l).data_vencimento ?? (l).data_competencia,
+          id: (l as any).id,
+          data: (l as any).data_realizado ?? (l as any).data_vencimento ?? (l as any).data_competencia,
           descricao: l.descricao,
-          categoria: (l).categorias_financeiras?.nome ?? "—",
-          tipo: l.tipo,
+          categoria: (l as any).categorias_financeiras?.nome ?? "—",
+          tipo: l.tipo as any,
           status: l.status,
           valor: Number(l.valor || 0),
-          origem: (l).origem ?? "financeiro",
-          origemId: (l).origem_id ?? null,
+          origem: (l as any).origem ?? "financeiro",
+          origemId: (l as any).origem_id ?? null,
         });
       }
       for (const n of nfs.data ?? []) {
         list.push({
-          id: (n).id,
-          data: (n).data_emissao,
-          descricao: `NF ${(n).numero_nf ?? ""}`.trim(),
+          id: (n as any).id,
+          data: (n as any).data_emissao,
+          descricao: `NF ${(n as any).numero_nf ?? ""}`.trim(),
           categoria: "Faturamento",
           tipo: "receita",
           status: "faturado",
-          valor: Number((n).valor_bruto ?? (n).valor ?? 0),
+          valor: Number((n as any).valor_bruto ?? (n as any).valor ?? 0),
           origem: "nota_fiscal",
-          valorLiquido: Number((n).valor_liquido ?? (n).valor ?? 0),
+          valorLiquido: Number((n as any).valor_liquido ?? (n as any).valor ?? 0),
         });
       }
       return list.sort((a, b) => (String(a.data) < String(b.data) ? 1 : -1));

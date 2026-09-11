@@ -177,19 +177,23 @@ export function OrcamentoFormDialog({
     (async () => {
       const { data: orc } = await supabase.from("orcamentos").select("*").eq("id", orcamentoId).single();
       if (!orc) return;
-      setChamado((orc).codigo_chamado ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setChamado((orc as any).codigo_chamado ?? "");
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? getTodayDateInputValue());
       setValidadeDias(orc.validade_dias ?? 30);
       // (condicoes_pagamento legado removido — usar condicao_pagamento estruturado)
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
-      setClienteIE((orc).cliente_inscricao_estadual ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteIE((orc as any).cliente_inscricao_estadual ?? "");
       setClienteEndereco(orc.cliente_endereco ?? "");
-      setClienteEmail((orc).cliente_email ?? "");
-      setClienteTelefone((orc).cliente_telefone ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteEmail((orc as any).cliente_email ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClienteTelefone((orc as any).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
-      const o = orc;
+      const o = orc as any;
       setNumero(o.numero || o.numero_orcamento || null);
       setObjeto(o.objeto ?? "");
       setPrazoExecucao(o.prazo_execucao ?? "");

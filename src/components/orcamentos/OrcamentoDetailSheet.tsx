@@ -78,7 +78,7 @@ export function OrcamentoDetailSheet({
   const handlePDF = async () => {
     if (!data?.orc || !empresaId) return;
     const { data: empresa } = await supabase.from("empresas").select("*").eq("id", empresaId).single();
-    const e = (empresa ?? {});
+    const e = (empresa ?? {}) as any;
     await gerarOrcamentoPDF(data.orc, data.itens, {
       nome: e.nome ?? "Empresa",
       cnpj: e.cnpj ?? null,

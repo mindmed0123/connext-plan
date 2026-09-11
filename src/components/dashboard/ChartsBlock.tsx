@@ -32,10 +32,10 @@ export function ChartsBlock({ data }: { data: DashboardData }) {
   const recebidosMes = buckets.map((b) => {
     const total = data.recebimentos
       .filter((r) => getMonthKey(r.data_recebido) === `${b.date.getFullYear()}-${b.date.getMonth()}`)
-       .reduce((s, r) => s + Number((r).valor_recebido || 0), 0);
+       .reduce((s, r) => s + Number((r as any).valor_recebido || 0), 0);
     const previsto = data.recebimentos
       .filter((r) => getMonthKey(r.data_prevista) === `${b.date.getFullYear()}-${b.date.getMonth()}`)
-       .reduce((s, r) => s + Math.max(0, Number(r.valor) - Number((r).valor_recebido || 0)), 0);
+       .reduce((s, r) => s + Math.max(0, Number(r.valor) - Number((r as any).valor_recebido || 0)), 0);
     return { mes: b.label, recebido: total, previsto };
   });
 

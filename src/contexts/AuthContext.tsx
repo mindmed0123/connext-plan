@@ -33,8 +33,8 @@ async function fetchEmpresa(userId: string) {
     .maybeSingle();
   return {
     empresaId: (data?.empresa_id as string | null) ?? null,
-    empresaNome: ((data?.empresas)?.nome as string | null) ?? null,
-    empresaAtivo: ((data?.empresas)?.ativo as boolean | undefined) ?? null,
+    empresaNome: ((data?.empresas as any)?.nome as string | null) ?? null,
+    empresaAtivo: ((data?.empresas as any)?.ativo as boolean | undefined) ?? null,
   };
 }
 
