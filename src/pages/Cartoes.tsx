@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateBR, getTodayDateInputValue, parseDateString, toDateKey } from "@/lib/date";
 import { arredondar2, dividirParcelas } from "@/lib/money";
 import { useDraftState } from "@/hooks/useDraftState";
-import { calcularFaturas, faturaDeCompra } from "@/lib/cartao-helpers";
+import { calcularFaturas, faturaDeCompra, somarMeses } from "@/lib/cartao-helpers";
 
 type Cartao = {
   id: string; apelido: string; banco: string | null; bandeira: string | null;
@@ -41,8 +41,11 @@ export default function Cartoes() {
   const [cartaoForm, setCartaoForm, clearCartaoDraft] = useDraftState("cartao-form", emptyCartao);
   const [despDialog, setDespDialog] = useState(false);
   const [editingDespId, setEditingDespId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editingDesp, setEditingDesp] = useState<any | null>(null);
   const [despForm, setDespForm, clearDespDraft] = useDraftState("desp-form", emptyDesp);
   const [filtroCartao, setFiltroCartao] = useState<string>("todos");
+  const [periodoMeses, setPeriodoMeses] = useState<number | null>(12);
 
   const { data: cartoes = [] } = useQuery({
     queryKey: ["cartoes", empresaId], enabled: !!empresaId,
@@ -61,14 +64,26 @@ export default function Cartoes() {
     queryFn: async () => (await supabase.from("compradores" as any).select("id, nome").eq("ativo", true).order("nome")).data ?? [],
   });
   const { data: despesas = [] } = useQuery({
-    queryKey: ["cartao-despesas", empresaId, filtroCartao], enabled: !!empresaId,
+    queryKey: ["cartao-despesas", empresaId, filtroCartao, periodoMeses], enabled: !!empresaId,
     queryFn: async () => {
-      let q = supabase.from("cartao_despesas" as any)
-        .select("*, cartoes_credito(apelido), obras(codigo_chamado), compradores(nome)")
-        .order("data_compra", { ascending: false }).limit(500);
-      if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
-      const { data } = await q;
-      return data ?? [];
+      const desde = periodoMeses
+        ? toDateKey(new Date(new Date().getFullYear(), new Date().getMonth() - periodoMeses, 1))
+        : null;
+      const linhas: any[] = [];
+      const passo = 1000;
+      for (let inicio = 0; ; inicio += passo) {
+        let q = supabase.from("cartao_despesas" as any)
+          .select("*, cartoes_credito(apelido), obras(codigo_chamado), compradores(nome)")
+          .order("data_compra", { ascending: false })
+          .range(inicio, inicio + passo - 1);
+        if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
+        if (desde) q = q.gte("data_compra", desde);
+        const { data, error } = await q;
+        if (error) throw error;
+        linhas.push(...(data ?? []));
+        if (!data || data.length < passo) break;
+      }
+      return linhas;
     },
   });
 
@@ -135,8 +150,7 @@ export default function Cartoes() {
   const saveDesp = useMutation({
     mutationFn: async () => {
       const totalParcelas = Math.max(1, parseInt(despForm.parcelas) || 1);
-      const valorTotal = parseFloat(despForm.valor) || 0;
-      const valorParcela = totalParcelas > 1 ? Math.round((valorTotal / totalParcelas) * 100) / 100 : valorTotal;
+      const valorInformado = parseFloat(despForm.valor) || 0;
       const basePayload = {
         cartao_id: despForm.cartao_id,
         obra_id: despForm.obra_id || null,
@@ -148,23 +162,57 @@ export default function Cartoes() {
         categoria: despForm.categoria || null,
       };
       if (editingDespId) {
-        const { error } = await supabase.from("cartao_despesas" as any)
-          .update({ ...basePayload, valor: valorTotal }).eq("id", editingDespId);
-        if (error) throw error;
+        const atual: any = editingDesp ?? {};
+        const grupo = atual.grupo_parcelamento as string | null;
+        const nParcelas = Number(atual.total_parcelas ?? 0);
+        let todoParcelamento = false;
+        if (grupo && nParcelas > 1) {
+          todoParcelamento = confirm(
+            `Esta compra está dividida em ${nParcelas} parcelas.\n\nOK = aplicar a TODO o parcelamento (o valor informado é o total da compra e será redividido).\nCancelar = alterar somente esta parcela.`,
+          );
+        }
+        if (!todoParcelamento) {
+          const { error } = await supabase.from("cartao_despesas" as any)
+            .update({ ...basePayload, parcelas: atual.parcelas ?? totalParcelas, valor: valorInformado })
+            .eq("id", editingDespId);
+          if (error) throw error;
+          return;
+        }
+        const { data: irmas, error: e1 } = await supabase.from("cartao_despesas" as any)
+          .select("id, parcela_num, descricao")
+          .eq("grupo_parcelamento", grupo)
+          .order("parcela_num", { ascending: true });
+        if (e1) throw e1;
+        const linhas = (irmas ?? []) as any[];
+        const valores = dividirParcelas(arredondar2(valorInformado), linhas.length);
+        for (let i = 0; i < linhas.length; i++) {
+          const { error } = await supabase.from("cartao_despesas" as any)
+            .update({
+              obra_id: basePayload.obra_id,
+              comprador_id: basePayload.comprador_id,
+              categoria: basePayload.categoria,
+              observacoes: basePayload.observacoes,
+              descricao: `${basePayload.descricao.replace(/\s*\(\d+\/\d+\)$/, "")} (${i + 1}/${linhas.length})`,
+              valor: valores[i],
+            })
+            .eq("id", linhas[i].id);
+          if (error) throw error;
+        }
         return;
       }
-      // Cria N linhas (uma por fatura) quando parcelado
+      // Cria N linhas (uma por fatura) quando parcelado — a data da compra é sempre a real
       const base = parseDateString(despForm.data_compra) ?? new Date();
-      const valores = dividirParcelas(arredondar2(valorTotal), totalParcelas);
-      const rows = Array.from({ length: totalParcelas }, (_, i) => {
-        const d = new Date(base);
-        d.setMonth(d.getMonth() + i);
-        const dataCompra = toDateKey(d);
-        const descricao = totalParcelas > 1
-          ? `${basePayload.descricao} (${i + 1}/${totalParcelas})`
-          : basePayload.descricao;
-        return { ...basePayload, data_compra: dataCompra, descricao, valor: valores[i] };
-      });
+      const valores = dividirParcelas(arredondar2(valorInformado), totalParcelas);
+      const grupo = totalParcelas > 1 ? crypto.randomUUID() : null;
+      const rows = Array.from({ length: totalParcelas }, (_, i) => ({
+        ...basePayload,
+        descricao: totalParcelas > 1 ? `${basePayload.descricao} (${i + 1}/${totalParcelas})` : basePayload.descricao,
+        valor: valores[i],
+        competencia_fatura: toDateKey(somarMeses(base, i)),
+        grupo_parcelamento: grupo,
+        parcela_num: i + 1,
+        total_parcelas: totalParcelas,
+      }));
       const { error } = await supabase.from("cartao_despesas" as any).insert(rows);
       if (error) throw error;
     },
@@ -234,6 +282,7 @@ export default function Cartoes() {
 
   const openEditDesp = (d: any) => {
     setEditingDespId(d.id);
+    setEditingDesp(d);
     setDespForm({
       cartao_id: d.cartao_id ?? "",
       obra_id: d.obra_id ?? "",
@@ -259,7 +308,7 @@ export default function Cartoes() {
           <Button variant="outline" onClick={() => { setEditingCartao(null); clearCartaoDraft(); setCartaoDialog(true); }}>
             <CreditCard className="h-4 w-4" /> Novo cartão
           </Button>
-          <Button onClick={() => { setEditingDespId(null); clearDespDraft(); setDespDialog(true); }} disabled={cartoes.length === 0}>
+          <Button onClick={() => { setEditingDespId(null); setEditingDesp(null); clearDespDraft(); setDespDialog(true); }} disabled={cartoes.length === 0}>
             <Plus className="h-4 w-4" /> Nova despesa
           </Button>
         </div>
@@ -395,6 +444,16 @@ export default function Cartoes() {
       <div className="rounded-lg border bg-card">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-semibold">Despesas no cartão</h2>
+          <div className="flex gap-2">
+          <Select value={periodoMeses === null ? "tudo" : String(periodoMeses)} onValueChange={(v) => setPeriodoMeses(v === "tudo" ? null : Number(v))}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">Últimos 3 meses</SelectItem>
+              <SelectItem value="6">Últimos 6 meses</SelectItem>
+              <SelectItem value="12">Últimos 12 meses</SelectItem>
+              <SelectItem value="tudo">Todo o histórico</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={filtroCartao} onValueChange={setFiltroCartao}>
             <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -402,6 +461,7 @@ export default function Cartoes() {
               {cartoes.map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}
             </SelectContent>
           </Select>
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -420,16 +480,11 @@ export default function Cartoes() {
           </TableHeader>
           <TableBody>
             {(despesas as any[]).map((d) => {
-              const cartao = cartoes.find((c) => c.id === d.cartao_id);
-              let faturaCell: React.ReactNode = "—";
-              if (cartao?.dia_fechamento && cartao?.dia_vencimento) {
-                const qual = faturaDeCompra(d.data_compra, cartao.dia_fechamento, cartao.dia_vencimento);
-                const { faturaAtual, proximaFatura } = calcularFaturas(cartao.dia_fechamento, cartao.dia_vencimento);
-                if (qual === "atual") faturaCell = <Badge variant="default" className="text-[10px]">Atual · {faturaAtual.label}</Badge>;
-                else if (qual === "proxima") faturaCell = <Badge variant="secondary" className="text-[10px]">Próxima · {proximaFatura.label}</Badge>;
-                else if (qual === "anterior") faturaCell = <Badge variant="outline" className="text-[10px]">Anterior</Badge>;
-                else faturaCell = <Badge variant="outline" className="text-[10px]">Futura</Badge>;
-              }
+              const faturaCell: React.ReactNode = d.fatura_vencimento ? (
+                <Badge variant={d.fatura_paga ? "outline" : "secondary"} className="text-[10px]">
+                  Vence {formatDateBR(d.fatura_vencimento)}{d.fatura_paga ? " · paga" : ""}
+                </Badge>
+              ) : "—";
               return (
                 <TableRow key={d.id}>
                   <TableCell>{formatDateBR(d.data_compra)}</TableCell>
@@ -483,7 +538,7 @@ export default function Cartoes() {
       </Dialog>
 
       {/* Despesa dialog */}
-      <Dialog open={despDialog} onOpenChange={(v) => { setDespDialog(v); if (!v) setEditingDespId(null); }}>
+      <Dialog open={despDialog} onOpenChange={(v) => { setDespDialog(v); if (!v) { setEditingDespId(null); setEditingDesp(null); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editingDespId ? "Editar despesa" : "Nova despesa de cartão"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3">

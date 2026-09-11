@@ -138,6 +138,7 @@ export type Database = {
           cartao_id: string
           categoria: string | null
           categoria_id: string | null
+          competencia_fatura: string | null
           comprador_id: string | null
           created_at: string
           created_by: string | null
@@ -147,10 +148,13 @@ export type Database = {
           fatura_paga: boolean
           fatura_paga_em: string | null
           fatura_vencimento: string | null
+          grupo_parcelamento: string | null
           id: string
           obra_id: string | null
           observacoes: string | null
+          parcela_num: number | null
           parcelas: number
+          total_parcelas: number | null
           updated_at: string
           valor: number
         }
@@ -158,6 +162,7 @@ export type Database = {
           cartao_id: string
           categoria?: string | null
           categoria_id?: string | null
+          competencia_fatura?: string | null
           comprador_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -167,10 +172,13 @@ export type Database = {
           fatura_paga?: boolean
           fatura_paga_em?: string | null
           fatura_vencimento?: string | null
+          grupo_parcelamento?: string | null
           id?: string
           obra_id?: string | null
           observacoes?: string | null
+          parcela_num?: number | null
           parcelas?: number
+          total_parcelas?: number | null
           updated_at?: string
           valor?: number
         }
@@ -178,6 +186,7 @@ export type Database = {
           cartao_id?: string
           categoria?: string | null
           categoria_id?: string | null
+          competencia_fatura?: string | null
           comprador_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -187,10 +196,13 @@ export type Database = {
           fatura_paga?: boolean
           fatura_paga_em?: string | null
           fatura_vencimento?: string | null
+          grupo_parcelamento?: string | null
           id?: string
           obra_id?: string | null
           observacoes?: string | null
+          parcela_num?: number | null
           parcelas?: number
+          total_parcelas?: number | null
           updated_at?: string
           valor?: number
         }
@@ -2849,7 +2861,12 @@ export type Database = {
       }
       aprovar_orcamento: { Args: { _id: string }; Returns: undefined }
       calc_fatura_vencimento: {
-        Args: { _data_compra: string; _dia_fech: number; _dia_venc: number }
+        Args: {
+          _data_compra: string
+          _dia_fech: number
+          _dia_venc: number
+          _offset?: number
+        }
         Returns: string
       }
       can_access_contratacao: {
