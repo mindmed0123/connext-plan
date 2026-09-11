@@ -33,14 +33,22 @@ export const STATUS_FINALIZADAS_AGUARD: ObraStatus[] = [
   "aguardando_pagamento",
 ];
 
+/** Converte string em Date; datas puras 'YYYY-MM-DD' viram meio-dia local (evita cair no dia anterior). */
+function toLocalDate(value: string | Date): Date {
+  if (typeof value !== "string") return value;
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0);
+  return new Date(value);
+}
+
 export function diffDays(from: string | Date, to: Date = new Date()) {
-  const d1 = typeof from === "string" ? new Date(from) : from;
+  const d1 = toLocalDate(from);
   return Math.floor((to.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function formatDateBR(value: string | Date | null | undefined) {
   if (!value) return "—";
-  const d = typeof value === "string" ? new Date(value) : value;
+  const d = toLocalDate(value);
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("pt-BR");
 }

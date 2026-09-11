@@ -194,6 +194,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cartao_despesas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cartao_despesas_comprador_id_fkey"
             columns: ["comprador_id"]
             isOneToOne: false
@@ -261,7 +268,15 @@ export type Database = {
           ultimos_4?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cartoes_credito_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categorias_financeiras: {
         Row: {
@@ -580,7 +595,15 @@ export type Database = {
           tipo_instituicao?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "compradores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contratacoes_terceirizado: {
         Row: {

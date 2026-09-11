@@ -13,7 +13,8 @@ import { Plus, CreditCard, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { Badge } from "@/components/ui/badge";
-import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { formatDateBR, getTodayDateInputValue, parseDateString, toDateKey } from "@/lib/date";
+import { arredondar2, dividirParcelas } from "@/lib/money";
 import { useDraftState } from "@/hooks/useDraftState";
 import { calcularFaturas, faturaDeCompra } from "@/lib/cartao-helpers";
 
@@ -153,19 +154,16 @@ export default function Cartoes() {
         return;
       }
       // Cria N linhas (uma por fatura) quando parcelado
-      const base = new Date(despForm.data_compra + "T12:00:00");
+      const base = parseDateString(despForm.data_compra) ?? new Date();
+      const valores = dividirParcelas(arredondar2(valorTotal), totalParcelas);
       const rows = Array.from({ length: totalParcelas }, (_, i) => {
         const d = new Date(base);
         d.setMonth(d.getMonth() + i);
-        const dataCompra = d.toISOString().slice(0, 10);
+        const dataCompra = toDateKey(d);
         const descricao = totalParcelas > 1
           ? `${basePayload.descricao} (${i + 1}/${totalParcelas})`
           : basePayload.descricao;
-        // Última parcela ajusta diferença de arredondamento
-        const valor = (i === totalParcelas - 1 && totalParcelas > 1)
-          ? Math.round((valorTotal - valorParcela * (totalParcelas - 1)) * 100) / 100
-          : valorParcela;
-        return { ...basePayload, data_compra: dataCompra, descricao, valor };
+        return { ...basePayload, data_compra: dataCompra, descricao, valor: valores[i] };
       });
       const { error } = await supabase.from("cartao_despesas" as any).insert(rows);
       if (error) throw error;
@@ -298,17 +296,17 @@ export default function Cartoes() {
                     <div className="rounded-md bg-primary/5 border border-primary/20 p-2">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Fatura atual · {info.faturaAtual.label}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {formatDateBR(info.faturaAtual.abre.toISOString().slice(0, 10))} → {formatDateBR(info.faturaAtual.fecha.toISOString().slice(0, 10))}
+                        {formatDateBR(toDateKey(info.faturaAtual.abre))} → {formatDateBR(toDateKey(info.faturaAtual.fecha))}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Vence: {formatDateBR(info.faturaAtual.vence.toISOString().slice(0, 10))}</p>
+                      <p className="text-[10px] text-muted-foreground">Vence: {formatDateBR(toDateKey(info.faturaAtual.vence))}</p>
                       <p className="text-sm font-semibold tabular-nums mt-1">{formatCurrency(totalFaturaAtual)}</p>
                     </div>
                     <div className="rounded-md bg-muted/40 border p-2">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Próxima · {info.proximaFatura.label}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {formatDateBR(info.proximaFatura.abre.toISOString().slice(0, 10))} → {formatDateBR(info.proximaFatura.fecha.toISOString().slice(0, 10))}
+                        {formatDateBR(toDateKey(info.proximaFatura.abre))} → {formatDateBR(toDateKey(info.proximaFatura.fecha))}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Vence: {formatDateBR(info.proximaFatura.vence.toISOString().slice(0, 10))}</p>
+                      <p className="text-[10px] text-muted-foreground">Vence: {formatDateBR(toDateKey(info.proximaFatura.vence))}</p>
                       <p className="text-sm font-semibold tabular-nums mt-1">{formatCurrency(totalFaturaProxima)}</p>
                     </div>
                   </div>
@@ -481,9 +479,9 @@ export default function Cartoes() {
               const qual = faturaDeCompra(despForm.data_compra, cartao.dia_fechamento, cartao.dia_vencimento);
               const { faturaAtual, proximaFatura } = calcularFaturas(cartao.dia_fechamento, cartao.dia_vencimento);
               const label = qual === "atual"
-                ? `Fatura atual (${faturaAtual.label}) · vence ${formatDateBR(faturaAtual.vence.toISOString().slice(0, 10))}`
+                ? `Fatura atual (${faturaAtual.label}) · vence ${formatDateBR(toDateKey(faturaAtual.vence))}`
                 : qual === "proxima"
-                ? `Próxima fatura (${proximaFatura.label}) · vence ${formatDateBR(proximaFatura.vence.toISOString().slice(0, 10))}`
+                ? `Próxima fatura (${proximaFatura.label}) · vence ${formatDateBR(toDateKey(proximaFatura.vence))}`
                 : qual === "anterior"
                 ? "Fatura anterior (já vencida)"
                 : "Fatura futura";

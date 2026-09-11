@@ -13,6 +13,7 @@ import { Download, FileSignature, Plus, Save, Trash2, Upload } from "lucide-reac
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { arredondar2 } from "@/lib/money";
 
 const BUCKET = "obras-contratos";
 
@@ -108,7 +109,8 @@ export function AdendosTab({ obraId }: { obraId: string }) {
         arquivo_nome = file.name;
       }
       const qtd = Number(form.quantidade || 0);
-      const vu = Number(form.valor_unitario || obra?.contrato_valor_unitario || 0);
+      const vu = arredondar2(Number(form.valor_unitario || obra?.contrato_valor_unitario || 0));
+      const valorTotalAdendo = arredondar2(qtd * vu);
       const proximo = (adendos.reduce((m: number, a: any) => Math.max(m, a.numero ?? 0), 0) || 0) + 1;
       const { error } = await (supabase.from("obra_adendos" as any) as any).insert([{
         obra_id: obraId,
@@ -117,7 +119,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
         descricao: form.descricao || null,
         quantidade: qtd,
         valor_unitario: vu,
-        valor_total: qtd * vu,
+        valor_total: valorTotalAdendo,
         data_assinatura: form.data_assinatura || null,
         data_inicio: form.data_inicio || null,
         status: form.status,

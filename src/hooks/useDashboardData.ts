@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetch-all";
+import { toDateKey } from "@/lib/date";
 import type { ObraStatus } from "@/lib/obra-helpers";
 import { REGIAO_LABEL } from "@/lib/obra-helpers";
 import {
@@ -23,74 +25,94 @@ export function useDashboardData(filters: DashboardFilters) {
     queryKey: ["dashboard-data", filters],
     queryFn: async () => {
       const [
-        obrasRes,
-        orcsRes,
-        adendosRes,
-        contratacoesRes,
-        parcelasRes,
-        materiaisRes,
-        nfsRes,
-        recsRes,
-        responsaveisRes,
-        pessoasRes,
-        timelineRes,
-        fotosRes,
+        obras,
+        orcs,
+        adendosRaw,
+        contratacoes,
+        parcelas,
+        materiais,
+        nfs,
+        recs,
+        responsaveis,
+        pessoas,
+        timeline,
+        fotos,
         resumoRes,
       ] = await Promise.all([
-
-        supabase
-          .from("obras")
-          .select(
-            "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
-          )
-          .eq("arquivada", false),
-        supabase
-          .from("orcamentos")
-          .select("id,obra_id,valor_orcamento,status,data_envio,created_at,updated_at"),
-        supabase
-          .from("obra_adendos")
-          .select("id,obra_id,valor_total,status,data_assinatura,created_at"),
-
-        supabase
-          .from("contratacoes_terceirizado")
-          .select(
-            "id,obra_id,terceirizado_id,valor_total,status_financeiro,created_at,updated_at",
-          ),
-        supabase
-          .from("parcelas_pagamento")
-          .select(
-            "id,contratacao_id,numero_parcela,valor,status,data_prevista,data_pagamento,created_at",
-          ),
-        supabase.from("materiais_obra").select("id,obra_id,valor_total,data_compra"),
-        supabase.from("notas_fiscais").select("id,obra_id,numero_nf,valor,data_emissao"),
-        supabase
-          .from("recebimentos")
-          .select("id,obra_id,valor,status,data_prevista,data_recebido"),
-        supabase.from("obra_responsaveis").select("obra_id,pessoa_id,papel"),
-        supabase.from("pessoas").select("id,nome,tipo,status"),
-        supabase.from("obra_timeline").select("obra_id,evento,created_at"),
-        supabase.from("fotos_obra").select("obra_id,data_upload"),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("obras")
+            .select(
+              "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
+            )
+            .eq("arquivada", false)
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("orcamentos")
+            .select("id,obra_id,valor_orcamento,status,data_envio,created_at,updated_at")
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("obra_adendos")
+            .select("id,obra_id,valor_total,status,data_assinatura,created_at")
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("contratacoes_terceirizado")
+            .select(
+              "id,obra_id,terceirizado_id,valor_total,status_financeiro,created_at,updated_at",
+            )
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("parcelas_pagamento")
+            .select(
+              "id,contratacao_id,numero_parcela,valor,status,data_prevista,data_pagamento,created_at",
+            )
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("materiais_obra").select("id,obra_id,valor_total,data_compra").range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("notas_fiscais")
+            .select("id,obra_id,numero_nf,valor,data_emissao")
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase
+            .from("recebimentos")
+            .select("id,obra_id,valor,status,data_prevista,data_recebido")
+            .range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("obra_responsaveis").select("obra_id,pessoa_id,papel").range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("pessoas").select("id,nome,tipo,status").range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("obra_timeline").select("obra_id,evento,created_at").range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("fotos_obra").select("obra_id,data_upload").range(f, t),
+        ),
         supabase.rpc("get_obra_financeiro_resumo" as any, { _obra_id: null }),
       ]);
 
-      const obras = obrasRes.data ?? [];
-      const orcs = orcsRes.data ?? [];
-      const adendos = (adendosRes.data ?? []) as Array<{
+      const adendos = adendosRaw as Array<{
         id: string;
         obra_id: string;
         valor_total: number;
         status: string;
       }>;
 
-      const contratacoes = contratacoesRes.data ?? [];
-      const parcelas = parcelasRes.data ?? [];
-      const materiais = materiaisRes.data ?? [];
-      const nfs = nfsRes.data ?? [];
-      const recs = recsRes.data ?? [];
-      const responsaveis = responsaveisRes.data ?? [];
-      const pessoas = pessoasRes.data ?? [];
-      const timeline = timelineRes.data ?? [];
-      const fotos = fotosRes.data ?? [];
       const resumoFin = ((resumoRes as any)?.data ?? []) as Array<{
         obra_id: string;
         receita_faturada: number;
@@ -99,14 +121,15 @@ export function useDashboardData(filters: DashboardFilters) {
         custo_terceirizados_pago: number;
       }>;
 
-      // Apply filters
-      const fromDate = filters.from ? new Date(filters.from) : null;
-      const toDate = filters.to ? new Date(filters.to) : null;
+      // Filtros por data comparam apenas o dia (YYYY-MM-DD), com limites inclusivos
+      const dayKey = (d?: string | null) => (d ? String(d).slice(0, 10) : null);
+      const fromKey = dayKey(filters.from);
+      const toKey = dayKey(filters.to);
       const inRange = (d?: string | null) => {
-        if (!d) return true;
-        const dt = new Date(d);
-        if (fromDate && dt < fromDate) return false;
-        if (toDate && dt > toDate) return false;
+        const k = dayKey(d);
+        if (!k) return true;
+        if (fromKey && k < fromKey) return false;
+        if (toKey && k > toKey) return false;
         return true;
       };
 
@@ -225,16 +248,16 @@ export function useDashboardData(filters: DashboardFilters) {
       const valorEmAberto = Math.max(0, valorTotalFaturado - valorRecebido);
 
       const hoje = new Date();
+      const hojeKey = toDateKey(hoje);
       const em15 = new Date();
       em15.setDate(hoje.getDate() + 15);
+      const em15Key = toDateKey(em15);
       const valorReceber15d = recsFiltered
-        .filter(
-          (r) =>
-            r.status === "a_receber" &&
-            r.data_prevista &&
-            new Date(r.data_prevista) <= em15 &&
-            new Date(r.data_prevista) >= hoje,
-        )
+        .filter((r) => {
+          if (r.status !== "a_receber" || !r.data_prevista) return false;
+          const k = String(r.data_prevista).slice(0, 10);
+          return k >= hojeKey && k <= em15Key;
+        })
         .reduce((s, r) => s + Number(r.valor || 0), 0);
 
       // Terceirizados
@@ -252,28 +275,23 @@ export function useDashboardData(filters: DashboardFilters) {
 
       // Próximo dia 1 e dia 15
       const proximoDia = (dia: number) => {
-        const d = new Date(hoje.getFullYear(), hoje.getMonth(), dia);
-        if (d < hoje) d.setMonth(d.getMonth() + 1);
+        const d = new Date(hoje.getFullYear(), hoje.getMonth(), dia, 12, 0, 0, 0);
+        if (toDateKey(d) < hojeKey) d.setMonth(d.getMonth() + 1);
         return d;
       };
       const dia1 = proximoDia(1);
       const dia15 = proximoDia(15);
-      const totalDia1 = recsFiltered
-        .filter(
-          (r) =>
-            r.status === "a_receber" &&
-            r.data_prevista &&
-            new Date(r.data_prevista).toDateString() === dia1.toDateString(),
-        )
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-      const totalDia15 = recsFiltered
-        .filter(
-          (r) =>
-            r.status === "a_receber" &&
-            r.data_prevista &&
-            new Date(r.data_prevista).toDateString() === dia15.toDateString(),
-        )
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
+      const somaNoDia = (alvo: Date) =>
+        recsFiltered
+          .filter(
+            (r) =>
+              r.status === "a_receber" &&
+              r.data_prevista &&
+              String(r.data_prevista).slice(0, 10) === toDateKey(alvo),
+          )
+          .reduce((s, r) => s + Number(r.valor || 0), 0);
+      const totalDia1 = somaNoDia(dia1);
+      const totalDia15 = somaNoDia(dia15);
 
       // Materiais
       const valorMateriais = somaResumo("custo_materiais");

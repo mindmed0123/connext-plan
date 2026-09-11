@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { arredondar2, emCentavos, dividirParcelas } from "@/lib/money";
 import {
   CONTRATACAO_STATUS_COLOR,
   CONTRATACAO_STATUS_LABEL,
@@ -65,9 +66,9 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
 
   const aplicarDivisaoAutomatica = (qtd: number, total: number) => {
     if (qtd < 1) return;
-    const valor = +(total / qtd).toFixed(2);
-    const novas: ParcelaInput[] = Array.from({ length: qtd }).map((_, i) => ({
-      valor: i === qtd - 1 ? (total - valor * (qtd - 1)).toFixed(2) : valor.toFixed(2),
+    const valores = dividirParcelas(arredondar2(total), qtd);
+    const novas: ParcelaInput[] = valores.map((v, i) => ({
+      valor: v.toFixed(2),
       data_prevista: parcelasInput[i]?.data_prevista ?? "",
     }));
     setParcelasInput(novas);
@@ -92,16 +93,20 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
     setParcelasInput((arr) => arr.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
   };
 
-  const somaParcelas = parcelasInput.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
-  const totalContratado = parseFloat(form.valor_total) || 0;
-  const diferenca = +(totalContratado - somaParcelas).toFixed(2);
+  const somaParcelasCent = parcelasInput.reduce(
+    (s, p) => s + emCentavos(parseFloat(p.valor) || 0),
+    0,
+  );
+  const somaParcelas = somaParcelasCent / 100;
+  const totalContratado = arredondar2(parseFloat(form.valor_total) || 0);
+  const diferenca = (emCentavos(totalContratado) - somaParcelasCent) / 100;
 
   const create = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       const valor_total = totalContratado;
       const qtd = parcelasInput.length;
-      if (Math.abs(diferenca) > 0.01) {
+      if (emCentavos(totalContratado) !== somaParcelasCent) {
         throw new Error(`Soma das parcelas (${formatCurrency(somaParcelas)}) precisa ser igual ao valor total (${formatCurrency(valor_total)})`);
       }
 
