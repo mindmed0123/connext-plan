@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateBR, getTodayDateInputValue, parseDateString, toDateKey } from "@/lib/date";
 import { arredondar2, dividirParcelas } from "@/lib/money";
 import { useDraftState } from "@/hooks/useDraftState";
-import { calcularFaturas, faturaDeCompra } from "@/lib/cartao-helpers";
+import { calcularFaturas, faturaDeCompra, somarMeses } from "@/lib/cartao-helpers";
 
 type Cartao = {
   id: string; apelido: string; banco: string | null; bandeira: string | null;
@@ -43,6 +43,7 @@ export default function Cartoes() {
   const [editingDespId, setEditingDespId] = useState<string | null>(null);
   const [despForm, setDespForm, clearDespDraft] = useDraftState("desp-form", emptyDesp);
   const [filtroCartao, setFiltroCartao] = useState<string>("todos");
+  const [periodoMeses, setPeriodoMeses] = useState<number | null>(12);
 
   const { data: cartoes = [] } = useQuery({
     queryKey: ["cartoes", empresaId], enabled: !!empresaId,
@@ -61,14 +62,26 @@ export default function Cartoes() {
     queryFn: async () => (await supabase.from("compradores" as any).select("id, nome").eq("ativo", true).order("nome")).data ?? [],
   });
   const { data: despesas = [] } = useQuery({
-    queryKey: ["cartao-despesas", empresaId, filtroCartao], enabled: !!empresaId,
+    queryKey: ["cartao-despesas", empresaId, filtroCartao, periodoMeses], enabled: !!empresaId,
     queryFn: async () => {
-      let q = supabase.from("cartao_despesas" as any)
-        .select("*, cartoes_credito(apelido), obras(codigo_chamado), compradores(nome)")
-        .order("data_compra", { ascending: false }).limit(500);
-      if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
-      const { data } = await q;
-      return data ?? [];
+      const desde = periodoMeses
+        ? toDateKey(new Date(new Date().getFullYear(), new Date().getMonth() - periodoMeses, 1))
+        : null;
+      const linhas: any[] = [];
+      const passo = 1000;
+      for (let inicio = 0; ; inicio += passo) {
+        let q = supabase.from("cartao_despesas" as any)
+          .select("*, cartoes_credito(apelido), obras(codigo_chamado), compradores(nome)")
+          .order("data_compra", { ascending: false })
+          .range(inicio, inicio + passo - 1);
+        if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
+        if (desde) q = q.gte("data_compra", desde);
+        const { data, error } = await q;
+        if (error) throw error;
+        linhas.push(...(data ?? []));
+        if (!data || data.length < passo) break;
+      }
+      return linhas;
     },
   });
 
