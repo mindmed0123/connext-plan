@@ -12,7 +12,18 @@ const corsHeaders = {
 
 const CAKTO_WEBHOOK_SECRET = Deno.env.get("CAKTO_WEBHOOK_SECRET") ?? "";
 
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
 function ok(body: unknown, status = 200) {
+
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -41,10 +52,15 @@ Deno.serve(async (req) => {
     event?.secret ?? event?.fields?.secret ?? event?.data?.secret ?? event?.webhook?.secret ?? "";
   const provided = (bodySecret || headerSig || tokenQuery || "").toString().trim();
 
-  if (CAKTO_WEBHOOK_SECRET && provided !== CAKTO_WEBHOOK_SECRET) {
+  if (!CAKTO_WEBHOOK_SECRET) {
+    console.error("Webhook (alias): CAKTO_WEBHOOK_SECRET não configurado");
+    return ok({ error: "webhook não configurado" }, 500);
+  }
+  if (!timingSafeEqual(provided, CAKTO_WEBHOOK_SECRET)) {
     console.warn("Cakto webhook (alias): secret inválido");
     return ok({ error: "unauthorized" }, 401);
   }
+
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
