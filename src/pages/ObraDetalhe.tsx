@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,8 @@ export default function ObraDetalhe() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin } = useUserRole();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabAtual = searchParams.get("tab") ?? "dre";
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra", obraId],
@@ -157,7 +159,7 @@ export default function ObraDetalhe() {
       </div>
 
       {isAdmin ? (
-        <Tabs defaultValue="dre">
+        <Tabs value={tabAtual} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}>
           <div className="overflow-x-auto pb-1">
             <TabsList className="inline-flex h-auto w-auto gap-1 p-1">
               <TabsTrigger value="dre" className={tabCls}>DRE / Balanço</TabsTrigger>

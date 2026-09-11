@@ -731,7 +731,7 @@ export default function Financeiro() {
                           title="Este lançamento é gerado automaticamente. Edite na origem."
                           onClick={() => {
                             if (l.origem === "recebimento") navigate("/recebimentos");
-                            else if (l.obra_id) navigate(`/obras/${l.obra_id}?tab=pagamentos`);
+                            else if (l.obra_id) navigate(`/obras/${l.obra_id}?tab=contratacoes`);
                             else toast.info("Lançamento gerado automaticamente pela contratação.");
                           }}
                         >
