@@ -192,9 +192,43 @@ export default function Cartoes() {
     },
   });
 
+  const pagarFatura = useMutation({
+    mutationFn: async ({ cartaoId, vencimento, pagar }: { cartaoId: string; vencimento: string; pagar: boolean }) => {
+      const fn = pagar ? "pagar_fatura_cartao" : "reabrir_fatura_cartao";
+      const args = pagar
+        ? { _cartao_id: cartaoId, _vencimento: vencimento, _data_pagamento: getTodayDateInputValue() }
+        : { _cartao_id: cartaoId, _vencimento: vencimento };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc(fn, args);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.pagar ? "Fatura marcada como paga" : "Fatura reaberta");
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const totaisPorCartao = useMemo(() => {
     const map = new Map<string, number>();
     (despesas as any[]).forEach((d) => map.set(d.cartao_id, (map.get(d.cartao_id) ?? 0) + Number(d.valor || 0)));
+    return map;
+  }, [despesas]);
+
+  // Faturas por cartão (agrupadas pelo vencimento calculado no banco)
+  const faturasPorCartao = useMemo(() => {
+    const map = new Map<string, Map<string, { total: number; paga: boolean; qtd: number }>>();
+    (despesas as any[]).forEach((d) => {
+      const venc = d.fatura_vencimento as string | null;
+      if (!venc) return;
+      const porCartao = map.get(d.cartao_id) ?? new Map();
+      const cur = porCartao.get(venc) ?? { total: 0, paga: true, qtd: 0 };
+      cur.total += Number(d.valor || 0);
+      cur.qtd += 1;
+      if (!d.fatura_paga) cur.paga = false;
+      porCartao.set(venc, cur);
+      map.set(d.cartao_id, porCartao);
+    });
     return map;
   }, [despesas]);
 
