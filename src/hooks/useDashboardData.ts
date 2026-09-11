@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetch-all";
 import type { ObraStatus } from "@/lib/obra-helpers";
 import { REGIAO_LABEL } from "@/lib/obra-helpers";
 import {
