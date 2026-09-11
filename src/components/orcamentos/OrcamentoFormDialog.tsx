@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
 import { getTodayDateInputValue } from "@/lib/date";
-import { arredondar2 } from "@/lib/money";
+import { calcularTotaisOrcamento, subtotalItem } from "@/lib/orcamento-calc";
 
 type ItemForm = {
   id?: string;
