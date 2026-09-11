@@ -308,7 +308,7 @@ export default function Cartoes() {
           <Button variant="outline" onClick={() => { setEditingCartao(null); clearCartaoDraft(); setCartaoDialog(true); }}>
             <CreditCard className="h-4 w-4" /> Novo cartão
           </Button>
-          <Button onClick={() => { setEditingDespId(null); clearDespDraft(); setDespDialog(true); }} disabled={cartoes.length === 0}>
+          <Button onClick={() => { setEditingDespId(null); setEditingDesp(null); clearDespDraft(); setDespDialog(true); }} disabled={cartoes.length === 0}>
             <Plus className="h-4 w-4" /> Nova despesa
           </Button>
         </div>
@@ -538,7 +538,7 @@ export default function Cartoes() {
       </Dialog>
 
       {/* Despesa dialog */}
-      <Dialog open={despDialog} onOpenChange={(v) => { setDespDialog(v); if (!v) setEditingDespId(null); }}>
+      <Dialog open={despDialog} onOpenChange={(v) => { setDespDialog(v); if (!v) { setEditingDespId(null); setEditingDesp(null); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editingDespId ? "Editar despesa" : "Nova despesa de cartão"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3">
