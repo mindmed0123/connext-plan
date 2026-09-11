@@ -32,7 +32,7 @@ import {
   ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { formatDateBR, getTodayDateInputValue, isVencido } from "@/lib/date";
 
 const fmt = formatCurrency;
 const fmtDate = (d?: string | null) => formatDateBR(d);
@@ -278,7 +278,7 @@ export default function Financeiro() {
           tipo: l.origem === "parcela_pagamento" ? "Parcela"
             : l.origem === "cartao" ? "Cartão"
             : l.origem === "material" ? "Material" : "Despesa",
-          vencido: isBefore(d, hoje),
+          vencido: isVencido(l.data_vencimento),
         });
       }
     });
@@ -630,7 +630,7 @@ export default function Financeiro() {
                 )}
                 {(parcelas as any[]).map((p) => {
                   const venc = p.data_prevista ? parseISO(p.data_prevista) : null;
-                  const vencido = p.status === "pendente" && venc && isBefore(venc, new Date());
+                  const vencido = p.status === "pendente" && isVencido(p.data_prevista);
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="text-sm">{p.contratacoes_terceirizado?.obras?.codigo_chamado ?? "—"}</TableCell>
