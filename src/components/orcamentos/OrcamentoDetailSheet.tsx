@@ -1,3 +1,4 @@
+import type { Tables } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,7 +79,7 @@ export function OrcamentoDetailSheet({
   const handlePDF = async () => {
     if (!data?.orc || !empresaId) return;
     const { data: empresa } = await supabase.from("empresas").select("*").eq("id", empresaId).single();
-    const e = (empresa ?? {});
+    const e = (empresa ?? {}) as Partial<Tables<"empresas">>;
     await gerarOrcamentoPDF(data.orc, data.itens, {
       nome: e.nome ?? "Empresa",
       cnpj: e.cnpj ?? null,

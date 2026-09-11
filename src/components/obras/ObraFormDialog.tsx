@@ -96,7 +96,7 @@ export function ObraFormDialog({
 
   const addRegiao = useMutation({
     mutationFn: async (nome: string) => {
-      const { data, error } = await supabase.from("regioes_obra").insert({ nome }).select().single();
+      const { data, error } = await supabase.from("regioes_obra").insert({ nome, empresa_id: empresaId as string }).select().single();
       if (error) throw error;
       return data;
     },

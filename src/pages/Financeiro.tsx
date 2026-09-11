@@ -1,3 +1,4 @@
+import type { Database } from "@/integrations/supabase/types";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -208,7 +209,7 @@ export default function Financeiro() {
   });
 
   const kpis = useMemo(() => {
-    const k = kpiRow ?? {};
+    const k = (kpiRow ?? {}) as Partial<Database["public"]["Functions"]["get_financeiro_kpis"]["Returns"][number]>;
     const receita_real = Number(k.receita_realizada || 0);
     const despesa_real = Number(k.despesa_realizada || 0);
     const receita_prev = Number(k.receita_prevista || 0);
@@ -338,7 +339,8 @@ export default function Financeiro() {
     mutationFn: async (l: any) => {
       // Lançamentos gerados por outras abas: apaga na origem — o gatilho remove o
       // lançamento do razão automaticamente.
-      const tabelaOrigem: Record<string, string> = {
+      type OrigemTabela = "recebimentos" | "materiais_obra" | "cartao_despesas";
+      const tabelaOrigem: Record<string, OrigemTabela> = {
         recebimento: "recebimentos",
         material: "materiais_obra",
         cartao: "cartao_despesas",

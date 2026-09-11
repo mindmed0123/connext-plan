@@ -34,7 +34,7 @@ export default function Configuracoes() {
   const [novaRegiaoCfg, setNovaRegiaoCfg] = useState("");
   const addRegiaoCfg = async () => {
     if (!novaRegiaoCfg.trim()) return;
-    const { error } = await supabase.from("regioes_obra").insert({ nome: novaRegiaoCfg.trim() });
+    const { error } = await supabase.from("regioes_obra").insert({ nome: novaRegiaoCfg.trim(), empresa_id: empresaId as string });
     if (error) return toast.error(error.message);
     setNovaRegiaoCfg("");
     qc.invalidateQueries({ queryKey: ["regioes-obra"] });

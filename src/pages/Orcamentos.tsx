@@ -1,3 +1,4 @@
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,7 +85,7 @@ export default function Orcamentos() {
       delete payload.updated_at;
 
       const { data: novo, error } = await supabase
-        .from("orcamentos").insert(payload).select("id").single();
+        .from("orcamentos").insert(payload as TablesInsert<"orcamentos">).select("id").single();
       if (error) throw error;
 
       if (itens && itens.length > 0) {
@@ -110,7 +111,7 @@ export default function Orcamentos() {
       supabase.from("empresas").select("*").eq("id", empresaId).single(),
     ]);
     if (!orc) return;
-    const e = (empresa ?? {});
+    const e = (empresa ?? {}) as Partial<Tables<"empresas">>;
     await gerarOrcamentoPDF(orc, itens ?? [], {
       nome: e.nome ?? "Empresa",
       cnpj: e.cnpj ?? null,

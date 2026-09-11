@@ -1,3 +1,5 @@
+import type { Database } from "@/integrations/supabase/types";
+type FormaPagamento = Database["public"]["Enums"]["forma_pagamento"];
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,7 +123,7 @@ export default function Recebimentos() {
           recebimento_id: pagRec.id,
           valor,
           data: pagForm.data || getTodayDateInputValue(),
-          forma_pagamento: pagForm.forma_pagamento || null,
+          forma_pagamento: (pagForm.forma_pagamento || null) as FormaPagamento | null,
           observacao: pagForm.observacao || null,
         },
       ]);
