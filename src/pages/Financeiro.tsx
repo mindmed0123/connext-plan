@@ -83,6 +83,7 @@ export default function Financeiro() {
   const [filtroObra, setFiltroObra] = useState("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"venc_asc" | "venc_desc" | "valor_desc" | "valor_asc" | "criado_desc" | "criado_asc">("venc_asc");
+  const anoAtual = new Date().getFullYear();
 
   // ── Queries ────────────────────────────────────────────────────────────
   const { data: fluxo = [] } = useQuery({
@@ -102,6 +103,18 @@ export default function Financeiro() {
     enabled: !!empresaId,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dre_obra" as any, { _empresa_id: empresaId! });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: retencoes = [] } = useQuery({
+    queryKey: ["retencoes-mensais", empresaId, anoAtual],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_retencoes_mensais" as any, {
+        _inicio: `${anoAtual}-01-01`, _fim: `${anoAtual}-12-31`,
+      });
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -402,6 +415,7 @@ export default function Financeiro() {
           <TabsTrigger value="visao-geral">Visão geral</TabsTrigger>
           <TabsTrigger value="fluxo">Fluxo de caixa</TabsTrigger>
           <TabsTrigger value="dre">DRE por obra</TabsTrigger>
+          <TabsTrigger value="retencoes">Retenções</TabsTrigger>
           <TabsTrigger value="contas">Contas a pagar</TabsTrigger>
           <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
         </TabsList>
@@ -475,6 +489,19 @@ export default function Financeiro() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="retencoes">
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <div className="border-b px-4 py-3"><h3 className="text-sm font-semibold">Retenções mensais — {anoAtual}</h3><p className="text-xs text-muted-foreground">Conferência de INSS, ISS, IRRF e PCC destacados nas notas fiscais</p></div>
+            <Table>
+              <TableHeader><TableRow><TableHead>Mês</TableHead><TableHead className="text-right">INSS</TableHead><TableHead className="text-right">ISS</TableHead><TableHead className="text-right">IRRF</TableHead><TableHead className="text-right">PCC</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {retencoes.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">Nenhuma retenção informada neste ano</TableCell></TableRow>}
+                {retencoes.map((r: any) => <TableRow key={r.mes}><TableCell>{fmtDate(r.mes)}</TableCell><TableCell className="text-right">{fmt(r.inss)}</TableCell><TableCell className="text-right">{fmt(r.iss)}</TableCell><TableCell className="text-right">{fmt(r.irrf)}</TableCell><TableCell className="text-right">{fmt(r.pcc)}</TableCell><TableCell className="text-right font-semibold">{fmt(r.total)}</TableCell></TableRow>)}
+              </TableBody>
+            </Table>
+          </div>
         </TabsContent>
 
         {/* Fluxo de caixa */}

@@ -19,6 +19,7 @@ type Lancamento = {
   valor: number;
   origem: string;
   origemId?: string | null;
+  valorLiquido?: number;
 };
 
 function Kpi({ label, value, tone }: { label: string; value: number; tone?: "receita" | "despesa" | "saldo" }) {
@@ -86,6 +87,7 @@ export function DreTab({ obraId }: { obraId: string }) {
           status: "faturado",
           valor: Number((n as any).valor_bruto ?? (n as any).valor ?? 0),
           origem: "nota_fiscal",
+          valorLiquido: Number((n as any).valor_liquido ?? (n as any).valor ?? 0),
         });
       }
       return list.sort((a, b) => (String(a.data) < String(b.data) ? 1 : -1));
@@ -125,9 +127,8 @@ export function DreTab({ obraId }: { obraId: string }) {
   const receitaFaturada = Number(r.receita_faturada || 0);
   const receitaRecebida = Number(r.receita_recebida || 0);
   const fiscal = (lancamentos ?? []).filter((l) => l.origem === "nota_fiscal");
-  const receitaLiquida = fiscal.reduce((s, l) => s + l.valor, 0) - 0;
-  const nfs = (lancamentos ?? []).filter((l) => l.origem === "nota_fiscal");
-  const receitaBrutaFiscal = nfs.reduce((s, l) => s + l.valor, 0);
+  const receitaLiquida = fiscal.reduce((s, l) => s + Number(l.valorLiquido ?? l.valor), 0);
+  const receitaBrutaFiscal = fiscal.reduce((s, l) => s + l.valor, 0);
   const retencoes = Math.max(0, receitaBrutaFiscal - receitaLiquida);
   const emAberto = Math.max(0, receitaLiquida - receitaRecebida);
   const custoMateriais = Number(r.custo_materiais || 0);
