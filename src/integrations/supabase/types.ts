@@ -2820,6 +2820,17 @@ export type Database = {
           receita_recebida: number
         }[]
       }
+      get_financeiro_kpis: {
+        Args: { _fim?: string; _inicio?: string }
+        Returns: {
+          despesa_prevista: number
+          despesa_realizada: number
+          receita_prevista: number
+          receita_realizada: number
+          vencidos_qtd: number
+          vencidos_valor: number
+        }[]
+      }
       get_fluxo_caixa_mensal: {
         Args: {
           _empresa_id: string
