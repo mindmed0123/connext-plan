@@ -719,19 +719,37 @@ export default function Financeiro() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-1">
-                      {l.status === "previsto" && (
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-emerald-700"
-                                onClick={() => realizar.mutate(l.id)} title="Marcar como realizado">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                      {l.origem ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          title="Este lançamento é gerado automaticamente. Edite na origem."
+                          onClick={() => {
+                            if (l.origem === "recebimento") navigate("/recebimentos");
+                            else if (l.obra_id) navigate(`/obras/${l.obra_id}?tab=pagamentos`);
+                            else toast.info("Lançamento gerado automaticamente pela contratação.");
+                          }}
+                        >
+                          Abrir origem
                         </Button>
+                      ) : (
+                        <>
+                          {l.status === "previsto" && (
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-emerald-700"
+                                    onClick={() => realizar.mutate(l.id)} title="Marcar como realizado">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEditar(l)}>
+                            Editar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
+                                  onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l); }}>
+                            Excluir
+                          </Button>
+                        </>
                       )}
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEditar(l)}>
-                        Editar
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
-                              onClick={() => { if (confirm("Excluir lançamento?")) excluir.mutate(l); }}>
-                        Excluir
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
