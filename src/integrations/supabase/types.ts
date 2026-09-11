@@ -937,6 +937,7 @@ export type Database = {
           cep: string | null
           cidade: string | null
           cnpj: string | null
+          cprb: boolean
           created_at: string
           data_saldo_inicial: string | null
           email: string | null
@@ -962,6 +963,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           cnpj?: string | null
+          cprb?: boolean
           created_at?: string
           data_saldo_inicial?: string | null
           email?: string | null
@@ -987,6 +989,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           cnpj?: string | null
+          cprb?: boolean
           created_at?: string
           data_saldo_inicial?: string | null
           email?: string | null
@@ -1155,6 +1158,7 @@ export type Database = {
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           fornecedor_nome: string | null
           id: string
+          impacto_caixa: boolean
           obra_id: string | null
           observacoes: string | null
           origem: string | null
@@ -1182,6 +1186,7 @@ export type Database = {
             | null
           fornecedor_nome?: string | null
           id?: string
+          impacto_caixa?: boolean
           obra_id?: string | null
           observacoes?: string | null
           origem?: string | null
@@ -1209,6 +1214,7 @@ export type Database = {
             | null
           fornecedor_nome?: string | null
           id?: string
+          impacto_caixa?: boolean
           obra_id?: string | null
           observacoes?: string | null
           origem?: string | null
@@ -1426,7 +1432,10 @@ export type Database = {
       }
       notas_fiscais: {
         Row: {
+          aliquota_inss: number
+          aliquota_iss: number
           arquivo_pdf_url: string | null
+          base_inss: number
           codigo_chamado_avulso: string | null
           created_at: string
           data_emissao: string
@@ -1435,11 +1444,21 @@ export type Database = {
           numero_nf: string
           obra_id: string | null
           pedido_compra_id: string | null
+          ret_inss: number
+          ret_irrf: number
+          ret_iss: number
+          ret_pcc: number
           updated_at: string
           valor: number
+          valor_bruto: number
+          valor_deducoes_inss: number
+          valor_liquido: number | null
         }
         Insert: {
+          aliquota_inss?: number
+          aliquota_iss?: number
           arquivo_pdf_url?: string | null
+          base_inss?: number
           codigo_chamado_avulso?: string | null
           created_at?: string
           data_emissao: string
@@ -1448,11 +1467,21 @@ export type Database = {
           numero_nf: string
           obra_id?: string | null
           pedido_compra_id?: string | null
+          ret_inss?: number
+          ret_irrf?: number
+          ret_iss?: number
+          ret_pcc?: number
           updated_at?: string
           valor?: number
+          valor_bruto: number
+          valor_deducoes_inss?: number
+          valor_liquido?: number | null
         }
         Update: {
+          aliquota_inss?: number
+          aliquota_iss?: number
           arquivo_pdf_url?: string | null
+          base_inss?: number
           codigo_chamado_avulso?: string | null
           created_at?: string
           data_emissao?: string
@@ -1461,8 +1490,15 @@ export type Database = {
           numero_nf?: string
           obra_id?: string | null
           pedido_compra_id?: string | null
+          ret_inss?: number
+          ret_irrf?: number
+          ret_iss?: number
+          ret_pcc?: number
           updated_at?: string
           valor?: number
+          valor_bruto?: number
+          valor_deducoes_inss?: number
+          valor_liquido?: number | null
         }
         Relationships: [
           {
@@ -2508,12 +2544,14 @@ export type Database = {
           descricao: string | null
           empresa_id: string
           id: string
+          nota_fiscal_id: string | null
           obra_id: string | null
           observacoes: string | null
           pedido_compra_id: string | null
           status: Database["public"]["Enums"]["recebimento_status"]
           updated_at: string
           valor: number
+          valor_recebido: number
         }
         Insert: {
           created_at?: string
@@ -2522,12 +2560,14 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string
           id?: string
+          nota_fiscal_id?: string | null
           obra_id?: string | null
           observacoes?: string | null
           pedido_compra_id?: string | null
           status?: Database["public"]["Enums"]["recebimento_status"]
           updated_at?: string
           valor?: number
+          valor_recebido?: number
         }
         Update: {
           created_at?: string
@@ -2536,12 +2576,14 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string
           id?: string
+          nota_fiscal_id?: string | null
           obra_id?: string | null
           observacoes?: string | null
           pedido_compra_id?: string | null
           status?: Database["public"]["Enums"]["recebimento_status"]
           updated_at?: string
           valor?: number
+          valor_recebido?: number
         }
         Relationships: [
           {
@@ -2549,6 +2591,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recebimentos_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
             referencedColumns: ["id"]
           },
           {
@@ -2811,6 +2860,31 @@ export type Database = {
         Args: { _obra_id: string; _uid: string }
         Returns: boolean
       }
+      confirmar_recebimento: {
+        Args: { _data?: string; _id: string; _valor: number }
+        Returns: {
+          created_at: string
+          data_prevista: string | null
+          data_recebido: string | null
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nota_fiscal_id: string | null
+          obra_id: string | null
+          observacoes: string | null
+          pedido_compra_id: string | null
+          status: Database["public"]["Enums"]["recebimento_status"]
+          updated_at: string
+          valor: number
+          valor_recebido: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recebimentos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       criar_obra_segura: {
         Args: {
           _codigo_chamado: string
@@ -2928,6 +3002,17 @@ export type Database = {
           receita_orcada: number
           receita_recebida: number
           saldo: number
+        }[]
+      }
+      get_retencoes_mensais: {
+        Args: { _fim: string; _inicio: string }
+        Returns: {
+          inss: number
+          irrf: number
+          iss: number
+          mes: string
+          pcc: number
+          total: number
         }[]
       }
       get_user_empresa_id: { Args: never; Returns: string }
@@ -3092,7 +3177,7 @@ export type Database = {
       pessoa_status: "ativo" | "inativo"
       pessoa_tipo: "terceirizado" | "administrativo" | "operacional"
       rc_status: "aguardando" | "recebido"
-      recebimento_status: "a_receber" | "recebido"
+      recebimento_status: "a_receber" | "recebido" | "parcial"
       regime_tributario:
         | "simples_anexo_iii_v"
         | "simples_anexo_iv"
@@ -3325,7 +3410,7 @@ export const Constants = {
       pessoa_status: ["ativo", "inativo"],
       pessoa_tipo: ["terceirizado", "administrativo", "operacional"],
       rc_status: ["aguardando", "recebido"],
-      recebimento_status: ["a_receber", "recebido"],
+      recebimento_status: ["a_receber", "recebido", "parcial"],
       regime_tributario: [
         "simples_anexo_iii_v",
         "simples_anexo_iv",
