@@ -217,19 +217,10 @@ export function OrcamentoFormDialog({
   }, [open, orcamentoId]);
 
   // Regra única (igual ao banco e ao PDF): ISS incide após o desconto global
-  const totais = useMemo(() => {
-    const sub = arredondar2(itens.reduce((s, i) => s + subtotal(i), 0));
-    const pct = Number(descontoGlobalPct) || 0;
-    const descGlobal = arredondar2(sub * (pct / 100));
-    const iss = arredondar2(
-      itens.reduce(
-        (s, i) =>
-          s + arredondar2(subtotal(i) * (1 - pct / 100) * ((Number(i.aliquota_iss) || 0) / 100)),
-        0,
-      ),
-    );
-    return { subtotal: sub, descGlobal, iss, total: arredondar2(sub - descGlobal + iss) };
-  }, [itens, descontoGlobalPct]);
+  const totais = useMemo(
+    () => calcularTotaisOrcamento(itens, descontoGlobalPct),
+    [itens, descontoGlobalPct],
+  );
   const total = totais.total;
 
   const updateItem = (idx: number, patch: Partial<ItemForm>) => {
