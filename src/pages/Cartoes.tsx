@@ -252,10 +252,17 @@ export default function Cartoes() {
             : 0;
 
           return (
-            <Card key={c.id}>
+            <Card key={c.id} className={(c as any).ativo === false ? "opacity-70" : undefined}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{c.apelido}</CardTitle>
+                  <CardTitle className="text-base">
+                    {c.apelido}
+                    {(c as any).ativo === false && (
+                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+                        Inativo
+                      </span>
+                    )}
+                  </CardTitle>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => {
                       setEditingCartao(c);
@@ -267,9 +274,19 @@ export default function Cartoes() {
                       });
                       setCartaoDialog(true);
                     }}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => toggleAtivoCartao.mutate({ id: c.id, ativo: (c as any).ativo === false })}
+                    >
+                      {(c as any).ativo === false ? "Ativar" : "Desativar"}
                     </Button>
+                    {despesasDoCartao.length === 0 && (
+                      <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
