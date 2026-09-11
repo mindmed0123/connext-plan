@@ -64,6 +64,7 @@ export default function Configuracoes() {
     nome: "", cnpj: "", inscricao_estadual: "", endereco: "",
     bairro: "", cidade: "", uf: "", cep: "", telefone: "", email: "",
   });
+  const [saldoForm, setSaldoForm] = useState({ saldo_inicial: "0", data_saldo_inicial: "" });
   const [buscando, setBuscando] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoUrl = (empresa as any)?.logo_url as string | null | undefined;
