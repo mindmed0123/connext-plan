@@ -49,7 +49,7 @@ export default function Cartoes() {
   });
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-min", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await supabase.from("obras").select("id, codigo_chamado, descricao_servico").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await (supabase.from("obras") as any).select("id, codigo_chamado, descricao_servico").eq("arquivada", false).order("created_at", { ascending: false })).data ?? [],
   });
   const obraLabel = (o: any) => {
     const desc = (o?.descricao_servico ?? "").trim();

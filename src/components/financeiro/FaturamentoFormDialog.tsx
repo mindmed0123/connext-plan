@@ -37,7 +37,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const obras = useQuery({
     queryKey: ["obras-select"],
     enabled: open && vinculo === "existente",
-    queryFn: async () => (await supabase.from("obras").select("id, codigo_chamado").order("codigo_chamado")).data ?? [],
+    queryFn: async () => (await (supabase.from("obras") as any).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
 
   const reset = () => {

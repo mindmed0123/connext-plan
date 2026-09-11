@@ -11,7 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Archive, ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { VistoriaTab } from "@/components/obras/tabs/VistoriaTab";
 import { OrcamentoTab } from "@/components/obras/tabs/OrcamentoTab";
@@ -150,6 +150,16 @@ export default function ObraDetalhe() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                disabled={toggleArquivar.isPending}
+                onClick={() => toggleArquivar.mutate(!(obra as any).arquivada)}
+              >
+                <Archive className="mr-1.5 h-3.5 w-3.5" />
+                {(obra as any).arquivada ? "Desarquivar" : "Arquivar obra"}
+              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 text-destructive hover:text-destructive hover:bg-destructive/10">

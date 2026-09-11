@@ -147,7 +147,10 @@ export default function Financeiro() {
     queryKey: ["obras-fin-select", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await supabase.from("obras").select("id, codigo_chamado, descricao_servico").order("codigo_chamado");
+      const { data } = await (supabase.from("obras") as any)
+        .select("id, codigo_chamado, descricao_servico")
+        .eq("arquivada", false)
+        .order("codigo_chamado");
       return data ?? [];
     },
   });
