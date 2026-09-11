@@ -323,12 +323,16 @@ export default function Financeiro() {
 
   const excluir = useMutation({
     mutationFn: async (l: any) => {
-      // Lançamentos gerados por outras abas (recebimentos/parcelas) precisam ter
-      // a origem apagada também, senão o DRE da obra continua mostrando o valor.
+      // Lançamentos gerados por outras abas: apaga na origem — o gatilho remove o
+      // lançamento do razão automaticamente.
       if (l?.origem === "recebimento" && l?.origem_id) {
-        const { error } = await (supabase as any).from("recebimentos").delete().eq("id", l.origem_id);
+        const { data, error } = await (supabase as any)
+          .from("recebimentos").delete().eq("id", l.origem_id).select("id");
         if (error) throw error;
-      } else if (l?.origem === "parcela" && l?.origem_id) {
+        if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este recebimento.");
+        return;
+      }
+      if (l?.origem === "parcela_pagamento" && l?.origem_id) {
         throw new Error("Este lançamento vem de uma parcela de contratação. Exclua a parcela na obra.");
       }
       const { data, error } = await (supabase as any)
