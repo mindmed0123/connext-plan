@@ -274,28 +274,23 @@ export function useDashboardData(filters: DashboardFilters) {
 
       // Próximo dia 1 e dia 15
       const proximoDia = (dia: number) => {
-        const d = new Date(hoje.getFullYear(), hoje.getMonth(), dia);
-        if (d < hoje) d.setMonth(d.getMonth() + 1);
+        const d = new Date(hoje.getFullYear(), hoje.getMonth(), dia, 12, 0, 0, 0);
+        if (toDateKey(d) < hojeKey) d.setMonth(d.getMonth() + 1);
         return d;
       };
       const dia1 = proximoDia(1);
       const dia15 = proximoDia(15);
-      const totalDia1 = recsFiltered
-        .filter(
-          (r) =>
-            r.status === "a_receber" &&
-            r.data_prevista &&
-            new Date(r.data_prevista).toDateString() === dia1.toDateString(),
-        )
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-      const totalDia15 = recsFiltered
-        .filter(
-          (r) =>
-            r.status === "a_receber" &&
-            r.data_prevista &&
-            new Date(r.data_prevista).toDateString() === dia15.toDateString(),
-        )
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
+      const somaNoDia = (alvo: Date) =>
+        recsFiltered
+          .filter(
+            (r) =>
+              r.status === "a_receber" &&
+              r.data_prevista &&
+              String(r.data_prevista).slice(0, 10) === toDateKey(alvo),
+          )
+          .reduce((s, r) => s + Number(r.valor || 0), 0);
+      const totalDia1 = somaNoDia(dia1);
+      const totalDia15 = somaNoDia(dia15);
 
       // Materiais
       const valorMateriais = somaResumo("custo_materiais");

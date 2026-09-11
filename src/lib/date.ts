@@ -4,6 +4,11 @@ export function getTodayDateInputValue() {
   return format(new Date(), "yyyy-MM-dd");
 }
 
+/** Converte um Date local em chave 'YYYY-MM-DD' (sem conversão para UTC). */
+export function toDateKey(d: Date) {
+  return format(d, "yyyy-MM-dd");
+}
+
 /**
  * Parse a date string into a LOCAL Date object at local midnight.
  * Critical: we use local midnight (not UTC) so that date-fns `format()`
