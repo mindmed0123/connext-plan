@@ -425,7 +425,11 @@ export default function Cartoes() {
               <Label>Cartão*</Label>
               <Select value={despForm.cartao_id} onValueChange={(v) => setDespForm({ ...despForm, cartao_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{cartoes.map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {cartoes
+                    .filter((c) => (c as any).ativo !== false || c.id === despForm.cartao_id)
+                    .map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
             <div className="col-span-2"><Label>Descrição</Label><Input value={despForm.descricao} onChange={(e) => setDespForm({ ...despForm, descricao: e.target.value })} /></div>
