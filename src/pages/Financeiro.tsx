@@ -129,6 +129,7 @@ export default function Financeiro() {
           .from("lancamentos_financeiros")
           .select("*, categorias_financeiras(nome, cor), obras(codigo_chamado)")
           .order("data_vencimento", { ascending: true, nullsFirst: false })
+          .order("id")
           .range(f, t),
       ),
   });
@@ -142,6 +143,7 @@ export default function Financeiro() {
           .from("parcelas_pagamento")
           .select("*, contratacoes_terceirizado(obra_id, obras(codigo_chamado), pessoas:terceirizado_id(nome))")
           .order("data_prevista", { ascending: true })
+          .order("id")
           .range(f, t),
       ),
   });
@@ -155,6 +157,7 @@ export default function Financeiro() {
           .from("recebimentos")
           .select("*, obras(codigo_chamado)")
           .order("data_prevista", { ascending: true })
+          .order("id")
           .range(f, t),
       ),
   });
