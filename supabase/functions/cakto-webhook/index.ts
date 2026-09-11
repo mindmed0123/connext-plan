@@ -109,17 +109,16 @@ Deno.serve(async (req) => {
   const orderId: string | null =
     data?.order?.id ?? data?.order_id ?? data?.transaction_id ?? null;
 
-  // metadata pode vir em vários locais
+  // Valor pago (quando presente no payload)
+  const rawAmount =
+    data?.amount ?? data?.paid_amount ?? data?.total ?? data?.value ??
+    data?.order?.amount ?? data?.offer?.price ?? null;
+  const paidAmount = rawAmount == null ? null : Number(rawAmount);
+
+  // `ref` que enviamos no link de checkout (id do checkout_intent).
+  // A Cakto pode devolver o ref em data.ref OU embutido em data.checkoutUrl.
   const metadata: any =
     data?.metadata ?? data?.subscription?.metadata ?? data?.checkout?.metadata ?? data?.order?.metadata ?? {};
-  let empresa_id: string | null = metadata?.empresa_id ?? null;
-  let plano_id: string | null = metadata?.plano_id ?? null;
-  let periodo: string | null = metadata?.periodo ?? null;
-  let user_id: string | null = metadata?.user_id ?? null;
-
-  // Fallback: parametro `ref` que enviamos no link de checkout
-  // Formato: empresa_id|plano_id|periodo|user_id
-  // A Cakto pode devolver o ref em data.ref OU embutido em data.checkoutUrl como query string.
   let refRaw: string | null =
     data?.ref ?? data?.utm?.ref ?? metadata?.ref ??
     data?.checkout?.ref ?? data?.tracking?.ref ?? null;
@@ -134,35 +133,48 @@ Deno.serve(async (req) => {
       } catch { /* ignore */ }
     }
   }
-  if (refRaw && typeof refRaw === "string" && refRaw.includes("|")) {
-    const [r_empresa, r_plano, r_periodo, r_user] = refRaw.split("|");
-    empresa_id = empresa_id ?? r_empresa ?? null;
-    plano_id = plano_id ?? r_plano ?? null;
-    periodo = periodo ?? r_periodo ?? null;
-    user_id = user_id ?? r_user ?? null;
-  }
 
-  // Fallback: localizar plano pelo product_id da Cakto
-  if (!plano_id && productId) {
-    const { data: planoMatch } = await supabase
-      .from("planos")
-      .select("id, slug, cakto_product_id_mensal, cakto_product_id_anual")
-      .or(`cakto_product_id_mensal.eq.${productId},cakto_product_id_anual.eq.${productId}`)
-      .maybeSingle();
-    if (planoMatch) {
-      plano_id = (planoMatch as any).id;
-      if (!periodo) {
-        periodo = (planoMatch as any).cakto_product_id_anual === productId ? "anual" : "mensal";
+  let empresa_id: string | null = null;
+  let plano_id: string | null = null;
+  let periodo: string | null = null;
+
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (refRaw && typeof refRaw === "string") {
+    const refTrim = refRaw.trim();
+    if (UUID_RE.test(refTrim)) {
+      const { data: intent } = await supabase
+        .from("checkout_intents")
+        .select("id, empresa_id")
+        .eq("id", refTrim)
+        .maybeSingle();
+      if (intent) {
+        empresa_id = (intent as any).empresa_id;
+        await supabase.from("checkout_intents")
+          .update({ usado_em: new Date().toISOString() })
+          .eq("id", refTrim);
       }
+    } else if (refTrim.includes("|")) {
+      // Formato antigo (checkouts já abertos): usa APENAS a empresa, ignora plano/período
+      const legacyEmpresa = refTrim.split("|")[0];
+      if (UUID_RE.test(legacyEmpresa)) empresa_id = legacyEmpresa;
     }
   }
 
-  // Fallback: detecta período pelo recurrence_period da assinatura Cakto (>=350 dias = anual)
-  if (!periodo) {
-    const recPeriod = Number(data?.subscription?.recurrence_period ?? 0);
-    if (recPeriod >= 350) periodo = "anual";
-    else if (recPeriod > 0) periodo = "mensal";
+  // Plano e período vêm SEMPRE do product_id da Cakto
+  let planoRow: any = null;
+  if (productId) {
+    const { data: planoMatch } = await supabase
+      .from("planos")
+      .select("id, slug, preco_mensal, preco_anual, cakto_product_id_mensal, cakto_product_id_anual")
+      .or(`cakto_product_id_mensal.eq.${productId},cakto_product_id_anual.eq.${productId}`)
+      .maybeSingle();
+    if (planoMatch) {
+      planoRow = planoMatch;
+      plano_id = planoMatch.id;
+      periodo = planoMatch.cakto_product_id_anual === productId ? "anual" : "mensal";
+    }
   }
+
   // Idempotência por event_id
   await supabase.from("billing_events").upsert({
     event_id: String(eventId),
