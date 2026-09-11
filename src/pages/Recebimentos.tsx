@@ -54,7 +54,7 @@ export default function Recebimentos() {
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-rec-select"],
     queryFn: async () =>
-      (await supabase.from("obras").select("id, codigo_chamado").order("codigo_chamado")).data ?? [],
+      (await (supabase.from("obras") as any).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
 
   const lista = useMemo(() => {

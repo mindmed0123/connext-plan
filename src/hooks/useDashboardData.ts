@@ -42,7 +42,8 @@ export function useDashboardData(filters: DashboardFilters) {
           .from("obras")
           .select(
             "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
-          ),
+          )
+          .eq("arquivada", false),
         supabase
           .from("orcamentos")
           .select("id,obra_id,valor_orcamento,status,data_envio,created_at,updated_at"),

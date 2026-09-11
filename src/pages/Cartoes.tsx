@@ -49,7 +49,7 @@ export default function Cartoes() {
   });
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-min", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await supabase.from("obras").select("id, codigo_chamado, descricao_servico").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await (supabase.from("obras") as any).select("id, codigo_chamado, descricao_servico").eq("arquivada", false).order("created_at", { ascending: false })).data ?? [],
   });
   const obraLabel = (o: any) => {
     const desc = (o?.descricao_servico ?? "").trim();
@@ -103,10 +103,31 @@ export default function Cartoes() {
 
   const delCartao = useMutation({
     mutationFn: async (id: string) => {
+      const { count } = await supabase
+        .from("cartao_despesas" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("cartao_id", id);
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `Este cartão tem ${count} despesa(s) lançada(s) e não pode ser excluído. Use "Desativar" para tirá-lo de uso mantendo o histórico.`,
+        );
+      }
       const { error } = await supabase.from("cartoes_credito" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Cartão removido"); qc.invalidateQueries({ queryKey: ["cartoes", empresaId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleAtivoCartao = useMutation({
+    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+      const { error } = await supabase.from("cartoes_credito" as any).update({ ativo }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.ativo ? "Cartão reativado" : "Cartão desativado");
+      qc.invalidateQueries({ queryKey: ["cartoes", empresaId] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -231,10 +252,17 @@ export default function Cartoes() {
             : 0;
 
           return (
-            <Card key={c.id}>
+            <Card key={c.id} className={(c as any).ativo === false ? "opacity-70" : undefined}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{c.apelido}</CardTitle>
+                  <CardTitle className="text-base">
+                    {c.apelido}
+                    {(c as any).ativo === false && (
+                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+                        Inativo
+                      </span>
+                    )}
+                  </CardTitle>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => {
                       setEditingCartao(c);
@@ -246,9 +274,19 @@ export default function Cartoes() {
                       });
                       setCartaoDialog(true);
                     }}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => toggleAtivoCartao.mutate({ id: c.id, ativo: (c as any).ativo === false })}
+                    >
+                      {(c as any).ativo === false ? "Ativar" : "Desativar"}
                     </Button>
+                    {despesasDoCartao.length === 0 && (
+                      <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -387,7 +425,11 @@ export default function Cartoes() {
               <Label>Cartão*</Label>
               <Select value={despForm.cartao_id} onValueChange={(v) => setDespForm({ ...despForm, cartao_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{cartoes.map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {cartoes
+                    .filter((c) => (c as any).ativo !== false || c.id === despForm.cartao_id)
+                    .map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
             <div className="col-span-2"><Label>Descrição</Label><Input value={despForm.descricao} onChange={(e) => setDespForm({ ...despForm, descricao: e.target.value })} /></div>

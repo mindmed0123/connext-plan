@@ -6,6 +6,7 @@ import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -20,15 +21,17 @@ export default function Obras() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [regiaoFilter, setRegiaoFilter] = useState<string>("all");
+  const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
   const [openForm, setOpenForm] = useState(false);
 
   const { data: obras, isLoading } = useQuery({
-    queryKey: ["obras", { search, statusFilter, regiaoFilter }],
+    queryKey: ["obras", { search, statusFilter, regiaoFilter, mostrarArquivadas }],
     queryFn: async () => {
-      let q = supabase
+      let q: any = supabase
         .from("obras")
         .select("*, orcamentos(valor_orcamento, status, created_at), obra_adendos(valor_total, status)")
         .order("created_at", { ascending: false });
+      if (!mostrarArquivadas) q = q.eq("arquivada", false);
       if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
       if (regiaoFilter !== "all") q = q.eq("regiao_label", regiaoFilter);
       if (search.trim()) q = q.ilike("codigo_chamado", `%${search.trim()}%`);
@@ -112,6 +115,13 @@ export default function Obras() {
             ))}
           </SelectContent>
         </Select>
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+          <Checkbox
+            checked={mostrarArquivadas}
+            onCheckedChange={(v) => setMostrarArquivadas(v === true)}
+          />
+          Mostrar arquivadas
+        </label>
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
@@ -141,7 +151,14 @@ export default function Obras() {
                 getValorAdendos(o.obra_adendos) > 0;
               return (
                 <TableRow key={o.id} className="cursor-pointer hover:bg-surface-muted" onClick={() => navigate(`/obras/${o.id}`)}>
-                  <TableCell className="font-medium">{o.codigo_chamado}</TableCell>
+                  <TableCell className="font-medium">
+                    {o.codigo_chamado}
+                    {o.arquivada && (
+                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+                        Arquivada
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
                   <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
                   <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>

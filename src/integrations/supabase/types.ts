@@ -1629,6 +1629,8 @@ export type Database = {
       }
       obras: {
         Row: {
+          arquivada: boolean
+          arquivada_em: string | null
           cliente_id: string | null
           codigo_chamado: string
           contrato_qtd_contratada: number
@@ -1650,6 +1652,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arquivada?: boolean
+          arquivada_em?: string | null
           cliente_id?: string | null
           codigo_chamado: string
           contrato_qtd_contratada?: number
@@ -1671,6 +1675,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arquivada?: boolean
+          arquivada_em?: string | null
           cliente_id?: string | null
           codigo_chamado?: string
           contrato_qtd_contratada?: number
@@ -2779,6 +2785,8 @@ export type Database = {
           _regiao_label: string
         }
         Returns: {
+          arquivada: boolean
+          arquivada_em: string | null
           cliente_id: string | null
           codigo_chamado: string
           contrato_qtd_contratada: number
