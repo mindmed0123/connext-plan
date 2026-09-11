@@ -53,6 +53,11 @@ Deno.serve(async (req) => {
     if (!callerRow) {
       return json({ error: "Sem permissão para convidar" }, 403);
     }
+    const callerIsAdmin = callerRoles?.some((r: any) => ["super_admin", "admin"].includes(r.role));
+    if (role === "admin" && !callerIsAdmin) {
+      return json({ error: "Somente administradores podem convidar outro administrador." }, 403);
+    }
+
     const empresaId = callerRow.empresa_id;
     if (!empresaId) {
       return json({ error: "Você precisa pertencer a uma empresa" }, 400);
