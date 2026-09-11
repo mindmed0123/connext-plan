@@ -17,6 +17,7 @@ import { formatCurrency } from "@/lib/obra-helpers";
 import { toast } from "sonner";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 import { useDraftState } from "@/hooks/useDraftState";
+import { useAuth } from "@/contexts/AuthContext";
 
 type RecForm = {
   obra_id: string;
@@ -38,6 +39,7 @@ type PagForm = { valor: string; data: string; forma_pagamento: string; observaca
 
 export default function Recebimentos() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm, clearDraft] = useDraftState<RecForm>("recebimento-form", emptyRec);
@@ -120,6 +122,7 @@ export default function Recebimentos() {
       if (!(valor > 0)) throw new Error("Informe um valor maior que zero");
       const { error } = await supabase.from("recebimento_pagamentos").insert([
         {
+          empresa_id: empresaId as string,
           recebimento_id: pagRec.id,
           valor,
           data: pagForm.data || getTodayDateInputValue(),
