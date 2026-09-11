@@ -2548,6 +2548,64 @@ export type Database = {
           },
         ]
       }
+      recebimento_pagamentos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: string
+          empresa_id: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          observacao: string | null
+          recebimento_id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          empresa_id: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacao?: string | null
+          recebimento_id: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          empresa_id?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacao?: string | null
+          recebimento_id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recebimento_pagamentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recebimento_pagamentos_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "recebimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recebimentos: {
         Row: {
           created_at: string
