@@ -20,15 +20,17 @@ export default function Obras() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [regiaoFilter, setRegiaoFilter] = useState<string>("all");
+  const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
   const [openForm, setOpenForm] = useState(false);
 
   const { data: obras, isLoading } = useQuery({
-    queryKey: ["obras", { search, statusFilter, regiaoFilter }],
+    queryKey: ["obras", { search, statusFilter, regiaoFilter, mostrarArquivadas }],
     queryFn: async () => {
       let q = supabase
         .from("obras")
         .select("*, orcamentos(valor_orcamento, status, created_at), obra_adendos(valor_total, status)")
         .order("created_at", { ascending: false });
+      if (!mostrarArquivadas) q = q.eq("arquivada" as any, false as any);
       if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
       if (regiaoFilter !== "all") q = q.eq("regiao_label", regiaoFilter);
       if (search.trim()) q = q.ilike("codigo_chamado", `%${search.trim()}%`);
