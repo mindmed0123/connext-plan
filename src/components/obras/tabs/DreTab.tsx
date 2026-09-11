@@ -265,16 +265,28 @@ export function DreTab({ obraId }: { obraId: string }) {
                   {l.tipo === "receita" ? "+" : "-"} {formatCurrency(l.valor)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                    title="Excluir lançamento"
-                    disabled={excluir.isPending}
-                    onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {l.origem === "parcela_pagamento" ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      title="Gerado pela contratação. Altere na aba Pagamentos."
+                      onClick={() => setSearchParams({ tab: "contratacoes" }, { replace: true })}
+                    >
+                      Abrir origem
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                      title="Excluir lançamento"
+                      disabled={excluir.isPending}
+                      onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
