@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDateBR, getTodayDateInputValue, isVencido } from "@/lib/date";
+import { abrirOrigemPath } from "@/lib/origem-nav";
 
 const fmt = formatCurrency;
 const fmtDate = (d?: string | null) => formatDateBR(d);
