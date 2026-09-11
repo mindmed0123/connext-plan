@@ -114,6 +114,13 @@ export default function Obras() {
             ))}
           </SelectContent>
         </Select>
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+          <Checkbox
+            checked={mostrarArquivadas}
+            onCheckedChange={(v) => setMostrarArquivadas(v === true)}
+          />
+          Mostrar arquivadas
+        </label>
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
