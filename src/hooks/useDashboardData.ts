@@ -88,7 +88,7 @@ export function useDashboardData(filters: DashboardFilters) {
         fetchAllRows<any>((f, t) =>
           supabase
             .from("recebimentos")
-            .select("id,obra_id,valor,valor_recebido,status,data_prevista,data_recebido")
+            .select("id,obra_id,nota_fiscal_id,valor,valor_recebido,status,data_prevista,data_recebido")
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
@@ -251,8 +251,12 @@ export function useDashboardData(filters: DashboardFilters) {
       const valorAReceber = recsFiltered
         .filter((r) => r.status !== "recebido")
         .reduce((s, r) => s + Math.max(0, Number(r.valor || 0) - Number((r as any).valor_recebido || 0)), 0);
-      const liquidoFaturado = nfs.filter((n) => obraIds.has(n.obra_id)).reduce((s, n: any) => s + Number(n.valor_liquido ?? n.valor ?? 0), 0);
-      const valorEmAberto = Math.max(0, liquidoFaturado - valorRecebido);
+      const nfsFiltradas = nfs.filter((n) => obraIds.has(n.obra_id));
+      const nfIds = new Set(nfsFiltradas.map((n) => n.id));
+      const liquidoFaturado = nfsFiltradas.reduce((s, n: any) => s + Number(n.valor_liquido ?? n.valor ?? 0), 0);
+      const recebidoDeNfs = recsFiltered.filter((r: any) => r.nota_fiscal_id && nfIds.has(r.nota_fiscal_id))
+        .reduce((s, r: any) => s + Number(r.valor_recebido || 0), 0);
+      const valorEmAberto = Math.max(0, liquidoFaturado - recebidoDeNfs);
 
       const hoje = new Date();
       const hojeKey = toDateKey(hoje);

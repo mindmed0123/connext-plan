@@ -28,6 +28,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [data, setData] = useState("");
   const [valor, setValor] = useState("");
   const [retencoes, setRetencoes] = useState<RetencoesNf>(emptyRetencoes());
+  const [regras, setRegras] = useState<any>(null);
   const [status, setStatus] = useState<string>(tipo === "nf" ? "" : "aguardando");
 
   // NF opcional ao criar PC
@@ -49,21 +50,26 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
         (supabase.from("obras") as any).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
         supabase.from("empresas").select("cprb").limit(1).single(),
       ]);
-      const cliente = obra?.clientes;
-      const bruto = Number(retencoes.valor_bruto || valor || 0);
-      const aliquotaInss = empresa?.cprb ? 3.5 : 11;
+      setRegras({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
+    })();
+  }, [obraId, tipo]);
+
+  useEffect(() => {
+    if (tipo !== "nf" || !regras) return;
+      const bruto = Number(valor || 0);
+      const aliquotaInss = regras.cprb ? 3.5 : 11;
       const baseInss = Math.max(0, bruto - Number(retencoes.valor_deducoes_inss || 0));
       setRetencoes((atual) => ({
         ...atual,
+        valor_bruto: valor,
         base_inss: String(baseInss), aliquota_inss: String(aliquotaInss),
-        aliquota_iss: String(cliente?.aliquota_iss ?? 0),
-        ret_inss: cliente?.retem_inss ? String(Math.round(baseInss * aliquotaInss) / 100) : "0",
-        ret_iss: cliente?.retem_iss ? String(Math.round(bruto * Number(cliente?.aliquota_iss ?? 0)) / 100) : "0",
-        ret_irrf: cliente?.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
-        ret_pcc: cliente?.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
+        aliquota_iss: String(regras.aliquota_iss ?? 0),
+        ret_inss: regras.retem_inss ? String(Math.round(baseInss * aliquotaInss) / 100) : "0",
+        ret_iss: regras.retem_iss ? String(Math.round(bruto * Number(regras.aliquota_iss ?? 0)) / 100) : "0",
+        ret_irrf: regras.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
+        ret_pcc: regras.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
       }));
-    })();
-  }, [obraId, tipo]);
+  }, [valor, regras, tipo]);
 
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");
