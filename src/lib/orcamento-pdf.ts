@@ -298,7 +298,6 @@ export async function gerarOrcamentoPDF(
     margin: { left: margin, right: margin },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   y = (doc).lastAutoTable.finalY + 12;
 
   // ====== VENCIMENTOS / PARCELAS ======
@@ -370,7 +369,6 @@ export async function gerarOrcamentoPDF(
     tableWidth: 100,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   y = (doc).lastAutoTable.finalY + 10;
 
   const dataVenc = parcelas.length > 0 ? parcelas[parcelas.length - 1].venc : format(baseDate, "dd/MM/yyyy", { locale: ptBR });

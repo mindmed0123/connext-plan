@@ -89,7 +89,6 @@ export default function Orcamentos() {
 
       if (itens && itens.length > 0) {
         await supabase.from("orcamento_itens").insert(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           itens.map(({ id: _i, orcamento_id: _o, created_at: _c, subtotal: _s, ...rest }: any) => ({
             ...rest, orcamento_id: novo.id,
           }))

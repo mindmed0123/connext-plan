@@ -177,7 +177,6 @@ export function OrcamentoFormDialog({
     (async () => {
       const { data: orc } = await supabase.from("orcamentos").select("*").eq("id", orcamentoId).single();
       if (!orc) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setChamado((orc).codigo_chamado ?? "");
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? getTodayDateInputValue());
@@ -185,12 +184,9 @@ export function OrcamentoFormDialog({
       // (condicoes_pagamento legado removido — usar condicao_pagamento estruturado)
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setClienteIE((orc).cliente_inscricao_estadual ?? "");
       setClienteEndereco(orc.cliente_endereco ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setClienteEmail((orc).cliente_email ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setClienteTelefone((orc).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
       const o = orc;
