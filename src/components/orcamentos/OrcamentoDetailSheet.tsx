@@ -38,8 +38,7 @@ export function OrcamentoDetailSheet({
   const updateStatus = useMutation({
     mutationFn: async (status: "aprovado" | "reprovado" | "em_negociacao") => {
       if (status === "aprovado") {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).rpc("aprovar_orcamento", { _id: orcamentoId! });
+        const { error } = await supabase.rpc("aprovar_orcamento", { _id: orcamentoId! });
         if (error) throw error;
         return;
       }
@@ -79,8 +78,7 @@ export function OrcamentoDetailSheet({
   const handlePDF = async () => {
     if (!data?.orc || !empresaId) return;
     const { data: empresa } = await supabase.from("empresas").select("*").eq("id", empresaId).single();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = (empresa ?? {}) as any;
+    const e = (empresa ?? {});
     await gerarOrcamentoPDF(data.orc, data.itens, {
       nome: e.nome ?? "Empresa",
       cnpj: e.cnpj ?? null,

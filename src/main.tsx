@@ -7,7 +7,7 @@ import "./index.css";
 // (typical "white screen" on returning users), force a one-shot hard reload.
 const RELOAD_FLAG = "__chunk_reload__";
 function isChunkError(msg: unknown) {
-  const s = String((msg as any)?.message ?? msg ?? "");
+  const s = String((msg)?.message ?? msg ?? "");
   return (
     s.includes("Failed to fetch dynamically imported module") ||
     s.includes("Importing a module script failed") ||

@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
 import { getTodayDateInputValue } from "@/lib/date";
-import { arredondar2 } from "@/lib/money";
+import { calcularTotaisOrcamento, subtotalItem } from "@/lib/orcamento-calc";
 
 type ItemForm = {
   id?: string;
@@ -33,8 +33,7 @@ type ItemForm = {
   aliquota_iss?: number;
 };
 
-const subtotal = (i: ItemForm) =>
-  Number(i.quantidade) * Number(i.preco_unitario) * (1 - Number(i.desconto_pct) / 100);
+const subtotal = (i: ItemForm) => subtotalItem(i);
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
@@ -178,24 +177,19 @@ export function OrcamentoFormDialog({
     (async () => {
       const { data: orc } = await supabase.from("orcamentos").select("*").eq("id", orcamentoId).single();
       if (!orc) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setChamado((orc as any).codigo_chamado ?? "");
+      setChamado((orc).codigo_chamado ?? "");
       setTitulo(orc.titulo ?? "");
       setDataOrcamento(orc.data_orcamento ?? getTodayDateInputValue());
       setValidadeDias(orc.validade_dias ?? 30);
       // (condicoes_pagamento legado removido — usar condicao_pagamento estruturado)
       setClienteNome(orc.cliente_nome ?? "");
       setClienteCnpj(orc.cliente_cnpj ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setClienteIE((orc as any).cliente_inscricao_estadual ?? "");
+      setClienteIE((orc).cliente_inscricao_estadual ?? "");
       setClienteEndereco(orc.cliente_endereco ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setClienteEmail((orc as any).cliente_email ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setClienteTelefone((orc as any).cliente_telefone ?? "");
+      setClienteEmail((orc).cliente_email ?? "");
+      setClienteTelefone((orc).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const o = orc as any;
+      const o = orc;
       setNumero(o.numero || o.numero_orcamento || null);
       setObjeto(o.objeto ?? "");
       setPrazoExecucao(o.prazo_execucao ?? "");
@@ -218,19 +212,10 @@ export function OrcamentoFormDialog({
   }, [open, orcamentoId]);
 
   // Regra única (igual ao banco e ao PDF): ISS incide após o desconto global
-  const totais = useMemo(() => {
-    const sub = arredondar2(itens.reduce((s, i) => s + subtotal(i), 0));
-    const pct = Number(descontoGlobalPct) || 0;
-    const descGlobal = arredondar2(sub * (pct / 100));
-    const iss = arredondar2(
-      itens.reduce(
-        (s, i) =>
-          s + arredondar2(subtotal(i) * (1 - pct / 100) * ((Number(i.aliquota_iss) || 0) / 100)),
-        0,
-      ),
-    );
-    return { subtotal: sub, descGlobal, iss, total: arredondar2(sub - descGlobal + iss) };
-  }, [itens, descontoGlobalPct]);
+  const totais = useMemo(
+    () => calcularTotaisOrcamento(itens, descontoGlobalPct),
+    [itens, descontoGlobalPct],
+  );
   const total = totais.total;
 
   const updateItem = (idx: number, patch: Partial<ItemForm>) => {
@@ -290,8 +275,7 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: obraIdData, error: obraErr } = await (supabase as any).rpc("ensure_obra_for_chamado", {
+      const { data: obraIdData, error: obraErr } = await supabase.rpc("ensure_obra_for_chamado", {
         _chamado: chamado,
         _descricao: titulo || clienteNome || chamado,
         _endereco: clienteEndereco || null,
@@ -329,8 +313,7 @@ export function OrcamentoFormDialog({
 
       // Salva orçamento + itens numa única transação no banco (os totais são
       // calculados pelo próprio banco, nunca pelo front)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc("salvar_orcamento", {
+      const { error } = await supabase.rpc("salvar_orcamento", {
         _orcamento: { ...payload, id: orcamentoId ?? null },
         _itens: itens.map((it, idx) => ({
           servico_id: it.servico_id || null,

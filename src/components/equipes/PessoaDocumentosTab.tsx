@@ -60,7 +60,7 @@ export function PessoaDocumentosTab({ pessoaId }: { pessoaId: string }) {
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["pessoa-documentos", pessoaId],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("pessoa_documentos" as any) as any)
+      const { data, error } = await (supabase.from("pessoa_documentos"))
         .select("*")
         .eq("pessoa_id", pessoaId)
         .order("created_at", { ascending: false });
@@ -81,7 +81,7 @@ export function PessoaDocumentosTab({ pessoaId }: { pessoaId: string }) {
         arquivo_path = path;
         arquivo_nome = file.name;
       }
-      const { error } = await (supabase.from("pessoa_documentos" as any) as any).insert([{
+      const { error } = await (supabase.from("pessoa_documentos")).insert([{
         pessoa_id: pessoaId,
         tipo: form.tipo,
         nome: form.nome.trim() || form.tipo,
@@ -107,7 +107,7 @@ export function PessoaDocumentosTab({ pessoaId }: { pessoaId: string }) {
   const del = useMutation({
     mutationFn: async (doc: Doc) => {
       if (doc.arquivo_path) await supabase.storage.from(BUCKET).remove([doc.arquivo_path]);
-      const { error } = await (supabase.from("pessoa_documentos" as any) as any).delete().eq("id", doc.id);
+      const { error } = await (supabase.from("pessoa_documentos")).delete().eq("id", doc.id);
       if (error) throw error;
     },
     onSuccess: () => {

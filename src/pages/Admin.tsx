@@ -66,10 +66,10 @@ export default function Admin() {
           plano: novaEmpresaPlano,
         },
       });
-      if (error || (data as any)?.error) {
-        throw new Error((data as any)?.error ?? error?.message ?? "Erro desconhecido");
+      if (error || (data)?.error) {
+        throw new Error((data)?.error ?? error?.message ?? "Erro desconhecido");
       }
-      toast.success((data as any).message ?? "Empresa criada e convite enviado!");
+      toast.success((data).message ?? "Empresa criada e convite enviado!");
       qc.invalidateQueries({ queryKey: ["admin-empresas"] });
       setOpenModal(false);
       setNovaEmpresaNome("");

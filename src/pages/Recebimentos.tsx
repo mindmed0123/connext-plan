@@ -64,7 +64,7 @@ export default function Recebimentos() {
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-rec-select"],
     queryFn: async () =>
-      (await (supabase.from("obras") as any).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
+      (await (supabase.from("obras")).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
 
   // Pagamentos do recebimento aberto no diálogo
@@ -73,7 +73,7 @@ export default function Recebimentos() {
     enabled: !!pagRec?.id,
     queryFn: async () =>
       (
-        await (supabase as any)
+        await supabase
           .from("recebimento_pagamentos")
           .select("*")
           .eq("recebimento_id", pagRec.id)
@@ -83,7 +83,7 @@ export default function Recebimentos() {
   });
 
   const lista = useMemo(() => {
-    const rows = (data ?? []) as any[];
+    const rows = (data ?? [])[];
     if (filtro === "pc_recebidos") {
       return rows.filter((r) => r.pedido_compra_id && r.status === "recebido");
     }
@@ -116,7 +116,7 @@ export default function Recebimentos() {
     mutationFn: async () => {
       const valor = Number(pagForm.valor.replace(",", "."));
       if (!(valor > 0)) throw new Error("Informe um valor maior que zero");
-      const { error } = await (supabase as any).from("recebimento_pagamentos").insert([
+      const { error } = await supabase.from("recebimento_pagamentos").insert([
         {
           recebimento_id: pagRec.id,
           valor,
@@ -140,7 +140,7 @@ export default function Recebimentos() {
 
   const estornarPagamento = useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("recebimento_pagamentos").delete().eq("id", id).select("id");
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("Você não tem permissão para estornar este pagamento.");
@@ -217,7 +217,7 @@ export default function Recebimentos() {
   };
 
   const recAtual = useMemo(
-    () => (pagRec ? (lista as any[]).find((r) => r.id === pagRec.id) ?? pagRec : null),
+    () => (pagRec ? (lista[]).find((r) => r.id === pagRec.id) ?? pagRec : null),
     [lista, pagRec],
   );
   const saldoAtual = recAtual ? Math.max(0, Number(recAtual.valor || 0) - Number(recAtual.valor_recebido || 0)) : 0;
@@ -363,10 +363,10 @@ export default function Recebimentos() {
           )}
 
           <div className="rounded-md border divide-y">
-            {(pagamentos as any[]).length === 0 && (
+            {(pagamentos[]).length === 0 && (
               <p className="p-3 text-sm text-muted-foreground">Nenhum pagamento registrado.</p>
             )}
-            {(pagamentos as any[]).map((p) => (
+            {(pagamentos[]).map((p) => (
               <div key={p.id} className="flex items-center justify-between px-3 py-2 text-sm">
                 <span>{formatDateBR(p.data)}</span>
                 <span className="tabular-nums font-medium">{formatCurrency(Number(p.valor))}</span>
@@ -465,7 +465,7 @@ export default function Recebimentos() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra (manual) —</SelectItem>
-                  {(obras as any[]).map((o) => (
+                  {(obras[]).map((o) => (
                     <SelectItem key={o.id} value={o.id}>
                       {o.codigo_chamado}
                     </SelectItem>

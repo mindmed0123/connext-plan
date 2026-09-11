@@ -40,14 +40,14 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const obras = useQuery({
     queryKey: ["obras-select"],
     enabled: open && vinculo === "existente",
-    queryFn: async () => (await (supabase.from("obras") as any).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
+    queryFn: async () => (await (supabase.from("obras")).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
 
   useEffect(() => {
     if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !obraId) return;
     void (async () => {
       const [{ data: obra }, { data: empresa }] = await Promise.all([
-        (supabase.from("obras") as any).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
+        (supabase.from("obras")).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
         supabase.from("empresas").select("cprb").limit(1).single(),
       ]);
       setRegras({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
@@ -91,7 +91,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
           ...baseObra,
           numero_rc: numero || null,
           data_rc: data || null,
-          status: (status || "aguardando") as any,
+          status: (status || "aguardando"),
         }]);
         if (error) throw error;
       } else if (tipo === "pc") {
@@ -100,7 +100,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
           numero_pedido: numero || null,
           data_recebimento: data || null,
           valor: valor ? Number(valor) : 0,
-          status: (status || "aguardando") as any,
+          status: (status || "aguardando"),
         }]).select("id").single();
         if (error) throw error;
         if (withNf && nfNumero.trim() && nfData) {
@@ -146,7 +146,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
         </DialogHeader>
 
         <div className="space-y-4">
-          <RadioGroup value={vinculo} onValueChange={(v) => setVinculo(v as any)} className="grid grid-cols-2 gap-2">
+          <RadioGroup value={vinculo} onValueChange={(v) => setVinculo(v)} className="grid grid-cols-2 gap-2">
             <Label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
               <RadioGroupItem value="existente" /> Obra cadastrada
             </Label>
