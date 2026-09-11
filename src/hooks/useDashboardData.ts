@@ -247,16 +247,16 @@ export function useDashboardData(filters: DashboardFilters) {
       const valorEmAberto = Math.max(0, valorTotalFaturado - valorRecebido);
 
       const hoje = new Date();
+      const hojeKey = toDateKey(hoje);
       const em15 = new Date();
       em15.setDate(hoje.getDate() + 15);
+      const em15Key = toDateKey(em15);
       const valorReceber15d = recsFiltered
-        .filter(
-          (r) =>
-            r.status === "a_receber" &&
-            r.data_prevista &&
-            new Date(r.data_prevista) <= em15 &&
-            new Date(r.data_prevista) >= hoje,
-        )
+        .filter((r) => {
+          if (r.status !== "a_receber" || !r.data_prevista) return false;
+          const k = String(r.data_prevista).slice(0, 10);
+          return k >= hojeKey && k <= em15Key;
+        })
         .reduce((s, r) => s + Number(r.valor || 0), 0);
 
       // Terceirizados
