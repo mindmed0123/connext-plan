@@ -1,60 +1,49 @@
+# Cadeia NF → retenções → recebimento
 
-## Objetivo
-Remodelar as páginas **Serviços** e **Orçamentos** seguindo o prompt enviado (nível Omie ERP), **preservando os dados atuais**: 7 serviços, 31 orçamentos e 3 itens de orçamento.
+## Solução escolhida
 
-## Adaptações necessárias ao prompt original
+As retenções serão registradas em `lancamentos_financeiros` na categoria **Impostos retidos na fonte**, mas marcadas como **sem impacto no caixa**. O recebimento continuará sendo a única entrada de caixa e usará o valor líquido.
 
-O prompt assume um schema que não bate 100% com o que existe no projeto. Vou adaptar:
+Isso evita a dupla redução que ocorreria se o sistema lançasse o recebimento líquido e também tratasse as retenções como saída de dinheiro.
 
-- O prompt faz `DROP TABLE servicos / orcamentos / orcamento_itens CASCADE` → **não vou dropar**. Vou usar `ALTER TABLE ADD COLUMN IF NOT EXISTS` para acrescentar os campos novos preservando os dados.
-- O prompt referencia tabela `perfis` (não existe — usaremos `profiles`).
-- O prompt referencia `obras.titulo` (não existe — vou usar `codigo_chamado` + `descricao_servico`).
-- O prompt referencia `obra_timeline.descricao` e `tipo` (campos reais são `evento` e `detalhes`).
-- O prompt referencia `compradores.cnpj_cpf` (campo real é `cpf_cnpj`). Vou só garantir os campos extras (cidade, estado, endereco).
-- Trigger `sync_obra_aprovado` do prompt conflita com o `sync_obra_status_from_orcamento` já existente — vou remover/substituir o antigo para evitar duplicidade.
-- `numero_orcamento` (existente) vira `numero` no formato `ORC-YYYY-0001` via trigger; manter `numero_orcamento` como alias/coluna existente para não quebrar listagens antigas.
-- Cores hardcoded `#0B1F42`, `#EE6616` do prompt → vou converter para tokens semânticos do design system (`primary`, `accent`) seguindo as regras do projeto.
+## Banco de dados
 
-## Migration (1 migration única)
+- Adicionar `cprb` em empresas.
+- Ampliar notas fiscais com valor bruto, deduções/base e campos editáveis de INSS, ISS, IRRF e PCC; `valor_liquido` será calculado pelo banco.
+- Preservar NFs antigas com `valor_bruto = valor` e retenções zeradas.
+- Adicionar em recebimentos o vínculo com NF, valor efetivamente recebido e status parcial.
+- Adicionar ao razão um indicador de impacto no caixa.
+- Criar a categoria **Impostos retidos na fonte** para cada empresa.
+- Sincronizar cada NF com um lançamento informativo de retenção, sem impacto no caixa.
+- Sincronizar recebimentos previstos, parciais e completos sem duplicar valores:
+  - previsto: saldo integral em aberto;
+  - parcial: valor pago como realizado e saldo restante como previsto;
+  - completo: valor líquido integral como realizado.
+- Criar uma função transacional para salvar NF e criar ou vincular seu recebimento ao PC existente.
+- Atualizar os resumos financeiros para excluir lançamentos sem impacto do fluxo de caixa e incluí-los somente na DRE.
+- Criar relatório mensal de INSS, ISS, IRRF e PCC por competência.
 
-1. Criar enum/tabela `categorias_servico` + RLS + seed por empresa.
-2. `ALTER TABLE servicos` adicionando: `descricao_detalhada`, `categoria_id`, `desconto_padrao_pct`, `codigo_servico_municipio`, `codigo_lc116`, `codigo_nbs`, `aliquota_iss`, `iss_retido`, `tipo_tributacao`. Mantém `codigo`, `nome`, `unidade`, `preco_unitario`, `ativo`.
-3. Trigger `gerar_codigo_servico` (gera `SRV00001` por empresa) — só dispara se `codigo IS NULL`.
-4. `ALTER TABLE orcamentos` adicionando: `numero` (gerado), `comprador_id`, `vendedor_id`, `data_emissao`, `data_validade`, `data_resposta`, `subtotal`, `desconto_global_pct`, `desconto_global_valor`, `valor_impostos`, `valor_total`, `condicao_pagamento`, `numero_parcelas`, `intervalo_parcelas`, `percentual_entrada`, `objeto`, `local_execucao`, `prazo_execucao`, `observacoes_internas`. Adiciona valores `em_negociacao` e `cancelado` ao enum `orcamento_status` se faltarem.
-5. Backfill: copiar `valor_orcamento → valor_total`, `data_envio → data_emissao` para registros existentes; gerar `numero` para os 31 orçamentos antigos.
-6. `ALTER TABLE orcamento_itens` adicionando: `tipo`, `codigo`, `descricao_detalhada`, `aliquota_iss`. Tornar `subtotal` calculado (drop coluna e recriar como GENERATED).
-7. Trigger `recalc_totais_orcamento` (recalcula `subtotal`, `valor_impostos`, `valor_total` a cada mudança em itens).
-8. Substituir trigger antigo `sync_obra_status_from_orcamento` por versão atualizada que usa os campos novos.
-9. `ALTER TABLE compradores` adicionando `endereco`, `cidade`, `estado` (e-mail/telefone já existem).
-10. Índices novos.
+## Regras sugeridas ao lançar uma NF
 
-## Código frontend
+- INSS: base = bruto − deduções; alíquota sugerida de 11%, ou 3,5% quando a empresa estiver em CPRB.
+- ISS: alíquota sugerida do cliente.
+- IRRF: sugestão de 1,5% quando o cliente retiver IRRF.
+- PCC: sugestão conjunta de 4,65% quando o cliente retiver CSRF/PCC.
+- Todas as bases, alíquotas e valores retidos continuarão editáveis antes de salvar.
+- O vencimento sugerido será emissão + prazo de pagamento do cliente.
 
-- `src/types/servicos.ts` (tipos)
-- `src/pages/Servicos.tsx` — lista estilo Omie (tabela densa, filtros, paginação, painel lateral).
-- `src/components/servicos/ServicoDetalhePanel.tsx` — painel lateral de detalhe.
-- `src/components/servicos/ServicoFormDialog.tsx` — substitui o existente, com abas (Serviço, Impostos, Descrição).
-- `src/pages/Orcamentos.tsx` — lista com chips de status, busca, totais.
-- `src/components/orcamentos/OrcamentoFormDialog.tsx` — substitui o existente, com abas (Cliente, Itens, Pagamento, Observações) e itens vinculados ao catálogo de serviços.
-- `src/components/orcamentos/OrcamentoDetalheSheet.tsx` — sheet de detalhe + ações (enviar, aprovar, reprovar, baixar PDF).
-- `src/lib/orcamento-pdf.ts` — PDF formatado nível Omie com jsPDF + autoTable (lib já está no projeto).
-- Atualizar `OrcamentoDetailSheet.tsx` existente (renomear/redirecionar para o novo Sheet) e remover imports quebrados.
-- `usePermissions` + sidebar: garantir que `categorias_servico` está atrelado à permissão `servicos`.
+## Telas
 
-## Detalhes técnicos
-- Tokens HSL/semânticos no lugar das cores hex hardcoded do prompt.
-- `useAuth().empresaId` já existe no projeto.
-- `formatCurrency` está em `@/lib/obra-helpers` (não em `@/lib/utils`) — vou ajustar imports.
-- Datas usando `@/lib/date.ts` (helpers do projeto p/ evitar shift de fuso).
-- `jspdf` + `jspdf-autotable` precisam ser instalados (verificar `package.json`).
+- Cadastro e edição da NF: mostrar bruto, deduções, bases, alíquotas, retenções e líquido em tempo real.
+- Recebimentos: informar o valor recebido; valor menor mantém o saldo como parcial e aberto.
+- Dashboard: “em aberto” será líquido faturado menos o efetivamente recebido.
+- DRE da obra: Receita bruta faturada, Retenções, Receita líquida, Recebido e Em aberto.
+- Financeiro: adicionar relatório mensal simples das quatro retenções.
 
-## Riscos
-- Backfill de `numero` em orçamentos antigos: vou gerar `ORC-YYYY-0001`, `0002`… ordenado por `created_at` por empresa.
-- Trigger `recalc_totais_orcamento` substitui o `recalculate_orcamento_total` existente — comportamento equivalente, sem risco.
-- A coluna `subtotal` em `orcamento_itens` hoje é nullable normal; transformar em `GENERATED` exige drop+recreate. Não há perda (é derivada).
+## Validação
 
-## Ordem de execução
-1. Migration única (com backfill).
-2. Após aprovação da migration: instalar `jspdf`/`jspdf-autotable` se faltar.
-3. Criar types + páginas + componentes + PDF em paralelo.
-4. Atualizar rotas/sidebar se necessário (provavelmente já estão).
+- Conferir NFs antigas sem alteração financeira.
+- Testar NF sem retenção, com retenção, vinculada a PC e sem PC.
+- Testar recebimento parcial e quitação posterior.
+- Confirmar que caixa recebe apenas o líquido e que DRE não duplica retenções.
+- Comparar Dashboard, DRE, recebimentos e razão para a mesma obra.
