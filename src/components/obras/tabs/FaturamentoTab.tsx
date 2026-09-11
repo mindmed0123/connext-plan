@@ -15,6 +15,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   const [pc, setPc] = useState({ numero_pedido: "", data_recebimento: getTodayDateInputValue(), valor: "" });
   const [nf, setNf] = useState({ numero_nf: "", data_emissao: getTodayDateInputValue(), valor: "" });
   const [nfRetencoes, setNfRetencoes] = useState<RetencoesNf>(emptyRetencoes());
+  const [regrasNf, setRegrasNf] = useState<any>(null);
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
 
   useEffect(() => {
@@ -23,18 +24,23 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
         (supabase.from("obras") as any).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
         supabase.from("empresas").select("cprb").limit(1).single(),
       ]);
-      const cliente = obra?.clientes;
-      const bruto = Number(nfRetencoes.valor_bruto || nf.valor || 0);
-      const aliquotaInss = empresa?.cprb ? 3.5 : 11;
-      setNfRetencoes((atual) => ({ ...atual, base_inss: String(bruto), aliquota_inss: String(aliquotaInss),
-        aliquota_iss: String(cliente?.aliquota_iss ?? 0),
-        ret_inss: cliente?.retem_inss ? String(Math.round(bruto * aliquotaInss) / 100) : "0",
-        ret_iss: cliente?.retem_iss ? String(Math.round(bruto * Number(cliente?.aliquota_iss ?? 0)) / 100) : "0",
-        ret_irrf: cliente?.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
-        ret_pcc: cliente?.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
-      }));
+      setRegrasNf({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
     })();
   }, [obraId]);
+
+  useEffect(() => {
+    if (!regrasNf) return;
+    const bruto = Number(nf.valor || 0);
+    const aliquotaInss = regrasNf.cprb ? 3.5 : 11;
+    const baseInss = Math.max(0, bruto - Number(nfRetencoes.valor_deducoes_inss || 0));
+    setNfRetencoes((atual) => ({ ...atual, valor_bruto: nf.valor, base_inss: String(baseInss), aliquota_inss: String(aliquotaInss),
+      aliquota_iss: String(regrasNf.aliquota_iss ?? 0),
+      ret_inss: regrasNf.retem_inss ? String(Math.round(baseInss * aliquotaInss) / 100) : "0",
+      ret_iss: regrasNf.retem_iss ? String(Math.round(bruto * Number(regrasNf.aliquota_iss ?? 0)) / 100) : "0",
+      ret_irrf: regrasNf.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
+      ret_pcc: regrasNf.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
+    }));
+  }, [nf.valor, regrasNf]);
 
   const { data: rcs } = useQuery({
     queryKey: ["rcs", obraId],

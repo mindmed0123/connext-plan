@@ -44,7 +44,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   });
 
   useEffect(() => {
-    if (tipo !== "nf" || !obraId) return;
+    if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !obraId) return;
     void (async () => {
       const [{ data: obra }, { data: empresa }] = await Promise.all([
         (supabase.from("obras") as any).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
@@ -52,16 +52,17 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
       ]);
       setRegras({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
     })();
-  }, [obraId, tipo]);
+  }, [obraId, tipo, withNf]);
 
   useEffect(() => {
-    if (tipo !== "nf" || !regras) return;
-      const bruto = Number(valor || 0);
+    if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !regras) return;
+      const brutoTexto = tipo === "pc" ? (nfValor || valor) : valor;
+      const bruto = Number(brutoTexto || 0);
       const aliquotaInss = regras.cprb ? 3.5 : 11;
       const baseInss = Math.max(0, bruto - Number(retencoes.valor_deducoes_inss || 0));
       setRetencoes((atual) => ({
         ...atual,
-        valor_bruto: valor,
+        valor_bruto: brutoTexto,
         base_inss: String(baseInss), aliquota_inss: String(aliquotaInss),
         aliquota_iss: String(regras.aliquota_iss ?? 0),
         ret_inss: regras.retem_inss ? String(Math.round(baseInss * aliquotaInss) / 100) : "0",
@@ -69,7 +70,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
         ret_irrf: regras.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
         ret_pcc: regras.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
       }));
-  }, [valor, regras, tipo]);
+  }, [valor, nfValor, regras, tipo, withNf]);
 
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");
@@ -108,7 +109,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
             pedido_compra_id: pcRow!.id,
             numero_nf: nfNumero.trim(),
             data_emissao: nfData,
-            ...nfPayload(emptyRetencoes(nfValor || valor || "0")),
+            ...nfPayload({ ...retencoes, valor_bruto: nfValor || valor || "0" }),
           }]);
           if (nfErr) throw nfErr;
         }
@@ -191,7 +192,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
             </div>
           </div>
 
-          {tipo !== "rc" && (
+          {tipo === "pc" && (
             <div className="space-y-1.5">
               <Label>Valor (R$)</Label>
               <Input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
@@ -241,6 +242,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
                     <Input type="number" step="0.01" value={nfValor} onChange={(e) => setNfValor(e.target.value)}
                       placeholder={valor || "0,00"} />
                   </div>
+                  <RetencoesNfFields value={{ ...retencoes, valor_bruto: retencoes.valor_bruto || nfValor || valor }} onChange={(next) => { setRetencoes(next); setNfValor(next.valor_bruto); }} />
                 </div>
               )}
             </div>
