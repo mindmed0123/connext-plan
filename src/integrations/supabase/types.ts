@@ -2789,6 +2789,7 @@ export type Database = {
           empresa_id: string
         }[]
       }
+      aprovar_orcamento: { Args: { _id: string }; Returns: undefined }
       can_access_contratacao: {
         Args: { _contratacao_id: string; _uid: string }
         Returns: boolean
@@ -2950,6 +2951,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      salvar_orcamento: {
+        Args: { _itens: Json; _orcamento: Json }
+        Returns: string
       }
       seed_categorias_financeiras: {
         Args: { _empresa_id: string }

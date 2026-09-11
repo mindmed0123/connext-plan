@@ -37,6 +37,12 @@ export function OrcamentoDetailSheet({
 
   const updateStatus = useMutation({
     mutationFn: async (status: "aprovado" | "reprovado" | "em_negociacao") => {
+      if (status === "aprovado") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).rpc("aprovar_orcamento", { _id: orcamentoId! });
+        if (error) throw error;
+        return;
+      }
       const { error } = await supabase.from("orcamentos").update({ status }).eq("id", orcamentoId!);
       if (error) throw error;
     },
@@ -45,9 +51,30 @@ export function OrcamentoDetailSheet({
       qc.invalidateQueries({ queryKey: ["orc-detail", orcamentoId] });
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-data"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const aprovar = async () => {
+    const obraId = (orc as { obra_id?: string | null } | null)?.obra_id ?? null;
+    if (obraId) {
+      const { data: outros } = await supabase
+        .from("orcamentos")
+        .select("id, numero")
+        .eq("obra_id", obraId)
+        .eq("status", "aprovado")
+        .neq("id", orcamentoId!);
+      if ((outros?.length ?? 0) > 0) {
+        const ok = window.confirm(
+          "Esta obra já tem um orçamento aprovado. Ao aprovar esta versão, a anterior será marcada como reprovada. Continuar?",
+        );
+        if (!ok) return;
+      }
+    }
+    updateStatus.mutate("aprovado");
+  };
 
   const handlePDF = async () => {
     if (!data?.orc || !empresaId) return;
@@ -155,7 +182,13 @@ export function OrcamentoDetailSheet({
 
             <div className="flex flex-wrap gap-2 pt-3 border-t">
               <Button variant="outline" onClick={handlePDF}><FileDown className="h-4 w-4" /> Gerar PDF</Button>
-              <Button variant="outline" onClick={() => onEdit(orc.id)}><Pencil className="h-4 w-4" /> Editar</Button>
+              {orc.status !== "aprovado" ? (
+                <Button variant="outline" onClick={() => onEdit(orc.id)}><Pencil className="h-4 w-4" /> Editar</Button>
+              ) : (
+                <span className="self-center text-xs text-muted-foreground">
+                  Orçamento aprovado — somente leitura. Crie uma nova versão ou um adendo.
+                </span>
+              )}
               {orc.status === "enviado" && (
                 <Button variant="outline" onClick={() => updateStatus.mutate("em_negociacao")}>
                   <MessageSquare className="h-4 w-4" /> Em negociação
@@ -163,7 +196,7 @@ export function OrcamentoDetailSheet({
               )}
               {(orc.status === "enviado" || orc.status === "em_negociacao") && (
                 <>
-                  <Button onClick={() => updateStatus.mutate("aprovado")} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Button onClick={aprovar} className="bg-emerald-600 hover:bg-emerald-700">
                     <Check className="h-4 w-4" /> Aprovar
                   </Button>
                   <Button variant="destructive" onClick={() => updateStatus.mutate("reprovado")}>

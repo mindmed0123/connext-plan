@@ -160,7 +160,7 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
 
       const patch: any = {
         numero_orcamento: editForm.numero_orcamento || null,
-        valor_orcamento: parseFloat(editForm.valor_orcamento) || 0,
+        // valor_orcamento é calculado pelo sistema a partir dos itens — não editável aqui
         data_envio: editForm.data_envio || null,
         engenheiro_aprovador: editForm.engenheiro_aprovador || null,
         status: editForm.status,
@@ -360,7 +360,8 @@ export function OrcamentoTab({ obraId }: { obraId: string }) {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Valor (R$)</Label>
-                      <Input type="number" step="0.01" value={editForm.valor_orcamento} onChange={(e) => setEditForm({ ...editForm, valor_orcamento: e.target.value })} />
+                      <Input value={formatCurrency(Number(o.valor_orcamento ?? 0))} disabled readOnly />
+                      <p className="text-[11px] text-muted-foreground">Calculado pelos itens do orçamento</p>
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Data de envio</Label>
