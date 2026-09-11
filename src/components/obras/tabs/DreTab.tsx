@@ -36,6 +36,7 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone?: "rec
 
 export function DreTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
 
   const { data: resumo } = useQuery({
@@ -231,13 +232,19 @@ export function DreTab({ obraId }: { obraId: string }) {
                   {l.tipo === "receita" ? "+" : "-"} {formatCurrency(l.valor)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {l.origem === "parcela_pagamento" ? (
+                  {l.origem && l.origem !== "financeiro" ? (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2 text-xs"
-                      title="Gerado pela contratação. Altere na aba Pagamentos."
-                      onClick={() => setSearchParams({ tab: "contratacoes" }, { replace: true })}
+                      title="Lançamento gerado automaticamente. Altere na tela de origem."
+                      onClick={() => {
+                        const destino = abrirOrigemPath(l.origem, obraId);
+                        if (!destino) return;
+                        const mesmaObra = destino.startsWith(`/obras/${obraId}?tab=`);
+                        if (mesmaObra) setSearchParams({ tab: destino.split("tab=")[1] }, { replace: true });
+                        else navigate(destino);
+                      }}
                     >
                       Abrir origem
                     </Button>
@@ -247,8 +254,8 @@ export function DreTab({ obraId }: { obraId: string }) {
                       variant="ghost"
                       className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
                       title="Excluir lançamento"
-                      disabled={excluir.isPending}
-                      onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluir.mutate(l); }}
+                      disabled={excluirManual.isPending}
+                      onClick={() => { if (confirm("Excluir este lançamento da obra?")) excluirManual.mutate(l); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
