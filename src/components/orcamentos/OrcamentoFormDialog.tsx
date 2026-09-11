@@ -310,7 +310,7 @@ export function OrcamentoFormDialog({
         percentual_entrada: Number(percentualEntrada) || 0,
         status: novoStatus,
         valor_orcamento: total,
-        data_envio: novoStatus === "enviado" ? new Date().toISOString().slice(0, 10) : null,
+        data_envio: novoStatus === "enviado" ? getTodayDateInputValue() : null,
       };
 
       let id = orcamentoId;

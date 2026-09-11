@@ -92,16 +92,20 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
     setParcelasInput((arr) => arr.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
   };
 
-  const somaParcelas = parcelasInput.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
-  const totalContratado = parseFloat(form.valor_total) || 0;
-  const diferenca = +(totalContratado - somaParcelas).toFixed(2);
+  const somaParcelasCent = parcelasInput.reduce(
+    (s, p) => s + emCentavos(parseFloat(p.valor) || 0),
+    0,
+  );
+  const somaParcelas = somaParcelasCent / 100;
+  const totalContratado = arredondar2(parseFloat(form.valor_total) || 0);
+  const diferenca = (emCentavos(totalContratado) - somaParcelasCent) / 100;
 
   const create = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       const valor_total = totalContratado;
       const qtd = parcelasInput.length;
-      if (Math.abs(diferenca) > 0.01) {
+      if (emCentavos(totalContratado) !== somaParcelasCent) {
         throw new Error(`Soma das parcelas (${formatCurrency(somaParcelas)}) precisa ser igual ao valor total (${formatCurrency(valor_total)})`);
       }
 
