@@ -38,7 +38,8 @@ export function useDashboardData(filters: DashboardFilters) {
         resumoRes,
       ] = await Promise.all([
 
-        (supabase.from("obras") as any)
+        supabase
+          .from("obras")
           .select(
             "id,codigo_chamado,endereco,descricao_servico,engenheiro_responsavel,regiao,regiao_label,origem,status,data_recebimento,created_at,updated_at",
           )
