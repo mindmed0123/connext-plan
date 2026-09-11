@@ -55,6 +55,18 @@ export default function ObraDetalhe() {
     },
   });
 
+  const updateCliente = useMutation({
+    mutationFn: async (cliente_id: string | null) => {
+      const { error } = await supabase.from("obras").update({ cliente_id } as any).eq("id", obraId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cliente da obra atualizado");
+      qc.invalidateQueries({ queryKey: ["obra", obraId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar cliente"),
+  });
+
   const updateStatus = useMutation({
     mutationFn: async (status: any) => {
       const { data: u } = await supabase.auth.getUser();
