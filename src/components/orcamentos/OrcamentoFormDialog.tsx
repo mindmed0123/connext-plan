@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
 import { getTodayDateInputValue } from "@/lib/date";
-import { calcularTotaisOrcamento, subtotalItem } from "@/lib/orcamento-calc";
+import { calcularBdiPct, calcularTotaisOrcamento, subtotalItem } from "@/lib/orcamento-calc";
 
 type ItemForm = {
   id?: string;
@@ -82,6 +82,7 @@ export function OrcamentoFormDialog({
   const [prazoExecucao, setPrazoExecucao] = useState("");
   const [localExecucao, setLocalExecucao] = useState("");
   const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
+  const [bdi, setBdi] = useState({ ac: 0, s: 0, r: 0, df: 0, l: 0, i: 0 });
   const [condicaoPagamento, setCondicaoPagamento] = useState<string>("a_vista");
   const [numeroParcelas, setNumeroParcelas] = useState(1);
   const [intervaloParcelas, setIntervaloParcelas] = useState(30);
@@ -170,6 +171,7 @@ export function OrcamentoFormDialog({
       setObservacoes(""); setItens([]); setNumero(null);
       setObjeto(""); setPrazoExecucao(""); setLocalExecucao("");
       setDescontoGlobalPct(0); setCondicaoPagamento("a_vista");
+      setBdi({ ac: 0, s: 0, r: 0, df: 0, l: 0, i: 0 });
       setNumeroParcelas(1); setIntervaloParcelas(30); setPercentualEntrada(0);
       setObservacoesInternas("");
       return;
@@ -195,6 +197,10 @@ export function OrcamentoFormDialog({
       setPrazoExecucao(o.prazo_execucao ?? "");
       setLocalExecucao(o.local_execucao ?? "");
       setDescontoGlobalPct(Number(o.desconto_global_pct ?? 0));
+      setBdi({
+        ac: Number(o.bdi_ac ?? 0), s: Number(o.bdi_s ?? 0), r: Number(o.bdi_r ?? 0),
+        df: Number(o.bdi_df ?? 0), l: Number(o.bdi_l ?? 0), i: Number(o.bdi_i ?? 0),
+      });
       setCondicaoPagamento(o.condicao_pagamento ?? "a_vista");
       setNumeroParcelas(Number(o.numero_parcelas ?? 1));
       setIntervaloParcelas(Number(o.intervalo_parcelas ?? 30));
@@ -303,6 +309,12 @@ export function OrcamentoFormDialog({
         prazo_execucao: prazoExecucao || null,
         local_execucao: localExecucao || null,
         desconto_global_pct: Number(descontoGlobalPct) || 0,
+        bdi_ac: Number(bdi.ac) || 0,
+        bdi_s: Number(bdi.s) || 0,
+        bdi_r: Number(bdi.r) || 0,
+        bdi_df: Number(bdi.df) || 0,
+        bdi_l: Number(bdi.l) || 0,
+        bdi_i: Number(bdi.i) || 0,
         condicao_pagamento: condicaoPagamento,
         numero_parcelas: Number(numeroParcelas) || 1,
         intervalo_parcelas: Number(intervaloParcelas) || 30,
@@ -645,6 +657,30 @@ export function OrcamentoFormDialog({
                   <Input type="number" step="0.01" min={0} max={100}
                     value={descontoGlobalPct}
                     onChange={(e) => setDescontoGlobalPct(Number(e.target.value))} />
+                </div>
+                <div className="md:col-span-2 rounded-md border p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Composição do BDI (demonstrativo)</Label>
+                    <span className="text-xs text-muted-foreground">
+                      BDI: <strong>{calcularBdiPct(bdi).toFixed(2)}%</strong> — não altera o total
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+                    {([
+                      ["ac", "Adm. central %"],
+                      ["s", "Seguro %"],
+                      ["r", "Risco %"],
+                      ["df", "Desp. financ. %"],
+                      ["l", "Lucro %"],
+                      ["i", "Impostos %"],
+                    ] as const).map(([k, label]) => (
+                      <div key={k}>
+                        <Label className="text-[11px]">{label}</Label>
+                        <Input type="number" step="0.01" min={0} value={bdi[k]}
+                          onChange={(e) => setBdi({ ...bdi, [k]: Number(e.target.value) })} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-xs">Condição de pagamento</Label>
