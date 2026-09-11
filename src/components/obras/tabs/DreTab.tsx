@@ -136,7 +136,7 @@ export function DreTab({ obraId }: { obraId: string }) {
         : l.origem === "cartao" ? "cartao_despesas"
         : l.origem === "nota_fiscal" ? "notas_fiscais"
         : l.origem === "recebimento" ? "recebimentos"
-        : l.origem === "parcela" ? null
+        : l.origem === "parcela_pagamento" ? null
         : "lancamentos_financeiros";
 
       if (!tabela) throw new Error("Este lançamento vem de uma parcela de contratação. Exclua na aba Pagamentos.");
