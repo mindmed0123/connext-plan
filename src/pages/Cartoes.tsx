@@ -461,6 +461,7 @@ export default function Cartoes() {
               {cartoes.map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}
             </SelectContent>
           </Select>
+          </div>
         </div>
         <Table>
           <TableHeader>
