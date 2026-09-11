@@ -188,6 +188,34 @@ Deno.serve(async (req) => {
   const evt = String(eventType).toLowerCase();
   const updates: Record<string, any> = {};
 
+  const ACTIVATION_EVENTS = [
+    "purchase_approved", "subscription_created", "subscription_renewed",
+    "subscription.activated", "payment.approved", "payment.completed",
+  ];
+  const genericStatus = (data?.status ?? data?.subscription?.status ?? "").toString().toLowerCase();
+  const isActivation = ACTIVATION_EVENTS.includes(evt) ||
+    (!ACTIVATION_EVENTS.includes(evt) && ["active", "ativo", "paid", "approved"].includes(genericStatus));
+
+  if (isActivation) {
+    if (!planoRow) {
+      console.warn("Cakto webhook: product_id sem plano correspondente", { productId, eventType });
+      await supabase.from("billing_events")
+        .update({ processed_at: new Date().toISOString() })
+        .eq("event_id", String(eventId));
+      return ok({ ok: true, event: eventType, processed: false, reason: "plano_nao_identificado" });
+    }
+    // Valor pago deve ser compatível com o preço do plano (desconto de até 50%)
+    const precoEsperado = Number(periodo === "anual" ? planoRow.preco_anual : planoRow.preco_mensal) || 0;
+    if (paidAmount != null && Number.isFinite(paidAmount) && precoEsperado > 0 &&
+        paidAmount < precoEsperado * 0.5) {
+      console.warn("Cakto webhook: valor pago incompatível", { paidAmount, precoEsperado, productId });
+      await supabase.from("billing_events")
+        .update({ processed_at: new Date().toISOString() })
+        .eq("event_id", String(eventId));
+      return ok({ ok: true, event: eventType, processed: false, reason: "valor_incompativel" });
+    }
+  }
+
   const setActive = () => {
     updates.status = "active";
     updates.current_period_start = new Date().toISOString();
