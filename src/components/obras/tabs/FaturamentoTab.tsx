@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
+import { emptyRetencoes, nfPayload, RetencoesNfFields, type RetencoesNf } from "@/components/financeiro/RetencoesNfFields";
 
 export function FaturamentoTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const [rc, setRc] = useState({ numero_rc: "", data_rc: getTodayDateInputValue() });
   const [pc, setPc] = useState({ numero_pedido: "", data_recebimento: getTodayDateInputValue(), valor: "" });
   const [nf, setNf] = useState({ numero_nf: "", data_emissao: getTodayDateInputValue(), valor: "" });
+  const [nfRetencoes, setNfRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
 
   const { data: rcs } = useQuery({
@@ -68,7 +70,8 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   const addNf = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("notas_fiscais").insert([{
-        obra_id: obraId, numero_nf: nf.numero_nf, data_emissao: nf.data_emissao, valor: parseFloat(nf.valor) || 0,
+        obra_id: obraId, numero_nf: nf.numero_nf, data_emissao: nf.data_emissao,
+        ...nfPayload({ ...nfRetencoes, valor_bruto: nfRetencoes.valor_bruto || nf.valor }),
       }]);
       if (error) throw error;
       await log("Nota fiscal emitida", `NF ${nf.numero_nf} • ${formatCurrency(nf.valor)}`);
@@ -76,7 +79,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
     onSuccess: () => {
       toast.success("NF registrada"); qc.invalidateQueries({ queryKey: ["nfs", obraId] });
       qc.invalidateQueries({ queryKey: ["timeline", obraId] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setNf({ ...nf, numero_nf: "", valor: "" });
+      setNf({ ...nf, numero_nf: "", valor: "" }); setNfRetencoes(emptyRetencoes());
     },
   });
 
@@ -138,7 +141,8 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
           <div><Label className="text-xs">Valor</Label><Input type="number" step="0.01" value={nf.valor} onChange={(e) => setNf({ ...nf, valor: e.target.value })} /></div>
           <div className="flex items-end"><Button size="sm" className="w-full" onClick={() => addNf.mutate()} disabled={!nf.numero_nf}>Adicionar</Button></div>
         </div>
-        {nfs?.map((n) => <p key={n.id} className="text-xs text-muted-foreground">• NF {n.numero_nf} ({formatCurrency(n.valor)})</p>)}
+        <RetencoesNfFields value={{ ...nfRetencoes, valor_bruto: nfRetencoes.valor_bruto || nf.valor }} onChange={(next) => { setNfRetencoes(next); setNf({ ...nf, valor: next.valor_bruto }); }} />
+        {nfs?.map((n: any) => <p key={n.id} className="text-xs text-muted-foreground">• NF {n.numero_nf} — bruto {formatCurrency(n.valor_bruto ?? n.valor)} · líquido {formatCurrency(n.valor_liquido ?? n.valor)}</p>)}
       </div>
 
       {/* Recebimentos */}

@@ -98,6 +98,7 @@ export function PedidoCompraEditDialog({
         numero_nf: nfNumero.trim(),
         data_emissao: nfData,
         valor: nfValor ? Number(nfValor) : (pedido.valor ?? 0),
+        valor_bruto: nfValor ? Number(nfValor) : (pedido.valor ?? 0),
       }]);
       if (error) throw error;
     },

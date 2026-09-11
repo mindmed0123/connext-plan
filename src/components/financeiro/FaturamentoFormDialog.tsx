@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { getTodayDateInputValue } from "@/lib/date";
+import { emptyRetencoes, nfPayload, RetencoesNfFields, type RetencoesNf } from "@/components/financeiro/RetencoesNfFields";
 
 type Tipo = "rc" | "pc" | "nf";
 
@@ -26,6 +27,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [numero, setNumero] = useState("");
   const [data, setData] = useState("");
   const [valor, setValor] = useState("");
+  const [retencoes, setRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [status, setStatus] = useState<string>(tipo === "nf" ? "" : "aguardando");
 
   // NF opcional ao criar PC
@@ -43,7 +45,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");
     setStatus(tipo === "nf" ? "" : "aguardando");
-    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor("");
+    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor(""); setRetencoes(emptyRetencoes());
   };
 
   const save = useMutation({
@@ -77,7 +79,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
             pedido_compra_id: pcRow!.id,
             numero_nf: nfNumero.trim(),
             data_emissao: nfData,
-            valor: nfValor ? Number(nfValor) : (valor ? Number(valor) : 0),
+            ...nfPayload(emptyRetencoes(nfValor || valor || "0")),
           }]);
           if (nfErr) throw nfErr;
         }
@@ -88,7 +90,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
           ...baseObra,
           numero_nf: numero.trim(),
           data_emissao: data,
-          valor: valor ? Number(valor) : 0,
+          ...nfPayload({ ...retencoes, valor_bruto: retencoes.valor_bruto || valor }),
         }]);
         if (error) throw error;
       }
@@ -165,6 +167,13 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
               <Label>Valor (R$)</Label>
               <Input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
             </div>
+          )}
+
+          {tipo === "nf" && (
+            <RetencoesNfFields
+              value={{ ...retencoes, valor_bruto: retencoes.valor_bruto || valor }}
+              onChange={(next) => { setRetencoes(next); setValor(next.valor_bruto); }}
+            />
           )}
 
           {tipo !== "nf" && (
