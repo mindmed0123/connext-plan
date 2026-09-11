@@ -139,7 +139,9 @@ export default function Faturamento() {
                           ? <span className="text-success font-medium">✓ {nfsLinked.map((n) => n.numero_nf).join(", ")}</span>
                           : <span className="text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="text-xs capitalize">{p.status}</TableCell>
+                      <TableCell className="text-xs">
+                        {p.status === "recebido" ? "PC recebido do cliente" : "Aguardando"}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button size="icon" variant="ghost" onClick={() => setEditPc(p)}><Pencil className="h-4 w-4" /></Button>

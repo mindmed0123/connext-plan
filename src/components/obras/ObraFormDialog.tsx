@@ -28,6 +28,7 @@ export function ObraFormDialog({
     descricao_servico: "",
     endereco: "",
     data_recebimento: getTodayDateInputValue(),
+    cliente_id: "",
   });
 
   // Compradores cadastrados (fonte única de verdade — aba Compradores)
@@ -39,6 +40,19 @@ export function ObraFormDialog({
         .order("nome");
       if (error) throw error;
       return ((data ?? []) as any[]).filter((c) => c.ativo !== false);
+    },
+  });
+
+  // Clientes (quem paga a obra — define o prazo de pagamento dos recebimentos)
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes-obra-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("id, nome, prazo_pagamento_dias")
+        .order("nome");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -108,6 +122,10 @@ export function ObraFormDialog({
         _data_recebimento: form.data_recebimento,
       });
       if (error) throw error;
+      const novaObra: any = Array.isArray(data) ? data[0] : data;
+      if (form.cliente_id && novaObra?.id) {
+        await supabase.from("obras").update({ cliente_id: form.cliente_id } as any).eq("id", novaObra.id);
+      }
       return data;
     },
     onSuccess: () => {
@@ -241,6 +259,28 @@ export function ObraFormDialog({
                 </Button>
               </div>
             )}
+          </div>
+
+          {/* Cliente */}
+          <div className="space-y-2 col-span-2">
+            <Label>Cliente (quem paga)</Label>
+            <Select
+              value={form.cliente_id || "none"}
+              onValueChange={(v) => setForm({ ...form, cliente_id: v === "none" ? "" : v })}
+            >
+              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Sem cliente definido —</SelectItem>
+                {(clientes as any[]).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}{c.prazo_pagamento_dias ? ` · ${c.prazo_pagamento_dias} dias` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Usado para calcular a data prevista dos recebimentos gerados pelos pedidos de compra.
+            </p>
           </div>
 
           <div className="space-y-2 col-span-2">

@@ -1629,6 +1629,7 @@ export type Database = {
       }
       obras: {
         Row: {
+          cliente_id: string | null
           codigo_chamado: string
           contrato_qtd_contratada: number
           contrato_qtd_prevista: number
@@ -1649,6 +1650,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cliente_id?: string | null
           codigo_chamado: string
           contrato_qtd_contratada?: number
           contrato_qtd_prevista?: number
@@ -1669,6 +1671,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cliente_id?: string | null
           codigo_chamado?: string
           contrato_qtd_contratada?: number
           contrato_qtd_prevista?: number
@@ -1689,6 +1692,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "obras_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -2510,6 +2520,13 @@ export type Database = {
             referencedRelation: "obras"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recebimentos_pedido_compra_id_fkey"
+            columns: ["pedido_compra_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_compra"
+            referencedColumns: ["id"]
+          },
         ]
       }
       regioes_obra: {
@@ -2762,6 +2779,7 @@ export type Database = {
           _regiao_label: string
         }
         Returns: {
+          cliente_id: string | null
           codigo_chamado: string
           contrato_qtd_contratada: number
           contrato_qtd_prevista: number

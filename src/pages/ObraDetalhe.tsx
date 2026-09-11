@@ -35,6 +35,16 @@ export default function ObraDetalhe() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabAtual = searchParams.get("tab") ?? "dre";
 
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes-obra-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clientes").select("id, nome, prazo_pagamento_dias").order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra", obraId],
     enabled: !!obraId,
@@ -43,6 +53,18 @@ export default function ObraDetalhe() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const updateCliente = useMutation({
+    mutationFn: async (cliente_id: string | null) => {
+      const { error } = await supabase.from("obras").update({ cliente_id } as any).eq("id", obraId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cliente da obra atualizado");
+      qc.invalidateQueries({ queryKey: ["obra", obraId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar cliente"),
   });
 
   const updateStatus = useMutation({
@@ -142,6 +164,27 @@ export default function ObraDetalhe() {
         </div>
 
         <div className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Cliente: </span>
+            {isAdmin ? (
+              <Select
+                value={(obra as any).cliente_id ?? "none"}
+                onValueChange={(v) => updateCliente.mutate(v === "none" ? null : v)}
+              >
+                <SelectTrigger className="h-8 w-[220px] text-xs"><SelectValue placeholder="Sem cliente" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Sem cliente —</SelectItem>
+                  {(clientes as any[]).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}{c.prazo_pagamento_dias ? ` · ${c.prazo_pagamento_dias} dias` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span>{(clientes as any[]).find((c) => c.id === (obra as any).cliente_id)?.nome ?? "—"}</span>
+            )}
+          </div>
           <div><span className="text-muted-foreground">Origem: </span>{ORIGEM_LABEL[obra.origem]}</div>
           <div><span className="text-muted-foreground">Região: </span>{getRegiaoLabel(obra as any)}</div>
           <div><span className="text-muted-foreground">Engenheiro: </span>{obra.engenheiro_responsavel || "—"}</div>
