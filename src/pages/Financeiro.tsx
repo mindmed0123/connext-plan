@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,6 +71,7 @@ const emptyForm: LancamentoForm = {
 export default function Financeiro() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [tab, setTab] = useState("visao-geral");
   const [openLanc, setOpenLanc] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -301,6 +303,7 @@ export default function Financeiro() {
       qc.invalidateQueries({ queryKey: ["lancamentos"] });
       qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
       qc.invalidateQueries({ queryKey: ["dre-obras"] });
+      qc.invalidateQueries({ queryKey: ["financeiro-kpis"] });
       setOpenLanc(false); setEditId(null); setForm(emptyForm);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
@@ -318,6 +321,7 @@ export default function Financeiro() {
       qc.invalidateQueries({ queryKey: ["lancamentos"] });
       qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
       qc.invalidateQueries({ queryKey: ["dre-obras"] });
+      qc.invalidateQueries({ queryKey: ["financeiro-kpis"] });
     },
   });
 
