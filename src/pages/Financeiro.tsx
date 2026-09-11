@@ -250,37 +250,25 @@ export default function Financeiro() {
     const limite = addDays(hoje, 30);
     const itens: Array<{ data: Date; descricao: string; valor: number; tipo: string; vencido: boolean }> = [];
 
-    (parcelas as any[]).filter((p) => p.status === "pendente" && p.data_prevista).forEach((p) => {
-      const d = parseISO(p.data_prevista);
-      if (isBefore(d, limite)) {
-        itens.push({
-          data: d,
-          descricao: `${p.contratacoes_terceirizado?.pessoas?.nome ?? "Terceirizado"} — ${p.contratacoes_terceirizado?.obras?.codigo_chamado ?? ""}`,
-          valor: Number(p.valor),
-          tipo: "Parcela",
-          vencido: isBefore(d, hoje),
-        });
-      }
-    });
-
-    // Não repetir a mesma parcela: lançamentos com origem 'parcela_pagamento' já
-    // aparecem acima a partir da própria parcela.
+    // Fonte única: o razão já contém parcelas, materiais e cartão
     (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto"
-      && l.origem !== "parcela_pagamento" && l.data_vencimento).forEach((l) => {
+      && l.data_vencimento).forEach((l) => {
       const d = parseISO(l.data_vencimento);
       if (isBefore(d, limite)) {
         itens.push({
           data: d,
           descricao: l.descricao + (l.fornecedor_nome ? ` — ${l.fornecedor_nome}` : ""),
           valor: Number(l.valor),
-          tipo: "Despesa",
+          tipo: l.origem === "parcela_pagamento" ? "Parcela"
+            : l.origem === "cartao" ? "Cartão"
+            : l.origem === "material" ? "Material" : "Despesa",
           vencido: isBefore(d, hoje),
         });
       }
     });
 
     return itens.sort((a, b) => a.data.getTime() - b.data.getTime());
-  }, [parcelas, lancamentos]);
+  }, [lancamentos]);
 
   // ── Mutations ──────────────────────────────────────────────────────────
   const salvar = useMutation({
