@@ -171,25 +171,23 @@ export default function Financeiro() {
     },
   });
 
-  // ── KPIs ────────────────────────────────────────────────────────────────
+  // ── KPIs (fonte única no banco) ─────────────────────────────────────────
+  const { data: kpiRow } = useQuery({
+    queryKey: ["financeiro-kpis", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_financeiro_kpis" as any, {});
+      if (error) throw error;
+      return (Array.isArray(data) ? data[0] : data) as any;
+    },
+  });
+
   const kpis = useMemo(() => {
-    const all = lancamentos as any[];
-    const receita_real =
-      all.filter((l) => l.tipo === "receita" && l.status === "realizado").reduce((s, l) => s + Number(l.valor), 0)
-      + (recebimentos as any[]).filter((r) => r.status === "recebido").reduce((s, r) => s + Number(r.valor), 0);
-
-    const despesa_real =
-      all.filter((l) => l.tipo === "despesa" && l.status === "realizado").reduce((s, l) => s + Number(l.valor), 0)
-      + (parcelas as any[]).filter((p) => p.status === "pago").reduce((s, p) => s + Number(p.valor), 0);
-
-    const receita_prev =
-      all.filter((l) => l.tipo === "receita" && l.status === "previsto").reduce((s, l) => s + Number(l.valor), 0)
-      + (recebimentos as any[]).filter((r) => r.status === "a_receber").reduce((s, r) => s + Number(r.valor), 0);
-
-    const despesa_prev =
-      all.filter((l) => l.tipo === "despesa" && l.status === "previsto").reduce((s, l) => s + Number(l.valor), 0)
-      + (parcelas as any[]).filter((p) => p.status === "pendente").reduce((s, p) => s + Number(p.valor), 0);
-
+    const k = kpiRow ?? {};
+    const receita_real = Number(k.receita_realizada || 0);
+    const despesa_real = Number(k.despesa_realizada || 0);
+    const receita_prev = Number(k.receita_prevista || 0);
+    const despesa_prev = Number(k.despesa_prevista || 0);
     const margem = receita_real - despesa_real;
     const margem_pct = receita_real > 0 ? (margem / receita_real) * 100 : 0;
 
@@ -197,13 +195,17 @@ export default function Financeiro() {
     const limite7 = addDays(hoje, 7);
     const vencendo = (parcelas as any[])
       .filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), limite7))
-      .reduce((s, p) => s + Number(p.valor), 0);
-    const vencidos =
-      (parcelas as any[]).filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), hoje)).length
-      + all.filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.data_vencimento && isBefore(parseISO(l.data_vencimento), hoje)).length;
+      .reduce((s, p) => s + Number(p.valor), 0)
+      + (lancamentos as any[])
+        .filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.origem !== "parcela_pagamento"
+          && l.data_vencimento && isBefore(parseISO(l.data_vencimento), limite7))
+        .reduce((s, l) => s + Number(l.valor), 0);
 
-    return { receita_real, despesa_real, receita_prev, despesa_prev, margem, margem_pct, vencendo, vencidos };
-  }, [lancamentos, parcelas, recebimentos]);
+    return {
+      receita_real, despesa_real, receita_prev, despesa_prev, margem, margem_pct,
+      vencendo, vencidos: Number(k.vencidos_qtd || 0),
+    };
+  }, [kpiRow, parcelas, lancamentos]);
 
   const lancFiltrados = useMemo(() => {
     const arr = (lancamentos as any[]).filter((l) => {
