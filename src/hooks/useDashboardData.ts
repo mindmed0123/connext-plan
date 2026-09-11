@@ -35,6 +35,7 @@ export function useDashboardData(filters: DashboardFilters) {
         pessoasRes,
         timelineRes,
         fotosRes,
+        resumoRes,
       ] = await Promise.all([
 
         supabase
@@ -68,6 +69,7 @@ export function useDashboardData(filters: DashboardFilters) {
         supabase.from("pessoas").select("id,nome,tipo,status"),
         supabase.from("obra_timeline").select("obra_id,evento,created_at"),
         supabase.from("fotos_obra").select("obra_id,data_upload"),
+        supabase.rpc("get_obra_financeiro_resumo" as any, { _obra_id: null }),
       ]);
 
       const obras = obrasRes.data ?? [];
@@ -88,6 +90,13 @@ export function useDashboardData(filters: DashboardFilters) {
       const pessoas = pessoasRes.data ?? [];
       const timeline = timelineRes.data ?? [];
       const fotos = fotosRes.data ?? [];
+      const resumoFin = ((resumoRes as any)?.data ?? []) as Array<{
+        obra_id: string;
+        receita_faturada: number;
+        receita_recebida: number;
+        custo_materiais: number;
+        custo_terceirizados_pago: number;
+      }>;
 
       // Apply filters
       const fromDate = filters.from ? new Date(filters.from) : null;
@@ -195,15 +204,20 @@ export function useDashboardData(filters: DashboardFilters) {
         STATUS_FINALIZADAS_AGUARD.includes(s),
       );
 
-      const valorTotalFaturado = nfs
-        .filter((n) => obraIds.has(n.obra_id))
-        .reduce((s, n) => s + Number(n.valor || 0), 0);
+      // Totais financeiros vindos do banco (fonte única, sem duplicidade)
+      const resumoFiltrado = resumoFin.filter((r) => obraIds.has(r.obra_id));
+      const somaResumo = (campo: keyof (typeof resumoFin)[number]) =>
+        resumoFiltrado.reduce((s, r) => s + Number((r as any)[campo] || 0), 0);
+
+      const valorTotalFaturado = somaResumo("receita_faturada");
 
       // Incluir recebimentos sem obra vinculada (manuais) + os das obras filtradas
       const recsFiltered = recs.filter((r) => !r.obra_id || obraIds.has(r.obra_id));
-      const valorRecebido = recsFiltered
-        .filter((r) => r.status === "recebido")
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
+      const valorRecebido =
+        somaResumo("receita_recebida")
+        + recsFiltered
+            .filter((r) => !r.obra_id && r.status === "recebido")
+            .reduce((s, r) => s + Number(r.valor || 0), 0);
       const valorAReceber = recsFiltered
         .filter((r) => r.status === "a_receber")
         .reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -232,9 +246,7 @@ export function useDashboardData(filters: DashboardFilters) {
         (s, c) => s + Number(c.valor_total || 0),
         0,
       );
-      const valorPagoTerc = parcelasFiltered
-        .filter((p) => p.status === "pago")
-        .reduce((s, p) => s + Number(p.valor || 0), 0);
+      const valorPagoTerc = somaResumo("custo_terceirizados_pago");
       const valorPendenteTerc = Math.max(0, valorContratadoTerc - valorPagoTerc);
 
       // Próximo dia 1 e dia 15
@@ -263,9 +275,7 @@ export function useDashboardData(filters: DashboardFilters) {
         .reduce((s, r) => s + Number(r.valor || 0), 0);
 
       // Materiais
-      const valorMateriais = materiais
-        .filter((m) => obraIds.has(m.obra_id))
-        .reduce((s, m) => s + Number(m.valor_total || 0), 0);
+      const valorMateriais = somaResumo("custo_materiais");
 
       return {
         obras: obrasFiltered,
