@@ -182,7 +182,7 @@ export default function Cartoes() {
           .eq("grupo_parcelamento", grupo)
           .order("parcela_num", { ascending: true });
         if (e1) throw e1;
-        const linhas = (irmas ?? []) as any[];
+        const linhas = (irmas ?? []);
         const valores = dividirParcelas(arredondar2(valorInformado), linhas.length);
         for (let i = 0; i < linhas.length; i++) {
           const { error } = await supabase.from("cartao_despesas")
@@ -257,14 +257,14 @@ export default function Cartoes() {
 
   const totaisPorCartao = useMemo(() => {
     const map = new Map<string, number>();
-    (despesas as any[]).forEach((d) => map.set(d.cartao_id, (map.get(d.cartao_id) ?? 0) + Number(d.valor || 0)));
+    (despesas).forEach((d) => map.set(d.cartao_id, (map.get(d.cartao_id) ?? 0) + Number(d.valor || 0)));
     return map;
   }, [despesas]);
 
   // Faturas por cartão (agrupadas pelo vencimento calculado no banco)
   const faturasPorCartao = useMemo(() => {
     const map = new Map<string, Map<string, { total: number; paga: boolean; qtd: number }>>();
-    (despesas as any[]).forEach((d) => {
+    (despesas).forEach((d) => {
       const venc = d.fatura_vencimento as string | null;
       if (!venc) return;
       const porCartao = map.get(d.cartao_id) ?? new Map();
@@ -318,7 +318,7 @@ export default function Cartoes() {
           const info = c.dia_fechamento && c.dia_vencimento
             ? calcularFaturas(c.dia_fechamento, c.dia_vencimento)
             : null;
-          const despesasDoCartao = (despesas as any[]).filter((d) => d.cartao_id === c.id);
+          const despesasDoCartao = (despesas).filter((d) => d.cartao_id === c.id);
           const totalFaturaAtual = info
             ? despesasDoCartao
                 .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "atual")
@@ -477,7 +477,7 @@ export default function Cartoes() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(despesas as any[]).map((d) => {
+            {(despesas).map((d) => {
               const faturaCell: React.ReactNode = d.fatura_vencimento ? (
                 <Badge variant={d.fatura_paga ? "outline" : "secondary"} className="text-[10px]">
                   Vence {formatDateBR(d.fatura_vencimento)}{d.fatura_paga ? " · paga" : ""}
@@ -507,7 +507,7 @@ export default function Cartoes() {
                 </TableRow>
               );
             })}
-            {(despesas as any[]).length === 0 && (
+            {(despesas).length === 0 && (
               <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma despesa.</TableCell></TableRow>
             )}
           </TableBody>
@@ -579,7 +579,7 @@ export default function Cartoes() {
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra —</SelectItem>
-                  {(obras as any[]).map((o) => <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>)}
+                  {(obras).map((o) => <SelectItem key={o.id} value={o.id}>{obraLabel(o)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -589,7 +589,7 @@ export default function Cartoes() {
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Nenhum —</SelectItem>
-                  {(compradores as any[]).map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                  {(compradores).map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

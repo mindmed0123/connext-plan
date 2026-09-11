@@ -202,7 +202,7 @@ export default function ObraDetalhe() {
                 <SelectTrigger className="h-8 w-[220px] text-xs"><SelectValue placeholder="Sem cliente" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem cliente —</SelectItem>
-                  {(clientes as any[]).map((c) => (
+                  {(clientes).map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}{c.prazo_pagamento_dias ? ` · ${c.prazo_pagamento_dias} dias` : ""}
                     </SelectItem>
@@ -210,7 +210,7 @@ export default function ObraDetalhe() {
                 </SelectContent>
               </Select>
             ) : (
-              <span>{(clientes as any[]).find((c) => c.id === (obra).cliente_id)?.nome ?? "—"}</span>
+              <span>{(clientes).find((c) => c.id === (obra).cliente_id)?.nome ?? "—"}</span>
             )}
           </div>
           <div><span className="text-muted-foreground">Origem: </span>{ORIGEM_LABEL[obra.origem]}</div>

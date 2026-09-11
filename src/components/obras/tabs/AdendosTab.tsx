@@ -64,7 +64,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
       const { data, error } = await (supabase.from("obra_adendos"))
         .select("*").eq("obra_id", obraId).order("numero");
       if (error) throw error;
-      return (data ?? []) as any[];
+      return (data ?? []);
     },
   });
 

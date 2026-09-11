@@ -83,7 +83,7 @@ export default function Recebimentos() {
   });
 
   const lista = useMemo(() => {
-    const rows = (data ?? []) as any[];
+    const rows = (data ?? []);
     if (filtro === "pc_recebidos") {
       return rows.filter((r) => r.pedido_compra_id && r.status === "recebido");
     }
@@ -217,7 +217,7 @@ export default function Recebimentos() {
   };
 
   const recAtual = useMemo(
-    () => (pagRec ? (lista as any[]).find((r) => r.id === pagRec.id) ?? pagRec : null),
+    () => (pagRec ? (lista).find((r) => r.id === pagRec.id) ?? pagRec : null),
     [lista, pagRec],
   );
   const saldoAtual = recAtual ? Math.max(0, Number(recAtual.valor || 0) - Number(recAtual.valor_recebido || 0)) : 0;
@@ -363,10 +363,10 @@ export default function Recebimentos() {
           )}
 
           <div className="rounded-md border divide-y">
-            {(pagamentos as any[]).length === 0 && (
+            {(pagamentos).length === 0 && (
               <p className="p-3 text-sm text-muted-foreground">Nenhum pagamento registrado.</p>
             )}
-            {(pagamentos as any[]).map((p) => (
+            {(pagamentos).map((p) => (
               <div key={p.id} className="flex items-center justify-between px-3 py-2 text-sm">
                 <span>{formatDateBR(p.data)}</span>
                 <span className="tabular-nums font-medium">{formatCurrency(Number(p.valor))}</span>
@@ -465,7 +465,7 @@ export default function Recebimentos() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra (manual) —</SelectItem>
-                  {(obras as any[]).map((o) => (
+                  {(obras).map((o) => (
                     <SelectItem key={o.id} value={o.id}>
                       {o.codigo_chamado}
                     </SelectItem>
