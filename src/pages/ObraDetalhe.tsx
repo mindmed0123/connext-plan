@@ -85,20 +85,38 @@ export default function ObraDetalhe() {
     },
   });
 
+  const toggleArquivar = useMutation({
+    mutationFn: async (arquivar: boolean) => {
+      const { error } = await (supabase.from("obras") as any)
+        .update({ arquivada: arquivar, arquivada_em: arquivar ? new Date().toISOString() : null })
+        .eq("id", obraId!);
+      if (error) throw error;
+    },
+    onSuccess: (_d, arquivar) => {
+      toast.success(arquivar ? "Obra arquivada" : "Obra desarquivada");
+      qc.invalidateQueries({ queryKey: ["obra", obraId] });
+      qc.invalidateQueries({ queryKey: ["obras"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao arquivar obra"),
+  });
+
   const deleteObra = useMutation({
     mutationFn: async () => {
       if (!obraId) return;
       const { data: fotos } = await supabase.from("fotos_obra").select("storage_path").eq("obra_id", obraId);
       const paths = (fotos ?? []).map((f) => f.storage_path).filter(Boolean) as string[];
-      if (paths.length > 0) await supabase.storage.from("obras-fotos").remove(paths);
       const { error } = await supabase.from("obras").delete().eq("id", obraId);
       if (error) throw error;
+      if (paths.length > 0) await supabase.storage.from("obras-fotos").remove(paths);
     },
     onSuccess: () => {
       toast.success("Obra excluída com sucesso");
       navigate("/obras");
     },
-    onError: (e: any) => toast.error("Erro ao excluir obra", { description: e?.message }),
+    onError: (e: any) =>
+      toast.error("Não foi possível excluir", {
+        description: e?.message ?? "Erro ao excluir obra",
+      }),
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando obra...</p>;
