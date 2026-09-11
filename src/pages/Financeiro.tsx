@@ -629,7 +629,7 @@ export default function Financeiro() {
                   <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">Sem parcelas</TableCell></TableRow>
                 )}
                 {(parcelas as any[]).map((p) => {
-                  const venc = p.data_prevista ? parseISO(p.data_prevista) : null;
+                  
                   const vencido = p.status === "pendente" && isVencido(p.data_prevista);
                   return (
                     <TableRow key={p.id}>
@@ -757,10 +757,8 @@ export default function Financeiro() {
                           className="h-7 px-2"
                           title="Este lançamento é gerado automaticamente. Edite na origem."
                           onClick={() => {
-                            if (l.origem === "recebimento") navigate("/recebimentos");
-                            else if (l.origem === "cartao") navigate("/cartoes");
-                            else if (l.origem === "material" && l.obra_id) navigate(`/obras/${l.obra_id}?tab=materiais`);
-                            else if (l.obra_id) navigate(`/obras/${l.obra_id}?tab=contratacoes`);
+                            const destino = abrirOrigemPath(l.origem, l.obra_id);
+                            if (destino) navigate(destino);
                             else toast.info("Lançamento gerado automaticamente em outra tela.");
                           }}
                         >
