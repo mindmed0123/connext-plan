@@ -35,7 +35,7 @@ export function ObraFormDialog({
   const { data: origens } = useQuery({
     queryKey: ["compradores"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("compradores" as any) as any)
+      const { data, error } = await (supabase.from("compradores"))
         .select("id, nome, ativo")
         .order("nome");
       if (error) throw error;
@@ -75,12 +75,12 @@ export function ObraFormDialog({
 
   const addOrigem = useMutation({
     mutationFn: async (nome: string) => {
-      const { data, error } = await (supabase.from("compradores" as any) as any)
+      const { data, error } = await (supabase.from("compradores"))
         .insert([{ nome, tipo_instituicao: "outro" }])
         .select("id, nome")
         .single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     onSuccess: (data: any) => {
       qc.invalidateQueries({ queryKey: ["compradores"] });
@@ -96,7 +96,7 @@ export function ObraFormDialog({
 
   const addRegiao = useMutation({
     mutationFn: async (nome: string) => {
-      const { data, error } = await supabase.from("regioes_obra").insert({ nome } as any).select().single();
+      const { data, error } = await supabase.from("regioes_obra").insert({ nome }).select().single();
       if (error) throw error;
       return data;
     },
@@ -124,7 +124,7 @@ export function ObraFormDialog({
       if (error) throw error;
       const novaObra: any = Array.isArray(data) ? data[0] : data;
       if (form.cliente_id && novaObra?.id) {
-        await supabase.from("obras").update({ cliente_id: form.cliente_id } as any).eq("id", novaObra.id);
+        await supabase.from("obras").update({ cliente_id: form.cliente_id }).eq("id", novaObra.id);
       }
       return data;
     },

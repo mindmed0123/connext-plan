@@ -122,7 +122,7 @@ export default function Etapas() {
   const { data: obras } = useQuery<Obra[]>({
     queryKey: ["etapas"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("obras") as any)
+      const { data, error } = await (supabase.from("obras"))
         .select("id, codigo_chamado, descricao_servico, regiao, engenheiro_responsavel, status")
         .eq("arquivada", false)
         .order("created_at", { ascending: false });

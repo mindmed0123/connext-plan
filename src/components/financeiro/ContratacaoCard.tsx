@@ -118,7 +118,7 @@ function ParcelaRow({ parcela, contratacaoId, obraId }: { parcela: any; contrata
         status: "pago",
         valor: parseFloat(form.valor) || 0,
         data_pagamento: form.data_pagamento || getTodayDateInputValue(),
-        forma_pagamento: (form.forma_pagamento || null) as any,
+        forma_pagamento: (form.forma_pagamento || null),
         observacao: form.observacao || null,
         comprovante_url,
         comprovante_path,

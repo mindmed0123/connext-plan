@@ -225,7 +225,7 @@ export function FotosTab({ obraId }: { obraId: string }) {
               .select("nome, logo_url")
               .eq("id", empresaId)
               .maybeSingle()
-          : Promise.resolve({ data: null, error: null } as any),
+          : Promise.resolve({ data: null, error: null }),
         supabase
           .from("obra_timeline")
           .select("id", { count: "exact", head: true })

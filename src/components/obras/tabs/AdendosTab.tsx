@@ -40,11 +40,11 @@ export function AdendosTab({ obraId }: { obraId: string }) {
   const { data: obra } = useQuery({
     queryKey: ["obra-contrato", obraId],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("obras") as any)
+      const { data, error } = await (supabase.from("obras"))
         .select("id, contrato_unidade, contrato_valor_unitario, contrato_qtd_prevista, contrato_qtd_contratada")
         .eq("id", obraId).maybeSingle();
       if (error) throw error;
-      return data as any;
+      return data;
     },
   });
 
@@ -61,7 +61,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
   const { data: adendos = [] } = useQuery({
     queryKey: ["obra-adendos", obraId],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("obra_adendos" as any) as any)
+      const { data, error } = await (supabase.from("obra_adendos"))
         .select("*").eq("obra_id", obraId).order("numero");
       if (error) throw error;
       return (data ?? []) as any[];
@@ -81,7 +81,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
 
   const salvarContrato = useMutation({
     mutationFn: async () => {
-      const { error } = await (supabase.from("obras") as any).update({
+      const { error } = await (supabase.from("obras")).update({
         contrato_unidade: contrato.contrato_unidade || null,
         contrato_valor_unitario: Number(contrato.contrato_valor_unitario || 0),
         contrato_qtd_prevista: Number(contrato.contrato_qtd_prevista || 0),
@@ -112,7 +112,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
       const vu = arredondar2(Number(form.valor_unitario || obra?.contrato_valor_unitario || 0));
       const valorTotalAdendo = arredondar2(qtd * vu);
       const proximo = (adendos.reduce((m: number, a: any) => Math.max(m, a.numero ?? 0), 0) || 0) + 1;
-      const { error } = await (supabase.from("obra_adendos" as any) as any).insert([{
+      const { error } = await (supabase.from("obra_adendos")).insert([{
         obra_id: obraId,
         numero: proximo,
         titulo: form.titulo.trim() || `Adendo ${proximo}`,
@@ -135,7 +135,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
         user_id: u.user?.id,
         evento: `Adendo ${proximo} registrado`,
         detalhes: `${qtd} × ${formatCurrency(vu)} = ${formatCurrency(qtd * vu)}`,
-      }] as any);
+      }]);
     },
     onSuccess: () => {
       toast.success("Adendo registrado");
@@ -155,7 +155,7 @@ export function AdendosTab({ obraId }: { obraId: string }) {
   const del = useMutation({
     mutationFn: async (a: any) => {
       if (a.arquivo_path) await supabase.storage.from(BUCKET).remove([a.arquivo_path]);
-      const { error } = await (supabase.from("obra_adendos" as any) as any).delete().eq("id", a.id);
+      const { error } = await (supabase.from("obra_adendos")).delete().eq("id", a.id);
       if (error) throw error;
     },
     onSuccess: () => {

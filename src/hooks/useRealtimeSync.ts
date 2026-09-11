@@ -54,7 +54,7 @@ export function useRealtimeSync() {
     const channel = supabase.channel("sync-global");
     for (const table of TABELAS_COMPARTILHADAS) {
       channel.on(
-        "postgres_changes" as any,
+        "postgres_changes",
         { event: "*", schema: "public", table },
         invalidarTudo,
       );

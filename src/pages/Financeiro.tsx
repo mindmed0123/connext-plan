@@ -91,7 +91,7 @@ export default function Financeiro() {
     queryKey: ["fluxo-caixa-mensal", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal" as any, {
+      const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal", {
         _empresa_id: empresaId!, _meses_atras: 5, _meses_frente: 3,
       });
       if (error) throw error;
@@ -103,7 +103,7 @@ export default function Financeiro() {
     queryKey: ["dre-obras", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_dre_obra" as any, { _empresa_id: empresaId! });
+      const { data, error } = await supabase.rpc("get_dre_obra", { _empresa_id: empresaId! });
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -113,7 +113,7 @@ export default function Financeiro() {
     queryKey: ["retencoes-mensais", empresaId, anoAtual],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_retencoes_mensais" as any, {
+      const { data, error } = await supabase.rpc("get_retencoes_mensais", {
         _inicio: `${anoAtual}-01-01`, _fim: `${anoAtual}-12-31`,
       });
       if (error) throw error;
@@ -167,7 +167,7 @@ export default function Financeiro() {
     queryKey: ["obras-fin-select", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await (supabase.from("obras") as any)
+      const { data } = await (supabase.from("obras"))
         .select("id, codigo_chamado, descricao_servico")
         .eq("arquivada", false)
         .order("codigo_chamado");
@@ -201,9 +201,9 @@ export default function Financeiro() {
     queryKey: ["financeiro-kpis", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_financeiro_kpis" as any, {});
+      const { data, error } = await supabase.rpc("get_financeiro_kpis", {});
       if (error) throw error;
-      return (Array.isArray(data) ? data[0] : data) as any;
+      return (Array.isArray(data) ? data[0] : data);
     },
   });
 

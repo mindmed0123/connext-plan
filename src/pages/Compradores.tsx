@@ -31,12 +31,12 @@ export default function Compradores() {
 
   const { data: compradores = [] } = useQuery({
     queryKey: ["compradores-full", empresaId], enabled: !!empresaId,
-    queryFn: async () => ((await (supabase.from("compradores" as any) as any).select("*").order("nome")).data as Comprador[]) ?? [],
+    queryFn: async () => ((await (supabase.from("compradores")).select("*").order("nome")).data as Comprador[]) ?? [],
   });
 
   const save = useMutation({
     mutationFn: async () => {
-      const { data, error } = await (supabase.from("compradores" as any) as any).insert([{
+      const { data, error } = await (supabase.from("compradores")).insert([{
         nome: form.nome.trim(),
         tipo_instituicao: form.tipo_instituicao,
         cpf_cnpj: form.cpf_cnpj || null,
@@ -44,7 +44,7 @@ export default function Compradores() {
         telefone: form.telefone || null,
       }]).select("id").single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     onSuccess: (data) => {
       toast.success("Comprador criado");
@@ -58,7 +58,7 @@ export default function Compradores() {
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.from("compradores" as any) as any).delete().eq("id", id);
+      const { error } = await (supabase.from("compradores")).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

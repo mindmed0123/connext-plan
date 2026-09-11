@@ -45,9 +45,9 @@ export default function CompradorDetalhe() {
     queryKey: ["comprador", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("compradores" as any) as any).select("*").eq("id", id!).maybeSingle();
+      const { data, error } = await (supabase.from("compradores")).select("*").eq("id", id!).maybeSingle();
       if (error) throw error;
-      return data as any;
+      return data;
     },
   });
 
@@ -59,7 +59,7 @@ export default function CompradorDetalhe() {
     queryKey: ["comprador-contratos", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("comprador_contratos" as any) as any)
+      const { data, error } = await (supabase.from("comprador_contratos"))
         .select("*").eq("comprador_id", id!).order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
@@ -71,9 +71,9 @@ export default function CompradorDetalhe() {
     enabled: !!id,
     queryFn: async () => {
       const [pcs, mats, cards] = await Promise.all([
-        (supabase.from("pedidos_compra") as any).select("id, numero_pedido, valor, created_at, obras(codigo_chamado)").eq("comprador_id", id!).order("created_at", { ascending: false }),
-        (supabase.from("materiais_obra") as any).select("id, descricao, valor_total, data_compra, obras(codigo_chamado)").eq("comprador_id", id!).order("data_compra", { ascending: false }),
-        (supabase.from("cartao_despesas" as any) as any).select("id, descricao, valor, data_compra, obras(codigo_chamado), cartoes_credito(apelido)").eq("comprador_id", id!).order("data_compra", { ascending: false }),
+        (supabase.from("pedidos_compra")).select("id, numero_pedido, valor, created_at, obras(codigo_chamado)").eq("comprador_id", id!).order("created_at", { ascending: false }),
+        (supabase.from("materiais_obra")).select("id, descricao, valor_total, data_compra, obras(codigo_chamado)").eq("comprador_id", id!).order("data_compra", { ascending: false }),
+        (supabase.from("cartao_despesas")).select("id, descricao, valor, data_compra, obras(codigo_chamado), cartoes_credito(apelido)").eq("comprador_id", id!).order("data_compra", { ascending: false }),
       ]);
       return { pcs: pcs.data ?? [], mats: mats.data ?? [], cards: cards.data ?? [] };
     },
@@ -103,7 +103,7 @@ export default function CompradorDetalhe() {
         observacoes: form.observacoes || null,
         ativo: form.ativo ?? true,
       };
-      const { error } = await (supabase.from("compradores" as any) as any).update(payload).eq("id", id!);
+      const { error } = await (supabase.from("compradores")).update(payload).eq("id", id!);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -127,7 +127,7 @@ export default function CompradorDetalhe() {
         arquivo_path = path;
         arquivo_nome = file.name;
       }
-      const { error } = await (supabase.from("comprador_contratos" as any) as any).insert([{
+      const { error } = await (supabase.from("comprador_contratos")).insert([{
         comprador_id: id,
         numero_contrato: contratoForm.numero_contrato || null,
         objeto: contratoForm.objeto.trim(),
@@ -154,7 +154,7 @@ export default function CompradorDetalhe() {
   const delContrato = useMutation({
     mutationFn: async (c: any) => {
       if (c.arquivo_path) await supabase.storage.from(BUCKET).remove([c.arquivo_path]);
-      const { error } = await (supabase.from("comprador_contratos" as any) as any).delete().eq("id", c.id);
+      const { error } = await (supabase.from("comprador_contratos")).delete().eq("id", c.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comprador-contratos", id] }),

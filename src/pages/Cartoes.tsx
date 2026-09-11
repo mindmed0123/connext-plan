@@ -48,11 +48,11 @@ export default function Cartoes() {
 
   const { data: cartoes = [] } = useQuery({
     queryKey: ["cartoes", empresaId], enabled: !!empresaId,
-    queryFn: async () => ((await supabase.from("cartoes_credito" as any).select("*").order("apelido")).data as unknown as Cartao[]) ?? [],
+    queryFn: async () => ((await supabase.from("cartoes_credito").select("*").order("apelido")).data as unknown as Cartao[]) ?? [],
   });
   const { data: obras = [] } = useQuery({
     queryKey: ["obras-min", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await (supabase.from("obras") as any).select("id, codigo_chamado, descricao_servico").eq("arquivada", false).order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await (supabase.from("obras")).select("id, codigo_chamado, descricao_servico").eq("arquivada", false).order("created_at", { ascending: false })).data ?? [],
   });
   const obraLabel = (o: any) => {
     const desc = (o?.descricao_servico ?? "").trim();
@@ -60,7 +60,7 @@ export default function Cartoes() {
   };
   const { data: compradores = [] } = useQuery({
     queryKey: ["compradores", empresaId], enabled: !!empresaId,
-    queryFn: async () => (await supabase.from("compradores" as any).select("id, nome").eq("ativo", true).order("nome")).data ?? [],
+    queryFn: async () => (await supabase.from("compradores").select("id, nome").eq("ativo", true).order("nome")).data ?? [],
   });
   const { data: despesas = [] } = useQuery({
     queryKey: ["cartao-despesas", empresaId, filtroCartao, periodoMeses], enabled: !!empresaId,
@@ -71,7 +71,7 @@ export default function Cartoes() {
       const linhas: any[] = [];
       const passo = 1000;
       for (let inicio = 0; ; inicio += passo) {
-        let q = supabase.from("cartao_despesas" as any)
+        let q = supabase.from("cartao_despesas")
           .select("*, cartoes_credito(apelido), obras(codigo_chamado), compradores(nome)")
           .order("data_compra", { ascending: false })
           .range(inicio, inicio + passo - 1);
@@ -99,10 +99,10 @@ export default function Cartoes() {
         dia_vencimento: cartaoForm.dia_vencimento ? parseInt(cartaoForm.dia_vencimento) : null,
       };
       if (editingCartao) {
-        const { error } = await supabase.from("cartoes_credito" as any).update(payload).eq("id", editingCartao.id);
+        const { error } = await supabase.from("cartoes_credito").update(payload).eq("id", editingCartao.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("cartoes_credito" as any).insert([payload]);
+        const { error } = await supabase.from("cartoes_credito").insert([payload]);
         if (error) throw error;
       }
     },
@@ -119,7 +119,7 @@ export default function Cartoes() {
   const delCartao = useMutation({
     mutationFn: async (id: string) => {
       const { count } = await supabase
-        .from("cartao_despesas" as any)
+        .from("cartao_despesas")
         .select("id", { count: "exact", head: true })
         .eq("cartao_id", id);
       if ((count ?? 0) > 0) {
@@ -127,7 +127,7 @@ export default function Cartoes() {
           `Este cartão tem ${count} despesa(s) lançada(s) e não pode ser excluído. Use "Desativar" para tirá-lo de uso mantendo o histórico.`,
         );
       }
-      const { error } = await supabase.from("cartoes_credito" as any).delete().eq("id", id);
+      const { error } = await supabase.from("cartoes_credito").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Cartão removido"); qc.invalidateQueries({ queryKey: ["cartoes", empresaId] }); },
@@ -136,7 +136,7 @@ export default function Cartoes() {
 
   const toggleAtivoCartao = useMutation({
     mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
-      const { error } = await supabase.from("cartoes_credito" as any).update({ ativo }).eq("id", id);
+      const { error } = await supabase.from("cartoes_credito").update({ ativo }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, v) => {
@@ -171,13 +171,13 @@ export default function Cartoes() {
           );
         }
         if (!todoParcelamento) {
-          const { error } = await supabase.from("cartao_despesas" as any)
+          const { error } = await supabase.from("cartao_despesas")
             .update({ ...basePayload, parcelas: atual.parcelas ?? totalParcelas, valor: valorInformado })
             .eq("id", editingDespId);
           if (error) throw error;
           return;
         }
-        const { data: irmas, error: e1 } = await supabase.from("cartao_despesas" as any)
+        const { data: irmas, error: e1 } = await supabase.from("cartao_despesas")
           .select("id, parcela_num, descricao")
           .eq("grupo_parcelamento", grupo)
           .order("parcela_num", { ascending: true });
@@ -185,7 +185,7 @@ export default function Cartoes() {
         const linhas = (irmas ?? []) as any[];
         const valores = dividirParcelas(arredondar2(valorInformado), linhas.length);
         for (let i = 0; i < linhas.length; i++) {
-          const { error } = await supabase.from("cartao_despesas" as any)
+          const { error } = await supabase.from("cartao_despesas")
             .update({
               obra_id: basePayload.obra_id,
               comprador_id: basePayload.comprador_id,
@@ -212,7 +212,7 @@ export default function Cartoes() {
         parcela_num: i + 1,
         total_parcelas: totalParcelas,
       }));
-      const { error } = await supabase.from("cartao_despesas" as any).insert(rows);
+      const { error } = await supabase.from("cartao_despesas").insert(rows);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -229,7 +229,7 @@ export default function Cartoes() {
 
   const delDesp = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("cartao_despesas" as any).delete().eq("id", id);
+      const { error } = await supabase.from("cartao_despesas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -331,12 +331,12 @@ export default function Cartoes() {
             : 0;
 
           return (
-            <Card key={c.id} className={(c as any).ativo === false ? "opacity-70" : undefined}>
+            <Card key={c.id} className={(c).ativo === false ? "opacity-70" : undefined}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base">
                     {c.apelido}
-                    {(c as any).ativo === false && (
+                    {(c).ativo === false && (
                       <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
                         Inativo
                       </span>
@@ -357,9 +357,9 @@ export default function Cartoes() {
                       size="sm"
                       variant="ghost"
                       className="h-8 px-2 text-xs"
-                      onClick={() => toggleAtivoCartao.mutate({ id: c.id, ativo: (c as any).ativo === false })}
+                      onClick={() => toggleAtivoCartao.mutate({ id: c.id, ativo: (c).ativo === false })}
                     >
-                      {(c as any).ativo === false ? "Ativar" : "Desativar"}
+                      {(c).ativo === false ? "Ativar" : "Desativar"}
                     </Button>
                     {despesasDoCartao.length === 0 && (
                       <Button size="icon" variant="ghost" onClick={() => confirm("Excluir cartão?") && delCartao.mutate(c.id)}>
@@ -546,7 +546,7 @@ export default function Cartoes() {
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {cartoes
-                    .filter((c) => (c as any).ativo !== false || c.id === despForm.cartao_id)
+                    .filter((c) => (c).ativo !== false || c.id === despForm.cartao_id)
                     .map((c) => <SelectItem key={c.id} value={c.id}>{c.apelido}</SelectItem>)}
                 </SelectContent>
               </Select>
