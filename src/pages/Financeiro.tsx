@@ -109,38 +109,40 @@ export default function Financeiro() {
   const { data: lancamentos = [] } = useQuery({
     queryKey: ["lancamentos", empresaId],
     enabled: !!empresaId,
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("lancamentos_financeiros")
-        .select("*, categorias_financeiras(nome, cor), obras(codigo_chamado)")
-        .order("data_vencimento", { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: async () =>
+      fetchAllRows<any>((f, t) =>
+        (supabase as any)
+          .from("lancamentos_financeiros")
+          .select("*, categorias_financeiras(nome, cor), obras(codigo_chamado)")
+          .order("data_vencimento", { ascending: true, nullsFirst: false })
+          .range(f, t),
+      ),
   });
 
   const { data: parcelas = [] } = useQuery({
     queryKey: ["parcelas-fin", empresaId],
     enabled: !!empresaId,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("parcelas_pagamento")
-        .select("*, contratacoes_terceirizado(obra_id, obras(codigo_chamado), pessoas:terceirizado_id(nome))")
-        .order("data_prevista", { ascending: true });
-      return data ?? [];
-    },
+    queryFn: async () =>
+      fetchAllRows<any>((f, t) =>
+        supabase
+          .from("parcelas_pagamento")
+          .select("*, contratacoes_terceirizado(obra_id, obras(codigo_chamado), pessoas:terceirizado_id(nome))")
+          .order("data_prevista", { ascending: true })
+          .range(f, t),
+      ),
   });
 
   const { data: recebimentos = [] } = useQuery({
     queryKey: ["recebimentos-fin", empresaId],
     enabled: !!empresaId,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("recebimentos")
-        .select("*, obras(codigo_chamado)")
-        .order("data_prevista", { ascending: true });
-      return data ?? [];
-    },
+    queryFn: async () =>
+      fetchAllRows<any>((f, t) =>
+        supabase
+          .from("recebimentos")
+          .select("*, obras(codigo_chamado)")
+          .order("data_prevista", { ascending: true })
+          .range(f, t),
+      ),
   });
 
   const { data: obras = [] } = useQuery({
