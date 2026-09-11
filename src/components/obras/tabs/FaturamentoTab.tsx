@@ -118,7 +118,15 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
           <div><Label className="text-xs">Valor</Label><Input type="number" step="0.01" value={pc.valor} onChange={(e) => setPc({ ...pc, valor: e.target.value })} /></div>
           <div className="flex items-end"><Button size="sm" className="w-full" onClick={() => addPc.mutate()} disabled={!pc.numero_pedido}>Adicionar</Button></div>
         </div>
-        {pcs?.map((p) => <p key={p.id} className="text-xs text-muted-foreground">• PC {p.numero_pedido} ({formatCurrency(p.valor)})</p>)}
+        <p className="text-[11px] text-muted-foreground">
+          "PC recebido do cliente" indica o recebimento do documento — o dinheiro é confirmado na tela Recebimentos.
+        </p>
+        {pcs?.map((p) => (
+          <p key={p.id} className="text-xs text-muted-foreground">
+            • PC {p.numero_pedido} ({formatCurrency(p.valor)}) —{" "}
+            {p.status === "recebido" ? "PC recebido do cliente" : "Aguardando"}
+          </p>
+        ))}
       </div>
 
       {/* NF */}
