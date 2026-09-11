@@ -69,9 +69,22 @@ Deno.serve(async (req) => {
     }
 
     // Anexa email + metadata para rastrear no webhook da Cakto
+    // Registra a intenção de checkout no servidor; a URL leva apenas o ID do intent
+    const { data: intent, error: intentErr } = await supabase
+      .from("checkout_intents")
+      .insert({ empresa_id, plano_id: plano.id, periodo, user_id: user.id })
+      .select("id")
+      .single();
+    if (intentErr || !intent) {
+      console.error("Falha ao criar checkout_intent", intentErr);
+      return new Response(JSON.stringify({ error: "Falha ao iniciar checkout" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(baseUrl);
     if (user.email) url.searchParams.set("email", user.email);
-    url.searchParams.set("ref", `${empresa_id}|${plano.id}|${periodo}|${user.id}`);
+    url.searchParams.set("ref", String(intent.id));
 
     return new Response(JSON.stringify({ checkout_url: url.toString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
