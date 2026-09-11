@@ -444,6 +444,16 @@ export default function Cartoes() {
       <div className="rounded-lg border bg-card">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-semibold">Despesas no cartão</h2>
+          <div className="flex gap-2">
+          <Select value={periodoMeses === null ? "tudo" : String(periodoMeses)} onValueChange={(v) => setPeriodoMeses(v === "tudo" ? null : Number(v))}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">Últimos 3 meses</SelectItem>
+              <SelectItem value="6">Últimos 6 meses</SelectItem>
+              <SelectItem value="12">Últimos 12 meses</SelectItem>
+              <SelectItem value="tudo">Todo o histórico</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={filtroCartao} onValueChange={setFiltroCartao}>
             <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
