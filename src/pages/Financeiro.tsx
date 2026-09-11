@@ -201,19 +201,17 @@ export default function Financeiro() {
 
     const hoje = new Date();
     const limite7 = addDays(hoje, 7);
-    const vencendo = (parcelas as any[])
-      .filter((p) => p.status === "pendente" && p.data_prevista && isBefore(parseISO(p.data_prevista), limite7))
-      .reduce((s, p) => s + Number(p.valor), 0)
-      + (lancamentos as any[])
-        .filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.origem !== "parcela_pagamento"
-          && l.data_vencimento && isBefore(parseISO(l.data_vencimento), limite7))
-        .reduce((s, l) => s + Number(l.valor), 0);
+    // Razão único: parcelas, materiais e cartão já estão em lancamentos_financeiros
+    const vencendo = (lancamentos as any[])
+      .filter((l) => l.tipo === "despesa" && l.status === "previsto"
+        && l.data_vencimento && isBefore(parseISO(l.data_vencimento), limite7))
+      .reduce((s, l) => s + Number(l.valor), 0);
 
     return {
       receita_real, despesa_real, receita_prev, despesa_prev, margem, margem_pct,
       vencendo, vencidos: Number(k.vencidos_qtd || 0),
     };
-  }, [kpiRow, parcelas, lancamentos]);
+  }, [kpiRow, lancamentos]);
 
   const lancFiltrados = useMemo(() => {
     const arr = (lancamentos as any[]).filter((l) => {
