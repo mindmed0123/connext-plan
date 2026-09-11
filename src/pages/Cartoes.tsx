@@ -41,6 +41,8 @@ export default function Cartoes() {
   const [cartaoForm, setCartaoForm, clearCartaoDraft] = useDraftState("cartao-form", emptyCartao);
   const [despDialog, setDespDialog] = useState(false);
   const [editingDespId, setEditingDespId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editingDesp, setEditingDesp] = useState<any | null>(null);
   const [despForm, setDespForm, clearDespDraft] = useDraftState("desp-form", emptyDesp);
   const [filtroCartao, setFiltroCartao] = useState<string>("todos");
   const [periodoMeses, setPeriodoMeses] = useState<number | null>(12);
