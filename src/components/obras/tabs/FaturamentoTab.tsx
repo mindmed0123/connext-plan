@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,25 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   const [nf, setNf] = useState({ numero_nf: "", data_emissao: getTodayDateInputValue(), valor: "" });
   const [nfRetencoes, setNfRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
+
+  useEffect(() => {
+    void (async () => {
+      const [{ data: obra }, { data: empresa }] = await Promise.all([
+        (supabase.from("obras") as any).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
+        supabase.from("empresas").select("cprb").limit(1).single(),
+      ]);
+      const cliente = obra?.clientes;
+      const bruto = Number(nfRetencoes.valor_bruto || nf.valor || 0);
+      const aliquotaInss = empresa?.cprb ? 3.5 : 11;
+      setNfRetencoes((atual) => ({ ...atual, base_inss: String(bruto), aliquota_inss: String(aliquotaInss),
+        aliquota_iss: String(cliente?.aliquota_iss ?? 0),
+        ret_inss: cliente?.retem_inss ? String(Math.round(bruto * aliquotaInss) / 100) : "0",
+        ret_iss: cliente?.retem_iss ? String(Math.round(bruto * Number(cliente?.aliquota_iss ?? 0)) / 100) : "0",
+        ret_irrf: cliente?.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
+        ret_pcc: cliente?.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
+      }));
+    })();
+  }, [obraId]);
 
   const { data: rcs } = useQuery({
     queryKey: ["rcs", obraId],
