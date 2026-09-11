@@ -49,7 +49,7 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
         </div>
         <div>
           <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Etapa</label>
-          <Select value={filters.status ?? "todas"} onValueChange={(v) => setFilters({ ...filters, status: v })}>
+          <Select value={filters.status ?? "todas"} onValueChange={(v) => setFilters({ ...filters, status: v as typeof filters.status })}>
             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>

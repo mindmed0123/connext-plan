@@ -1,3 +1,4 @@
+import type { Database } from "@/integrations/supabase/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { abrirOrigemPath } from "@/lib/origem-nav";
@@ -114,7 +115,7 @@ export function DreTab({ obraId }: { obraId: string }) {
 
 
 
-  const r = resumo ?? {};
+  const r = (resumo ?? {}) as Partial<Database["public"]["Functions"]["get_obra_financeiro_resumo"]["Returns"][number]>;
   const receitaOrcada = Number(r.receita_orcada || 0);
   const receitaFaturada = Number(r.receita_faturada || 0);
   const receitaRecebida = Number(r.receita_recebida || 0);

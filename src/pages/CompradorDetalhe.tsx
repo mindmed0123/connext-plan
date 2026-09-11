@@ -62,7 +62,7 @@ export default function CompradorDetalhe() {
       const { data, error } = await (supabase.from("comprador_contratos"))
         .select("*").eq("comprador_id", id!).order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? [])[];
+      return (data ?? []);
     },
   });
 

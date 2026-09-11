@@ -146,7 +146,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
         </DialogHeader>
 
         <div className="space-y-4">
-          <RadioGroup value={vinculo} onValueChange={(v) => setVinculo(v)} className="grid grid-cols-2 gap-2">
+          <RadioGroup value={vinculo} onValueChange={(v) => setVinculo(v as typeof vinculo)} className="grid grid-cols-2 gap-2">
             <Label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
               <RadioGroupItem value="existente" /> Obra cadastrada
             </Label>

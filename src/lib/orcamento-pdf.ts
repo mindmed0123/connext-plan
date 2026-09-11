@@ -8,6 +8,7 @@ const BRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace("R$", "").trim();
 
 export type PDFOrcamento = {
+  numero?: string | null;
   numero_orcamento: string | null;
   titulo: string | null;
   data_orcamento: string;
@@ -298,7 +299,7 @@ export async function gerarOrcamentoPDF(
     margin: { left: margin, right: margin },
   });
 
-  y = (doc).lastAutoTable.finalY + 12;
+  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
 
   // ====== VENCIMENTOS / PARCELAS ======
   doc.setFont("helvetica", "bold");
@@ -369,7 +370,7 @@ export async function gerarOrcamentoPDF(
     tableWidth: 100,
   });
 
-  y = (doc).lastAutoTable.finalY + 10;
+  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
   const dataVenc = parcelas.length > 0 ? parcelas[parcelas.length - 1].venc : format(baseDate, "dd/MM/yyyy", { locale: ptBR });
 

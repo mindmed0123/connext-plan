@@ -1,3 +1,5 @@
+import type { Database } from "@/integrations/supabase/types";
+type FormaPagamento = Database["public"]["Enums"]["forma_pagamento"];
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +77,7 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
         valor_unitario: vUnit,
         valor_total: vTotal,
         data_compra: form.data_compra,
-        forma_pagamento: (form.forma_pagamento || null),
+        forma_pagamento: (form.forma_pagamento || null) as FormaPagamento | null,
         numero_nf: form.numero_nf || null,
         observacoes: form.observacoes || null,
         anexo_path,

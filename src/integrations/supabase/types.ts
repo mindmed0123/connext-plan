@@ -1877,6 +1877,12 @@ export type Database = {
         Row: {
           arquivo_path: string | null
           arquivo_url: string | null
+          bdi_ac: number
+          bdi_df: number
+          bdi_i: number
+          bdi_l: number
+          bdi_r: number
+          bdi_s: number
           cliente_cnpj: string | null
           cliente_email: string | null
           cliente_endereco: string | null
@@ -1925,6 +1931,12 @@ export type Database = {
         Insert: {
           arquivo_path?: string | null
           arquivo_url?: string | null
+          bdi_ac?: number
+          bdi_df?: number
+          bdi_i?: number
+          bdi_l?: number
+          bdi_r?: number
+          bdi_s?: number
           cliente_cnpj?: string | null
           cliente_email?: string | null
           cliente_endereco?: string | null
@@ -1973,6 +1985,12 @@ export type Database = {
         Update: {
           arquivo_path?: string | null
           arquivo_url?: string | null
+          bdi_ac?: number
+          bdi_df?: number
+          bdi_i?: number
+          bdi_l?: number
+          bdi_r?: number
+          bdi_s?: number
           cliente_cnpj?: string | null
           cliente_email?: string | null
           cliente_endereco?: string | null

@@ -39,7 +39,7 @@ export function ObraFormDialog({
         .select("id, nome, ativo")
         .order("nome");
       if (error) throw error;
-      return ((data ?? [])[]).filter((c) => c.ativo !== false);
+      return ((data ?? [])).filter((c) => c.ativo !== false);
     },
   });
 
@@ -96,7 +96,7 @@ export function ObraFormDialog({
 
   const addRegiao = useMutation({
     mutationFn: async (nome: string) => {
-      const { data, error } = await supabase.from("regioes_obra").insert({ nome }).select().single();
+      const { data, error } = await supabase.from("regioes_obra").insert({ nome, empresa_id: empresaId as string }).select().single();
       if (error) throw error;
       return data;
     },
@@ -271,7 +271,7 @@ export function ObraFormDialog({
               <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">— Sem cliente definido —</SelectItem>
-                {(clientes[]).map((c) => (
+                {(clientes).map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}{c.prazo_pagamento_dias ? ` · ${c.prazo_pagamento_dias} dias` : ""}
                   </SelectItem>
