@@ -108,7 +108,6 @@ export default function Configuracoes() {
 
   useEffect(() => {
     if (!empresa) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = empresa as any;
     setForm({
       nome: e.nome ?? "",

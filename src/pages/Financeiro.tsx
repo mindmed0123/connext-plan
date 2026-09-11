@@ -126,7 +126,7 @@ export default function Financeiro() {
     enabled: !!empresaId,
     queryFn: async () =>
       fetchAllRows<any>((f, t) =>
-        (supabase as any)
+        supabase
           .from("lancamentos_financeiros")
           .select("*, categorias_financeiras(nome, cor), obras(codigo_chamado)")
           .order("data_vencimento", { ascending: true, nullsFirst: false })
@@ -190,7 +190,7 @@ export default function Financeiro() {
     queryKey: ["categorias-fin", empresaId],
     enabled: !!empresaId,
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("categorias_financeiras").select("*").eq("ativo", true).order("nome");
       return (data ?? []) as any[];
     },
@@ -298,11 +298,11 @@ export default function Financeiro() {
       if (!payload.forma_pagamento) payload.forma_pagamento = null;
 
       if (editId) {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("lancamentos_financeiros").update(payload).eq("id", editId);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("lancamentos_financeiros").insert(payload);
         if (error) throw error;
       }
@@ -320,7 +320,7 @@ export default function Financeiro() {
 
   const realizar = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("lancamentos_financeiros")
+      const { error } = await supabase.from("lancamentos_financeiros")
         .update({ status: "realizado", data_realizado: getTodayDateInputValue() })
         .eq("id", id);
       if (error) throw error;
@@ -344,7 +344,7 @@ export default function Financeiro() {
         cartao: "cartao_despesas",
       };
       if (l?.origem && tabelaOrigem[l.origem] && l?.origem_id) {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from(tabelaOrigem[l.origem]).delete().eq("id", l.origem_id).select("id");
         if (error) throw error;
         if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este registro.");
@@ -353,7 +353,7 @@ export default function Financeiro() {
       if (l?.origem === "parcela_pagamento" && l?.origem_id) {
         throw new Error("Este lançamento vem de uma parcela de contratação. Exclua a parcela na obra.");
       }
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("lancamentos_financeiros").delete().eq("id", l.id).select("id");
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("Você não tem permissão para excluir este lançamento.");

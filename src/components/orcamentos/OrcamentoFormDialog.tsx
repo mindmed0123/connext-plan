@@ -193,7 +193,6 @@ export function OrcamentoFormDialog({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setClienteTelefone((orc as any).cliente_telefone ?? "");
       setObservacoes(orc.observacoes ?? "");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const o = orc as any;
       setNumero(o.numero || o.numero_orcamento || null);
       setObjeto(o.objeto ?? "");
@@ -280,8 +279,7 @@ export function OrcamentoFormDialog({
         }, { onConflict: "empresa_id,cnpj" });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: obraIdData, error: obraErr } = await (supabase as any).rpc("ensure_obra_for_chamado", {
+      const { data: obraIdData, error: obraErr } = await supabase.rpc("ensure_obra_for_chamado", {
         _chamado: chamado,
         _descricao: titulo || clienteNome || chamado,
         _endereco: clienteEndereco || null,
@@ -319,8 +317,7 @@ export function OrcamentoFormDialog({
 
       // Salva orçamento + itens numa única transação no banco (os totais são
       // calculados pelo próprio banco, nunca pelo front)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc("salvar_orcamento", {
+      const { error } = await supabase.rpc("salvar_orcamento", {
         _orcamento: { ...payload, id: orcamentoId ?? null },
         _itens: itens.map((it, idx) => ({
           servico_id: it.servico_id || null,

@@ -73,7 +73,7 @@ export default function Recebimentos() {
     enabled: !!pagRec?.id,
     queryFn: async () =>
       (
-        await (supabase as any)
+        await supabase
           .from("recebimento_pagamentos")
           .select("*")
           .eq("recebimento_id", pagRec.id)
@@ -116,7 +116,7 @@ export default function Recebimentos() {
     mutationFn: async () => {
       const valor = Number(pagForm.valor.replace(",", "."));
       if (!(valor > 0)) throw new Error("Informe um valor maior que zero");
-      const { error } = await (supabase as any).from("recebimento_pagamentos").insert([
+      const { error } = await supabase.from("recebimento_pagamentos").insert([
         {
           recebimento_id: pagRec.id,
           valor,
@@ -140,7 +140,7 @@ export default function Recebimentos() {
 
   const estornarPagamento = useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("recebimento_pagamentos").delete().eq("id", id).select("id");
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("Você não tem permissão para estornar este pagamento.");

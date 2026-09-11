@@ -41,7 +41,6 @@ export default function Cartoes() {
   const [cartaoForm, setCartaoForm, clearCartaoDraft] = useDraftState("cartao-form", emptyCartao);
   const [despDialog, setDespDialog] = useState(false);
   const [editingDespId, setEditingDespId] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingDesp, setEditingDesp] = useState<any | null>(null);
   const [despForm, setDespForm, clearDespDraft] = useDraftState("desp-form", emptyDesp);
   const [filtroCartao, setFiltroCartao] = useState<string>("todos");
@@ -246,8 +245,7 @@ export default function Cartoes() {
       const args = pagar
         ? { _cartao_id: cartaoId, _vencimento: vencimento, _data_pagamento: getTodayDateInputValue() }
         : { _cartao_id: cartaoId, _vencimento: vencimento };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc(fn, args);
+      const { error } = await supabase.rpc(fn, args);
       if (error) throw error;
     },
     onSuccess: (_d, v) => {

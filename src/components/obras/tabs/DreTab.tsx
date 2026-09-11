@@ -98,7 +98,7 @@ export function DreTab({ obraId }: { obraId: string }) {
 
   const excluirManual = useMutation({
     mutationFn: async (l: Lancamento) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("lancamentos_financeiros").delete().eq("id", l.id).select("id");
       if (error) throw error;
       if (!data || data.length === 0) {
