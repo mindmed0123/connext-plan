@@ -257,7 +257,10 @@ export default function Financeiro() {
       }
     });
 
-    (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto" && l.data_vencimento).forEach((l) => {
+    // Não repetir a mesma parcela: lançamentos com origem 'parcela_pagamento' já
+    // aparecem acima a partir da própria parcela.
+    (lancamentos as any[]).filter((l) => l.tipo === "despesa" && l.status === "previsto"
+      && l.origem !== "parcela_pagamento" && l.data_vencimento).forEach((l) => {
       const d = parseISO(l.data_vencimento);
       if (isBefore(d, limite)) {
         itens.push({
