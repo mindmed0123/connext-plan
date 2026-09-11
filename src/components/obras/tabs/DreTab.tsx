@@ -52,21 +52,18 @@ export function DreTab({ obraId }: { obraId: string }) {
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async (): Promise<Lancamento[]> => {
-      const [fin, mat, cart, nfs, receb] = await Promise.all([
+      // Razão único: tudo (recebimentos, parcelas, materiais e cartão) já está em
+      // lancamentos_financeiros. As notas fiscais entram apenas como faturamento.
+      const [fin, nfs] = await Promise.all([
         supabase
           .from("lancamentos_financeiros")
           .select("id, descricao, tipo, status, valor, data_competencia, data_realizado, data_vencimento, origem, origem_id, categorias_financeiras(nome)")
           .eq("obra_id", obraId),
-        supabase.from("materiais_obra").select("id, descricao, fornecedor, valor_total, data_compra").eq("obra_id", obraId),
-        supabase.from("cartao_despesas").select("id, descricao, categoria, valor, data_compra").eq("obra_id", obraId),
         supabase.from("notas_fiscais").select("id, numero_nf, valor, data_emissao").eq("obra_id", obraId),
-        supabase.from("recebimentos").select("id, descricao, valor, status, data_recebido, data_prevista").eq("obra_id", obraId),
       ]);
 
       const list: Lancamento[] = [];
       for (const l of fin.data ?? []) {
-        if ((l as any).origem === "recebimento") continue; // já listado a partir de Recebimentos
-
         list.push({
           id: (l as any).id,
           data: (l as any).data_realizado ?? (l as any).data_vencimento ?? (l as any).data_competencia,
@@ -79,30 +76,6 @@ export function DreTab({ obraId }: { obraId: string }) {
           origemId: (l as any).origem_id ?? null,
         });
       }
-      for (const m of mat.data ?? []) {
-        list.push({
-          id: (m as any).id,
-          data: m.data_compra,
-          descricao: m.descricao + (m.fornecedor ? ` — ${m.fornecedor}` : ""),
-          categoria: "Materiais",
-          tipo: "despesa",
-          status: "realizado",
-          valor: Number(m.valor_total || 0),
-          origem: "material",
-        });
-      }
-      for (const c of cart.data ?? []) {
-        list.push({
-          id: (c as any).id,
-          data: c.data_compra,
-          descricao: c.descricao || c.categoria || "Despesa de cartão",
-          categoria: c.categoria || "Cartão de crédito",
-          tipo: "despesa",
-          status: "realizado",
-          valor: Number(c.valor || 0),
-          origem: "cartao",
-        });
-      }
       for (const n of nfs.data ?? []) {
         list.push({
           id: (n as any).id,
@@ -113,18 +86,6 @@ export function DreTab({ obraId }: { obraId: string }) {
           status: "faturado",
           valor: Number((n as any).valor || 0),
           origem: "nota_fiscal",
-        });
-      }
-      for (const r of receb.data ?? []) {
-        list.push({
-          id: (r as any).id,
-          data: (r as any).data_recebido ?? (r as any).data_prevista,
-          descricao: (r as any).descricao || "Recebimento",
-          categoria: "Recebimentos",
-          tipo: "receita",
-          status: (r as any).status === "recebido" ? "realizado" : "previsto",
-          valor: Number((r as any).valor || 0),
-          origem: "recebimento",
         });
       }
       return list.sort((a, b) => (String(a.data) < String(b.data) ? 1 : -1));
