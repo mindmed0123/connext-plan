@@ -4,6 +4,25 @@ export function getTodayDateInputValue() {
   return format(new Date(), "yyyy-MM-dd");
 }
 
+/**
+ * Data de hoje no fuso de São Paulo, como 'YYYY-MM-DD'.
+ * Usada para decidir o que está vencido, igual ao banco de dados.
+ */
+export function getTodayKeySaoPaulo() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** Um vencimento só está vencido quando é ANTERIOR a hoje (São Paulo). */
+export function isVencido(dateStr?: string | null) {
+  if (!dateStr) return false;
+  return String(dateStr).slice(0, 10) < getTodayKeySaoPaulo();
+}
+
 /** Converte um Date local em chave 'YYYY-MM-DD' (sem conversão para UTC). */
 export function toDateKey(d: Date) {
   return format(d, "yyyy-MM-dd");
