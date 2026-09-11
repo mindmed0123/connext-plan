@@ -121,7 +121,31 @@ export default function Configuracoes() {
       telefone: e.telefone ?? "",
       email: e.email ?? "",
     });
+    setSaldoForm({
+      saldo_inicial: String(e.saldo_inicial ?? 0),
+      data_saldo_inicial: e.data_saldo_inicial ?? "",
+    });
   }, [empresa]);
+
+  const salvarSaldo = useMutation({
+    mutationFn: async () => {
+      if (!empresaId) throw new Error("Empresa não identificada");
+      const { error } = await supabase
+        .from("empresas")
+        .update({
+          saldo_inicial: Number(saldoForm.saldo_inicial) || 0,
+          data_saldo_inicial: saldoForm.data_saldo_inicial || null,
+        } as any)
+        .eq("id", empresaId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Saldo inicial salvo!");
+      qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] });
+      qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const set = <K extends keyof typeof form>(k: K, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
