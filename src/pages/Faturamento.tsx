@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { nfPayload, RetencoesNfFields } from "@/components/financeiro/RetencoesNfFields";
 
 export default function Faturamento() {
   const qc = useQueryClient();
@@ -65,7 +66,14 @@ export default function Faturamento() {
   const saveNf = useMutation({
     mutationFn: async () => {
       const { id, obras, ...payload } = editNf;
-      payload.valor = Number(payload.valor) || 0;
+      Object.assign(payload, nfPayload({
+        valor_bruto: String(payload.valor_bruto ?? payload.valor ?? 0),
+        valor_deducoes_inss: String(payload.valor_deducoes_inss ?? 0),
+        base_inss: String(payload.base_inss ?? 0), aliquota_inss: String(payload.aliquota_inss ?? 0),
+        ret_inss: String(payload.ret_inss ?? 0), aliquota_iss: String(payload.aliquota_iss ?? 0),
+        ret_iss: String(payload.ret_iss ?? 0), ret_irrf: String(payload.ret_irrf ?? 0), ret_pcc: String(payload.ret_pcc ?? 0),
+      }));
+      delete payload.valor_liquido;
       const { error } = await supabase.from("notas_fiscais").update(payload).eq("id", id);
       if (error) throw error;
     },
@@ -158,14 +166,16 @@ export default function Faturamento() {
         <TabsContent value="nfs">
           <div className="rounded-lg border bg-card overflow-hidden">
             <Table>
-              <TableHeader><TableRow><TableHead>Chamado</TableHead><TableHead>Nº NF</TableHead><TableHead>Emissão</TableHead><TableHead>Valor</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Chamado</TableHead><TableHead>Nº NF</TableHead><TableHead>Emissão</TableHead><TableHead>Bruto</TableHead><TableHead>Retenções</TableHead><TableHead>Líquido</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
               <TableBody>
                 {nfs.data?.map((n: any) => (
                   <TableRow key={n.id}>
                     <TableCell className="font-medium">{chamado(n)}{!n.obras && n.codigo_chamado_avulso && <span className="ml-2 text-[10px] text-muted-foreground">(avulso)</span>}</TableCell>
                     <TableCell>{n.numero_nf}</TableCell>
                     <TableCell>{formatDateBR(n.data_emissao)}</TableCell>
-                    <TableCell>{formatCurrency(n.valor)}</TableCell>
+                    <TableCell>{formatCurrency(n.valor_bruto ?? n.valor)}</TableCell>
+                    <TableCell>{formatCurrency(Number(n.ret_inss || 0) + Number(n.ret_iss || 0) + Number(n.ret_irrf || 0) + Number(n.ret_pcc || 0))}</TableCell>
+                    <TableCell className="font-medium text-success">{formatCurrency(n.valor_liquido ?? n.valor)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => setEditNf({ ...n })}><Pencil className="h-4 w-4" /></Button>
@@ -192,7 +202,7 @@ export default function Faturamento() {
 
       {/* Edit RC */}
       <Dialog open={!!editRc} onOpenChange={(v) => !v && setEditRc(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar RC</DialogTitle></DialogHeader>
           {editRc && (
             <div className="grid gap-3">
@@ -216,7 +226,11 @@ export default function Faturamento() {
             <div className="grid gap-3">
               <div><Label>Nº NF</Label><Input value={editNf.numero_nf ?? ""} onChange={(e) => setEditNf({ ...editNf, numero_nf: e.target.value })} /></div>
               <div><Label>Emissão</Label><Input type="date" value={editNf.data_emissao ?? getTodayDateInputValue()} onChange={(e) => setEditNf({ ...editNf, data_emissao: e.target.value })} /></div>
-              <div><Label>Valor</Label><Input type="number" step="0.01" value={editNf.valor ?? 0} onChange={(e) => setEditNf({ ...editNf, valor: e.target.value })} /></div>
+              <RetencoesNfFields value={{
+                valor_bruto: String(editNf.valor_bruto ?? editNf.valor ?? 0), valor_deducoes_inss: String(editNf.valor_deducoes_inss ?? 0),
+                base_inss: String(editNf.base_inss ?? 0), aliquota_inss: String(editNf.aliquota_inss ?? 0), ret_inss: String(editNf.ret_inss ?? 0),
+                aliquota_iss: String(editNf.aliquota_iss ?? 0), ret_iss: String(editNf.ret_iss ?? 0), ret_irrf: String(editNf.ret_irrf ?? 0), ret_pcc: String(editNf.ret_pcc ?? 0),
+              }} onChange={(next) => setEditNf({ ...editNf, ...next })} />
             </div>
           )}
           <DialogFooter>

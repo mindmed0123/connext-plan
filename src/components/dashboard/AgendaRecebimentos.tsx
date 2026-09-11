@@ -8,7 +8,7 @@ import { parseDateString } from "@/lib/date";
 
 export function AgendaRecebimentos({ data }: { data: DashboardData }) {
   const proximos = data.recebimentos
-    .filter((r) => r.status === "a_receber" && r.data_prevista)
+    .filter((r) => r.status !== "recebido" && r.data_prevista)
     .sort((a, b) => (parseDateString(a.data_prevista)?.getTime() ?? 0) - (parseDateString(b.data_prevista)?.getTime() ?? 0))
     .slice(0, 10);
 
@@ -55,8 +55,8 @@ export function AgendaRecebimentos({ data }: { data: DashboardData }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[11px]">A receber</Badge>
-                    <span className="text-sm font-semibold tabular-nums">{formatCurrency(r.valor)}</span>
+                    <Badge variant="outline" className="text-[11px]">{r.status === "parcial" ? "Parcial" : "A receber"}</Badge>
+                    <span className="text-sm font-semibold tabular-nums">{formatCurrency(Math.max(0, Number(r.valor) - Number((r as any).valor_recebido || 0)))}</span>
                   </div>
                 </div>
               );

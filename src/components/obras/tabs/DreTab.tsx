@@ -19,6 +19,7 @@ type Lancamento = {
   valor: number;
   origem: string;
   origemId?: string | null;
+  valorLiquido?: number;
 };
 
 function Kpi({ label, value, tone }: { label: string; value: number; tone?: "receita" | "despesa" | "saldo" }) {
@@ -59,7 +60,7 @@ export function DreTab({ obraId }: { obraId: string }) {
           .from("lancamentos_financeiros")
           .select("id, descricao, tipo, status, valor, data_competencia, data_realizado, data_vencimento, origem, origem_id, categorias_financeiras(nome)")
           .eq("obra_id", obraId),
-        supabase.from("notas_fiscais").select("id, numero_nf, valor, data_emissao").eq("obra_id", obraId),
+        supabase.from("notas_fiscais").select("id, numero_nf, valor, valor_bruto, valor_liquido, ret_inss, ret_iss, ret_irrf, ret_pcc, data_emissao").eq("obra_id", obraId),
       ]);
 
       const list: Lancamento[] = [];
@@ -84,8 +85,9 @@ export function DreTab({ obraId }: { obraId: string }) {
           categoria: "Faturamento",
           tipo: "receita",
           status: "faturado",
-          valor: Number((n as any).valor || 0),
+          valor: Number((n as any).valor_bruto ?? (n as any).valor ?? 0),
           origem: "nota_fiscal",
+          valorLiquido: Number((n as any).valor_liquido ?? (n as any).valor ?? 0),
         });
       }
       return list.sort((a, b) => (String(a.data) < String(b.data) ? 1 : -1));
@@ -124,6 +126,11 @@ export function DreTab({ obraId }: { obraId: string }) {
   const receitaOrcada = Number(r.receita_orcada || 0);
   const receitaFaturada = Number(r.receita_faturada || 0);
   const receitaRecebida = Number(r.receita_recebida || 0);
+  const fiscal = (lancamentos ?? []).filter((l) => l.origem === "nota_fiscal");
+  const receitaLiquida = fiscal.reduce((s, l) => s + Number(l.valorLiquido ?? l.valor), 0);
+  const receitaBrutaFiscal = fiscal.reduce((s, l) => s + l.valor, 0);
+  const retencoes = Math.max(0, receitaBrutaFiscal - receitaLiquida);
+  const emAberto = Math.max(0, receitaLiquida - receitaRecebida);
   const custoMateriais = Number(r.custo_materiais || 0);
   const custoTercPago = Number(r.custo_terceirizados_pago || 0);
   const custoTercPrev = Number(r.custo_terceirizados_previsto || 0);
@@ -137,7 +144,7 @@ export function DreTab({ obraId }: { obraId: string }) {
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi label="Receita orçada (contrato + adendos)" value={receitaOrcada} tone="receita" />
-        <Kpi label="Receita faturada" value={receitaFaturada} tone="receita" />
+        <Kpi label="Receita bruta faturada" value={receitaFaturada} tone="receita" />
         <Kpi label="Receita recebida" value={receitaRecebida} tone="receita" />
         <Kpi label="Custo total" value={custoTotal} tone="despesa" />
       </div>
@@ -151,8 +158,11 @@ export function DreTab({ obraId }: { obraId: string }) {
           <div className="divide-y text-sm">
             {[
               ["(+) Receita orçada", receitaOrcada, "text-success"],
-              ["(+) Receita faturada", receitaFaturada, "text-muted-foreground"],
+              ["(+) Receita bruta faturada", receitaFaturada, "text-muted-foreground"],
+              ["(-) Retenções", retencoes, "text-destructive"],
+              ["(=) Receita líquida", receitaFaturada - retencoes, "text-success"],
               ["(+) Receita recebida", receitaRecebida, "text-success"],
+              ["(=) Em aberto", emAberto, "text-muted-foreground"],
               ["(-) Materiais", custoMateriais, "text-destructive"],
               ["(-) Terceirizados pagos", custoTercPago, "text-destructive"],
               ["(-) Terceirizados previstos", custoTercPrev, "text-muted-foreground"],

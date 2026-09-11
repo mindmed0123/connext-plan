@@ -21,7 +21,8 @@ type RecForm = {
   valor: string;
   data_prevista: string;
   observacoes: string;
-  status: "a_receber" | "recebido";
+  status: "a_receber" | "parcial" | "recebido";
+  valor_recebido: string;
 };
 
 const emptyRec: RecForm = {
@@ -31,6 +32,7 @@ const emptyRec: RecForm = {
   data_prevista: getTodayDateInputValue(),
   observacoes: "",
   status: "a_receber",
+  valor_recebido: "0",
 };
 
 export default function Recebimentos() {
@@ -70,19 +72,17 @@ export default function Recebimentos() {
     let recebido = 0;
     for (const r of lista) {
       const v = Number(r.valor || 0);
-      if (r.status === "recebido") recebido += v;
-      else aReceber += v;
+      const pago = Number(r.valor_recebido || 0);
+      recebido += pago;
+      aReceber += Math.max(0, v - pago);
     }
     return { aReceber, recebido };
   }, [lista]);
 
   const marcarRecebido = useMutation({
-    mutationFn: async (r: any) => {
+    mutationFn: async ({ r, valor }: { r: any; valor: number }) => {
       const hoje = getTodayDateInputValue();
-      const { error } = await supabase
-        .from("recebimentos")
-        .update({ status: "recebido", data_recebido: hoje })
-        .eq("id", r.id);
+      const { error } = await supabase.rpc("confirmar_recebimento" as any, { _id: r.id, _valor: valor, _data: hoje });
       if (error) throw error;
       if (r.pedido_compra_id) {
         await supabase.from("pedidos_compra").update({ status: "recebido" }).eq("id", r.pedido_compra_id);
@@ -106,6 +106,7 @@ export default function Recebimentos() {
         data_prevista: form.data_prevista || null,
         observacoes: form.observacoes || null,
         status: form.status,
+        valor_recebido: parseFloat(form.valor_recebido) || 0,
       };
       if (editId) {
         const { error } = await supabase.from("recebimentos").update(payload).eq("id", editId);
@@ -154,6 +155,7 @@ export default function Recebimentos() {
       data_prevista: r.data_prevista ?? getTodayDateInputValue(),
       observacoes: r.observacoes ?? "",
       status: r.status,
+      valor_recebido: String(r.valor_recebido ?? 0),
     });
     setDialogOpen(true);
   };
@@ -239,15 +241,21 @@ export default function Recebimentos() {
                       <span className="text-xs text-muted-foreground">Manual</span>
                     )}
                   </TableCell>
-                  <TableCell>{formatCurrency(r.valor)}</TableCell>
+                  <TableCell>{formatCurrency(Math.max(0, Number(r.valor) - Number(r.valor_recebido || 0)))}</TableCell>
                   <TableCell>{formatDateBR(r.data_prevista)}</TableCell>
                   <TableCell>{formatDateBR(r.data_recebido)}</TableCell>
-                  <TableCell className="text-xs">{r.status === "recebido" ? "✓ Recebido" : "A receber"}</TableCell>
+                  <TableCell className="text-xs">{r.status === "recebido" ? "✓ Recebido" : r.status === "parcial" ? "Parcial" : "A receber"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {r.status === "a_receber" && (
-                        <Button size="sm" variant="outline" onClick={() => marcarRecebido.mutate(r)}>
-                          Marcar recebido
+                      {r.status !== "recebido" && (
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const saldo = Math.max(0, Number(r.valor) - Number(r.valor_recebido || 0));
+                          const informado = prompt("Valor recebido agora", saldo.toFixed(2));
+                          if (informado === null) return;
+                          const valor = Number(informado.replace(",", "."));
+                          if (valor > 0) marcarRecebido.mutate({ r, valor });
+                        }}>
+                          Registrar recebimento
                         </Button>
                       )}
                       <Button size="icon" variant="ghost" onClick={() => openEditar(r)}>
@@ -329,16 +337,21 @@ export default function Recebimentos() {
               <Label>Status</Label>
               <Select
                 value={form.status}
-                onValueChange={(v: "a_receber" | "recebido") => setForm({ ...form, status: v })}
+                onValueChange={(v: "a_receber" | "parcial" | "recebido") => setForm({ ...form, status: v })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="a_receber">A receber</SelectItem>
+                  <SelectItem value="parcial">Parcial</SelectItem>
                   <SelectItem value="recebido">Recebido</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Valor já recebido</Label>
+              <Input type="number" step="0.01" value={form.valor_recebido} onChange={(e) => setForm({ ...form, valor_recebido: e.target.value })} />
             </div>
             <div className="col-span-2">
               <Label>Observações</Label>

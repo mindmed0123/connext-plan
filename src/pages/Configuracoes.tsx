@@ -65,6 +65,7 @@ export default function Configuracoes() {
     bairro: "", cidade: "", uf: "", cep: "", telefone: "", email: "",
   });
   const [saldoForm, setSaldoForm] = useState({ saldo_inicial: "0", data_saldo_inicial: "" });
+  const [cprb, setCprb] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoUrl = (empresa as any)?.logo_url as string | null | undefined;
@@ -125,6 +126,7 @@ export default function Configuracoes() {
       saldo_inicial: String(e.saldo_inicial ?? 0),
       data_saldo_inicial: e.data_saldo_inicial ?? "",
     });
+    setCprb(Boolean(e.cprb));
   }, [empresa]);
 
   const salvarSaldo = useMutation({
@@ -144,6 +146,16 @@ export default function Configuracoes() {
       qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] });
       qc.invalidateQueries({ queryKey: ["fluxo-caixa-mensal"] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const salvarFiscal = useMutation({
+    mutationFn: async () => {
+      if (!empresaId) throw new Error("Empresa não identificada");
+      const { error } = await supabase.from("empresas").update({ cprb } as any).eq("id", empresaId);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Configuração fiscal salva!"); qc.invalidateQueries({ queryKey: ["empresa-config", empresaId] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -202,6 +214,17 @@ export default function Configuracoes() {
           Esses dados aparecem no cabeçalho dos PDFs de orçamento.
         </p>
       </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Retenções fiscais</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <label className="flex items-center gap-3 text-sm">
+            <Checkbox checked={cprb} onCheckedChange={(value) => setCprb(value === true)} />
+            Empresa enquadrada na desoneração da folha (CPRB — INSS sugerido em 3,5%)
+          </label>
+          <div className="flex justify-end"><Button onClick={() => salvarFiscal.mutate()} disabled={salvarFiscal.isPending}><Save className="h-4 w-4" /> Salvar configuração fiscal</Button></div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
