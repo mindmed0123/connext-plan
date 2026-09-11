@@ -66,9 +66,9 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
 
   const aplicarDivisaoAutomatica = (qtd: number, total: number) => {
     if (qtd < 1) return;
-    const valor = +(total / qtd).toFixed(2);
-    const novas: ParcelaInput[] = Array.from({ length: qtd }).map((_, i) => ({
-      valor: i === qtd - 1 ? (total - valor * (qtd - 1)).toFixed(2) : valor.toFixed(2),
+    const valores = dividirParcelas(arredondar2(total), qtd);
+    const novas: ParcelaInput[] = valores.map((v, i) => ({
+      valor: v.toFixed(2),
       data_prevista: parcelasInput[i]?.data_prevista ?? "",
     }));
     setParcelasInput(novas);

@@ -319,24 +319,24 @@ export async function gerarOrcamentoPDF(
       valor: valorTotal,
     });
   } else if (orc.condicao_pagamento === "entrada_parcelas" && percEntrada > 0) {
-    const valorEntrada = valorTotal * (percEntrada / 100);
-    const restante = valorTotal - valorEntrada;
-    const valorParc = restante / numParcelas;
+    const valorEntrada = arredondar2(valorTotal * (percEntrada / 100));
+    const restante = arredondar2(valorTotal - valorEntrada);
+    const valores = dividirParcelas(restante, numParcelas);
     parcelas.push({ numero: "Entrada", venc: format(baseDate, "dd/MM/yyyy", { locale: ptBR }), valor: valorEntrada });
     for (let i = 1; i <= numParcelas; i++) {
       parcelas.push({
         numero: String(i),
         venc: format(addDays(baseDate, intervalo * i), "dd/MM/yyyy", { locale: ptBR }),
-        valor: valorParc,
+        valor: valores[i - 1],
       });
     }
   } else {
-    const valorParc = valorTotal / numParcelas;
+    const valores = dividirParcelas(arredondar2(valorTotal), numParcelas);
     for (let i = 1; i <= numParcelas; i++) {
       parcelas.push({
         numero: String(i),
         venc: format(addDays(baseDate, intervalo * i), "dd/MM/yyyy", { locale: ptBR }),
-        valor: valorParc,
+        valor: valores[i - 1],
       });
     }
   }

@@ -153,19 +153,16 @@ export default function Cartoes() {
         return;
       }
       // Cria N linhas (uma por fatura) quando parcelado
-      const base = new Date(despForm.data_compra + "T12:00:00");
+      const base = parseDateString(despForm.data_compra) ?? new Date();
+      const valores = dividirParcelas(arredondar2(valorTotal), totalParcelas);
       const rows = Array.from({ length: totalParcelas }, (_, i) => {
         const d = new Date(base);
         d.setMonth(d.getMonth() + i);
-        const dataCompra = d.toISOString().slice(0, 10);
+        const dataCompra = toDateKey(d);
         const descricao = totalParcelas > 1
           ? `${basePayload.descricao} (${i + 1}/${totalParcelas})`
           : basePayload.descricao;
-        // Última parcela ajusta diferença de arredondamento
-        const valor = (i === totalParcelas - 1 && totalParcelas > 1)
-          ? Math.round((valorTotal - valorParcela * (totalParcelas - 1)) * 100) / 100
-          : valorParcela;
-        return { ...basePayload, data_compra: dataCompra, descricao, valor };
+        return { ...basePayload, data_compra: dataCompra, descricao, valor: valores[i] };
       });
       const { error } = await supabase.from("cartao_despesas" as any).insert(rows);
       if (error) throw error;
