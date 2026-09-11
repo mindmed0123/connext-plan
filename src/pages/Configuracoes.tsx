@@ -317,6 +317,43 @@ export default function Configuracoes() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Saldo inicial de caixa</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Quanto a empresa tinha em caixa numa data de partida. O fluxo de caixa começa desse valor e soma tudo o que entrou e saiu depois dessa data.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label>Saldo inicial (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={saldoForm.saldo_inicial}
+                onChange={(e) => setSaldoForm((s) => ({ ...s, saldo_inicial: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Data do saldo</Label>
+              <Input
+                type="date"
+                value={saldoForm.data_saldo_inicial}
+                onChange={(e) => setSaldoForm((s) => ({ ...s, data_saldo_inicial: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => salvarSaldo.mutate()} disabled={salvarSaldo.isPending}>
+              <Save className="h-4 w-4" /> Salvar saldo inicial
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Regiões de atuação</CardTitle>
           <p className="text-xs text-muted-foreground">Regiões que aparecem no cadastro de obras. Personalize para a sua operação.</p>
         </CardHeader>
