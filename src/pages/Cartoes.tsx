@@ -13,10 +13,10 @@ import { Plus, CreditCard, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { Badge } from "@/components/ui/badge";
-import { formatDateBR, getTodayDateInputValue, parseDateString, toDateKey } from "@/lib/date";
+import { formatDateBR, getTodayDateInputValue, toDateKey } from "@/lib/date";
 import { arredondar2, dividirParcelas } from "@/lib/money";
 import { useDraftState } from "@/hooks/useDraftState";
-import { calcularFaturas, faturaDeCompra, somarMeses } from "@/lib/cartao-helpers";
+import { calcularFaturas, faturaDeCompra } from "@/lib/cartao-helpers";
 
 type Cartao = {
   id: string; apelido: string; banco: string | null; bandeira: string | null;
@@ -43,6 +43,8 @@ export default function Cartoes() {
   const [editingDespId, setEditingDespId] = useState<string | null>(null);
   const [editingDesp, setEditingDesp] = useState<any | null>(null);
   const [despForm, setDespForm, clearDespDraft] = useDraftState("desp-form", emptyDesp);
+  const [escopoDialog, setEscopoDialog] = useState(false);
+  const [escopoTotal, setEscopoTotal] = useState("0");
   const [filtroCartao, setFiltroCartao] = useState<string>("todos");
   const [periodoMeses, setPeriodoMeses] = useState<number | null>(12);
 
@@ -77,7 +79,8 @@ export default function Cartoes() {
           .order("id")
           .range(inicio, inicio + passo - 1);
         if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
-        if (desde) q = q.gte("data_compra", desde);
+        // Filtra pela FATURA (não pela data da compra), para não esconder parcelas futuras de compras antigas
+        if (desde) q = q.gte("fatura_vencimento", desde);
         const { data, error } = await q;
         if (error) throw error;
         linhas.push(...(data ?? []));
@@ -148,7 +151,8 @@ export default function Cartoes() {
   });
 
   const saveDesp = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { escopo?: "parcela" | "grupo"; totalGrupo?: number }) => {
+      const escopo = opts?.escopo ?? "parcela";
       const totalParcelas = Math.max(1, parseInt(despForm.parcelas) || 1);
       const valorInformado = parseFloat(despForm.valor) || 0;
       const basePayload = {
@@ -165,13 +169,7 @@ export default function Cartoes() {
         const atual: any = editingDesp ?? {};
         const grupo = atual.grupo_parcelamento as string | null;
         const nParcelas = Number(atual.total_parcelas ?? 0);
-        let todoParcelamento = false;
-        if (grupo && nParcelas > 1) {
-          todoParcelamento = confirm(
-            `Esta compra está dividida em ${nParcelas} parcelas.\n\nOK = aplicar a TODO o parcelamento (o valor informado é o total da compra e será redividido).\nCancelar = alterar somente esta parcela.`,
-          );
-        }
-        if (!todoParcelamento) {
+        if (escopo === "parcela" || !grupo || nParcelas <= 1) {
           const { error } = await supabase.from("cartao_despesas")
             .update({ ...basePayload, parcelas: atual.parcelas ?? totalParcelas, valor: valorInformado })
             .eq("id", editingDespId);
@@ -184,7 +182,8 @@ export default function Cartoes() {
           .order("parcela_num", { ascending: true });
         if (e1) throw e1;
         const linhas = (irmas ?? []);
-        const valores = dividirParcelas(arredondar2(valorInformado), linhas.length);
+        const total = arredondar2(opts?.totalGrupo ?? 0);
+        const valores = dividirParcelas(total, linhas.length);
         for (let i = 0; i < linhas.length; i++) {
           const { error } = await supabase.from("cartao_despesas")
             .update({
@@ -192,6 +191,7 @@ export default function Cartoes() {
               comprador_id: basePayload.comprador_id,
               categoria: basePayload.categoria,
               observacoes: basePayload.observacoes,
+              data_compra: basePayload.data_compra,
               descricao: `${basePayload.descricao.replace(/\s*\(\d+\/\d+\)$/, "")} (${i + 1}/${linhas.length})`,
               valor: valores[i],
             })
@@ -200,18 +200,18 @@ export default function Cartoes() {
         }
         return;
       }
-      // Cria N linhas (uma por fatura) quando parcelado — a data da compra é sempre a real
-      const base = parseDateString(despForm.data_compra) ?? new Date();
+      // Cria N linhas (uma por fatura) quando parcelado — a data da compra é sempre a real.
+      // O vencimento de cada parcela é calculado no banco a partir de data_compra + (parcela_num - 1) faturas.
       const valores = dividirParcelas(arredondar2(valorInformado), totalParcelas);
       const grupo = totalParcelas > 1 ? crypto.randomUUID() : null;
       const rows = Array.from({ length: totalParcelas }, (_, i) => ({
         ...basePayload,
         descricao: totalParcelas > 1 ? `${basePayload.descricao} (${i + 1}/${totalParcelas})` : basePayload.descricao,
         valor: valores[i],
-        competencia_fatura: toDateKey(somarMeses(base, i)),
         grupo_parcelamento: grupo,
         parcela_num: i + 1,
         total_parcelas: totalParcelas,
+
       }));
       const { error } = await supabase.from("cartao_despesas").insert(rows);
       if (error) throw error;
@@ -296,6 +296,26 @@ export default function Cartoes() {
     setDespDialog(true);
   };
 
+  // Ao salvar a edição de uma parcela, pergunta o escopo (esta parcela x todo o parcelamento)
+  const abrirSalvar = async () => {
+    const atual: any = editingDesp ?? {};
+    const grupo = atual.grupo_parcelamento as string | null;
+    const n = Number(atual.total_parcelas ?? 0);
+    if (!editingDespId || !grupo || n <= 1) {
+      saveDesp.mutate({ escopo: "parcela" });
+      return;
+    }
+    const { data } = await supabase
+      .from("cartao_despesas")
+      .select("valor")
+      .eq("grupo_parcelamento", grupo);
+    const total = (data ?? []).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
+    setEscopoTotal(arredondar2(total).toFixed(2));
+    setEscopoDialog(true);
+  };
+
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -320,16 +340,20 @@ export default function Cartoes() {
             ? calcularFaturas(c.dia_fechamento, c.dia_vencimento)
             : null;
           const despesasDoCartao = (despesas).filter((d) => d.cartao_id === c.id);
+          // Classifica pela FATURA calculada no banco (cada parcela cai na sua fatura)
+          const vencAtual = info ? toDateKey(info.faturaAtual.vence) : null;
+          const vencProxima = info ? toDateKey(info.proximaFatura.vence) : null;
           const totalFaturaAtual = info
             ? despesasDoCartao
-                .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "atual")
+                .filter((d) => d.fatura_vencimento === vencAtual)
                 .reduce((s, d) => s + Number(d.valor || 0), 0)
             : 0;
           const totalFaturaProxima = info
             ? despesasDoCartao
-                .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "proxima")
+                .filter((d) => d.fatura_vencimento === vencProxima)
                 .reduce((s, d) => s + Number(d.valor || 0), 0)
             : 0;
+
 
           return (
             <Card key={c.id} className={(c).ativo === false ? "opacity-70" : undefined}>
@@ -616,7 +640,37 @@ export default function Cartoes() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDespDialog(false)}>Cancelar</Button>
-            <Button onClick={() => saveDesp.mutate()} disabled={!despForm.cartao_id || !despForm.categoria || !despForm.valor || saveDesp.isPending}>Salvar</Button>
+            <Button onClick={() => abrirSalvar()} disabled={!despForm.cartao_id || !despForm.categoria || !despForm.valor || saveDesp.isPending}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Escopo da edição de uma compra parcelada */}
+      <Dialog open={escopoDialog} onOpenChange={setEscopoDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Esta compra está parcelada</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Escolha se a alteração vale só para esta parcela ou para todo o parcelamento
+              ({Number(editingDesp?.total_parcelas ?? 0)} parcelas).
+            </p>
+            <div>
+              <Label>Valor TOTAL da compra (todo o parcelamento)</Label>
+              <Input type="number" step="0.01" value={escopoTotal} onChange={(e) => setEscopoTotal(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Será dividido igualmente entre as parcelas. Só é usado na opção "Todo o parcelamento".
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" disabled={saveDesp.isPending}
+              onClick={() => { setEscopoDialog(false); saveDesp.mutate({ escopo: "parcela" }); }}>
+              Só esta parcela
+            </Button>
+            <Button disabled={saveDesp.isPending}
+              onClick={() => { setEscopoDialog(false); saveDesp.mutate({ escopo: "grupo", totalGrupo: parseFloat(escopoTotal) || 0 }); }}>
+              Todo o parcelamento
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

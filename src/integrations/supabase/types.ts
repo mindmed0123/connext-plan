@@ -3039,6 +3039,10 @@ export type Database = {
         }[]
       }
       aprovar_orcamento: { Args: { _id: string }; Returns: undefined }
+      calc_fatura_fechamento: {
+        Args: { _data_compra: string; _dia_fech: number; _offset?: number }
+        Returns: string
+      }
       calc_fatura_vencimento: {
         Args: {
           _data_compra: string

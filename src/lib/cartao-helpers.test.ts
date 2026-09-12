@@ -30,4 +30,16 @@ describe("fatura de cartão", () => {
     expect(key(vencimentoDaCompra("2026-01-31", 10, 20, 1))).toBe("2026-03-20");
     expect(key(vencimentoDaCompra("2026-01-31", 10, 20, 2))).toBe("2026-04-20");
   });
+
+  it("fecha 31 / vence 10, compra em 30/01/2026 em 3x", () => {
+    expect(key(vencimentoDaCompra("2026-01-30", 31, 10, 0))).toBe("2026-02-10");
+    expect(key(vencimentoDaCompra("2026-01-30", 31, 10, 1))).toBe("2026-03-10");
+    expect(key(vencimentoDaCompra("2026-01-30", 31, 10, 2))).toBe("2026-04-10");
+  });
+
+  it("fecha 30, compra em 31/01/2026 em 2x (vence 10)", () => {
+    expect(key(fechamentoDaCompra("2026-01-31", 30))).toBe("2026-02-28");
+    expect(key(vencimentoDaCompra("2026-01-31", 30, 10, 0))).toBe("2026-03-10");
+    expect(key(vencimentoDaCompra("2026-01-31", 30, 10, 1))).toBe("2026-04-10");
+  });
 });
