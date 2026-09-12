@@ -131,9 +131,6 @@ export default function Recebimentos() {
         },
       ]);
       if (error) throw error;
-      if (pagRec.pedido_compra_id) {
-        await supabase.from("pedidos_compra").update({ status: "recebido" }).eq("id", pagRec.pedido_compra_id);
-      }
     },
     onSuccess: () => {
       toast.success("Pagamento registrado");
