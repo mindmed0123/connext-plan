@@ -45,18 +45,25 @@ export function OrcamentoDetailSheet({
       if (status === "aprovado") {
         const { error } = await supabase.rpc("aprovar_orcamento", { _id: orcamentoId! });
         if (error) throw error;
-        return;
+        return status;
       }
       const { error } = await supabase.from("orcamentos").update({ status }).eq("id", orcamentoId!);
       if (error) throw error;
+      return status;
     },
-    onSuccess: () => {
+    onSuccess: (status) => {
       toast.success("Status atualizado");
       qc.invalidateQueries({ queryKey: ["orc-detail", orcamentoId] });
       qc.invalidateQueries({ queryKey: ["orcamentos"] });
       qc.invalidateQueries({ queryKey: ["all-orcamentos"] });
       qc.invalidateQueries({ queryKey: ["obras"] });
       qc.invalidateQueries({ queryKey: ["dashboard-data"] });
+      if (status === "aprovado" && orcamentoId) {
+        toast("Deseja criar o contrato do cliente?", {
+          action: { label: "Criar contrato", onClick: () => navigate(`/contratos?orcamento=${orcamentoId}`) },
+          duration: 10000,
+        });
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
