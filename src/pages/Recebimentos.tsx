@@ -316,9 +316,11 @@ export default function Recebimentos() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button size="sm" variant="outline" onClick={() => abrirPagamentos(r)}>
-                        Registrar pagamento
-                      </Button>
+                      {r.status !== "recebido" && (
+                        <Button size="sm" variant="outline" onClick={() => abrirPagamentos(r)}>
+                          Registrar pagamento
+                        </Button>
+                      )}
                       <Button size="icon" variant="ghost" onClick={() => openEditar(r)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
