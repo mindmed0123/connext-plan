@@ -149,7 +149,8 @@ export default function Cartoes() {
   });
 
   const saveDesp = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { escopo?: "parcela" | "grupo"; totalGrupo?: number }) => {
+      const escopo = opts?.escopo ?? "parcela";
       const totalParcelas = Math.max(1, parseInt(despForm.parcelas) || 1);
       const valorInformado = parseFloat(despForm.valor) || 0;
       const basePayload = {
@@ -166,13 +167,7 @@ export default function Cartoes() {
         const atual: any = editingDesp ?? {};
         const grupo = atual.grupo_parcelamento as string | null;
         const nParcelas = Number(atual.total_parcelas ?? 0);
-        let todoParcelamento = false;
-        if (grupo && nParcelas > 1) {
-          todoParcelamento = confirm(
-            `Esta compra está dividida em ${nParcelas} parcelas.\n\nOK = aplicar a TODO o parcelamento (o valor informado é o total da compra e será redividido).\nCancelar = alterar somente esta parcela.`,
-          );
-        }
-        if (!todoParcelamento) {
+        if (escopo === "parcela" || !grupo || nParcelas <= 1) {
           const { error } = await supabase.from("cartao_despesas")
             .update({ ...basePayload, parcelas: atual.parcelas ?? totalParcelas, valor: valorInformado })
             .eq("id", editingDespId);
@@ -185,7 +180,8 @@ export default function Cartoes() {
           .order("parcela_num", { ascending: true });
         if (e1) throw e1;
         const linhas = (irmas ?? []);
-        const valores = dividirParcelas(arredondar2(valorInformado), linhas.length);
+        const total = arredondar2(opts?.totalGrupo ?? 0);
+        const valores = dividirParcelas(total, linhas.length);
         for (let i = 0; i < linhas.length; i++) {
           const { error } = await supabase.from("cartao_despesas")
             .update({
@@ -193,6 +189,7 @@ export default function Cartoes() {
               comprador_id: basePayload.comprador_id,
               categoria: basePayload.categoria,
               observacoes: basePayload.observacoes,
+              data_compra: basePayload.data_compra,
               descricao: `${basePayload.descricao.replace(/\s*\(\d+\/\d+\)$/, "")} (${i + 1}/${linhas.length})`,
               valor: valores[i],
             })
@@ -201,18 +198,18 @@ export default function Cartoes() {
         }
         return;
       }
-      // Cria N linhas (uma por fatura) quando parcelado — a data da compra é sempre a real
-      const base = parseDateString(despForm.data_compra) ?? new Date();
+      // Cria N linhas (uma por fatura) quando parcelado — a data da compra é sempre a real.
+      // O vencimento de cada parcela é calculado no banco a partir de data_compra + (parcela_num - 1) faturas.
       const valores = dividirParcelas(arredondar2(valorInformado), totalParcelas);
       const grupo = totalParcelas > 1 ? crypto.randomUUID() : null;
       const rows = Array.from({ length: totalParcelas }, (_, i) => ({
         ...basePayload,
         descricao: totalParcelas > 1 ? `${basePayload.descricao} (${i + 1}/${totalParcelas})` : basePayload.descricao,
         valor: valores[i],
-        competencia_fatura: toDateKey(somarMeses(base, i)),
         grupo_parcelamento: grupo,
         parcela_num: i + 1,
         total_parcelas: totalParcelas,
+
       }));
       const { error } = await supabase.from("cartao_despesas").insert(rows);
       if (error) throw error;
