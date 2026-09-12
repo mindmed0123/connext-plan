@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 import logo from "@/assets/logo.png";
 
 const ROTA_PADRAO_POR_ROLE = {
@@ -28,6 +29,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const motivo = searchParams.get("motivo");
   const tabParam = searchParams.get("tab") === "signup" ? "signup" : "login";
+  const planoParam = searchParams.get("plano");
   const { user, loading, authReady } = useAuth();
   const { role, isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
@@ -64,8 +66,10 @@ export default function Auth() {
       toast.error("É preciso aceitar os termos de uso e a política de privacidade.");
       return;
     }
+    trackEvent("signup_submit", { plano: planoParam ?? null });
     setBusy(true);
     try {
+      if (planoParam) sessionStorage.setItem("pending_plano", planoParam);
       const redirectUrl = `${window.location.origin}/dashboard`;
       const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
