@@ -359,6 +359,7 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
 
     if (target) {
       // Nunca troca o id de assinatura de uma assinatura ativa sem registrar o caso
+      let outraCompra = false;
       if (subscriptionId) {
         const atual = target.cakto_subscription_id ?? null;
         if (!atual) {
@@ -368,10 +369,17 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
             assinatura_id: target.id, empresa_id: target.empresa_id,
             atual, recebido: subscriptionId, status: target.status,
           });
-          if (target.status !== "active") updates.cakto_subscription_id = subscriptionId;
+          if (target.status === "active") {
+            // Evento de OUTRA compra não altera a assinatura ativa: fica só no histórico
+            outraCompra = true;
+          } else {
+            updates.cakto_subscription_id = subscriptionId;
+          }
         }
       }
-      await supabase.from("assinaturas").update(updates).eq("id", target.id);
+      if (!outraCompra) {
+        await supabase.from("assinaturas").update(updates).eq("id", target.id);
+      }
       empresa_id = empresa_id ?? target.empresa_id;
     } else {
       console.warn(`${serviceName}: assinatura não encontrada`, {
