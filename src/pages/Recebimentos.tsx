@@ -120,6 +120,10 @@ export default function Recebimentos() {
     mutationFn: async () => {
       const valor = Number(pagForm.valor.replace(",", "."));
       if (!(valor > 0)) throw new Error("Informe um valor maior que zero");
+      if (valor > saldoAtual + 0.005)
+        throw new Error(
+          `O pagamento passa do saldo em aberto (${formatCurrency(saldoAtual)})`,
+        );
       const { error } = await supabase.from("recebimento_pagamentos").insert([
         {
           empresa_id: empresaId as string,
