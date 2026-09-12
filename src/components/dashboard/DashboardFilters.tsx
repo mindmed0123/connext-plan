@@ -53,7 +53,7 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
-              {OBRA_STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>)}
+              {statuses.map((s) => <SelectItem key={s.chave} value={s.chave}>{s.nome}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
