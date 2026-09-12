@@ -1,3 +1,4 @@
+import { hexToRgb } from "@/lib/color";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,6 +19,14 @@ export type PDFRelatorioObra = {
 export type PDFRelatorioEmpresa = {
   nome: string;
   logo_url?: string | null;
+  cnpj?: string | null;
+  endereco?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+  cor_primaria?: string | null;
+  texto_rodape?: string | null;
 };
 
 async function loadImage(
@@ -114,10 +123,25 @@ export async function gerarRelatorioFotograficoPDF(
     );
   };
 
+  const cor = hexToRgb(empresa.cor_primaria ?? "", [82, 196, 184]);
+
+  const dadosEmpresa = [
+    empresa.cnpj ? `CNPJ: ${empresa.cnpj}` : null,
+    [empresa.endereco, [empresa.cidade, empresa.uf].filter(Boolean).join(" - ")].filter(Boolean).join(" — ") || null,
+    [empresa.telefone, empresa.email].filter(Boolean).join(" | ") || null,
+  ].filter(Boolean).join("  •  ");
+
   const drawFooter = (page: number, total: number) => {
+    doc.setDrawColor(cor[0], cor[1], cor[2]);
+    doc.setLineWidth(0.6);
+    doc.line(margin, pageH - 12, pageW - margin, pageH - 12);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(140);
+    const rodape = (empresa.texto_rodape ?? "").trim();
+    if (dadosEmpresa) doc.text(dadosEmpresa, margin, pageH - 8);
+    if (rodape) doc.text(rodape, margin, pageH - 4.5);
+    doc.setFontSize(8);
     doc.text(`${page} / ${total}`, pageW - margin, pageH - 6, {
       align: "right",
     });

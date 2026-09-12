@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { getTodayDateInputValue } from "@/lib/date";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
+import { calcularRetencoes } from "@/lib/fiscal";
 import { emptyRetencoes, nfPayload, RetencoesNfFields, type RetencoesNf } from "@/components/financeiro/RetencoesNfFields";
 
 type Tipo = "rc" | "pc" | "nf";
@@ -29,6 +31,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [valor, setValor] = useState("");
   const [retencoes, setRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [regras, setRegras] = useState<any>(null);
+  const { config } = useEmpresaConfig();
   const [status, setStatus] = useState<string>(tipo === "nf" ? "" : "aguardando");
 
   // NF opcional ao criar PC
@@ -66,31 +69,21 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   useEffect(() => {
     if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !obraId) return;
     void (async () => {
-      const [{ data: obra }, { data: empresa }] = await Promise.all([
-        (supabase.from("obras")).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
-        supabase.from("empresas").select("cprb").limit(1).single(),
-      ]);
-      setRegras({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
+      const { data: obra } = await (supabase.from("obras"))
+        .select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)")
+        .eq("id", obraId).single();
+      setRegras({ ...(obra?.clientes ?? {}) });
     })();
   }, [obraId, tipo, withNf]);
 
   useEffect(() => {
     if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !regras) return;
       const brutoTexto = tipo === "pc" ? (nfValor || valor) : valor;
-      const bruto = Number(brutoTexto || 0);
-      const aliquotaInss = regras.cprb ? 3.5 : 11;
-      const baseInss = Math.max(0, bruto - Number(retencoes.valor_deducoes_inss || 0));
       setRetencoes((atual) => ({
         ...atual,
-        valor_bruto: brutoTexto,
-        base_inss: String(baseInss), aliquota_inss: String(aliquotaInss),
-        aliquota_iss: String(regras.aliquota_iss ?? 0),
-        ret_inss: regras.retem_inss ? String(Math.round(baseInss * aliquotaInss) / 100) : "0",
-        ret_iss: regras.retem_iss ? String(Math.round(bruto * Number(regras.aliquota_iss ?? 0)) / 100) : "0",
-        ret_irrf: regras.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
-        ret_pcc: regras.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
+        ...calcularRetencoes(config, regras, brutoTexto, atual.valor_deducoes_inss),
       }));
-  }, [valor, nfValor, regras, tipo, withNf]);
+  }, [valor, nfValor, regras, tipo, withNf, config]);
 
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");

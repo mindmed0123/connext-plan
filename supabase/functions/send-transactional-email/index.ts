@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let messageId: string
   let templateData: Record<string, any> = {}
+  let empresaId: string | null = null
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -100,6 +101,12 @@ Deno.serve(async (req) => {
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
     }
+    empresaId =
+      typeof body.empresaId === 'string'
+        ? body.empresaId
+        : typeof body.empresa_id === 'string'
+          ? body.empresa_id
+          : null
   } catch {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON in request body' }),
@@ -323,10 +330,31 @@ Deno.serve(async (req) => {
   )
 
   // Resolve subject — supports static string or dynamic function
-  const resolvedSubject =
+  let resolvedSubject =
     typeof template.subject === 'function'
       ? template.subject(templateData)
       : template.subject
+
+  // Marca da empresa: nome no assunto e no remetente. O domínio de envio
+  // continua sendo o do produto — apenas o nome exibido muda.
+  let fromName = SITE_NAME
+  if (empresaId) {
+    const [{ data: empresa }, { data: cfg }] = await Promise.all([
+      supabase.from('empresas').select('nome').eq('id', empresaId).maybeSingle(),
+      supabase
+        .from('empresa_config')
+        .select('email_remetente_nome')
+        .eq('empresa_id', empresaId)
+        .maybeSingle(),
+    ])
+    const nomeEmpresa = (cfg?.email_remetente_nome || empresa?.nome || '').trim()
+    if (nomeEmpresa) {
+      fromName = nomeEmpresa
+      if (!resolvedSubject.includes(nomeEmpresa)) {
+        resolvedSubject = `${nomeEmpresa} — ${resolvedSubject}`
+      }
+    }
+  }
 
   // 5. Enqueue the pre-rendered email for async processing by the dispatcher.
   // The dispatcher (process-email-queue) handles sending, retries, and rate-limit backoff.
@@ -344,7 +372,7 @@ Deno.serve(async (req) => {
     payload: {
       message_id: messageId,
       to: effectiveRecipient,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: `${fromName} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
       subject: resolvedSubject,
       html,
