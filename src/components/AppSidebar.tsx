@@ -16,6 +16,7 @@ import {
   CreditCard,
   Wrench,
   Settings,
+  Bell,
   ShoppingCart,
   FileSignature,
   Ruler,
