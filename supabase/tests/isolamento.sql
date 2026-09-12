@@ -104,9 +104,13 @@ BEGIN
     ELSE
       PERFORM iso_test.reg('a) leitura', _tabela, true, n_a || ' linha(s) de A, 0 de B');
     END IF;
-  EXCEPTION WHEN OTHERS THEN
-    PERFORM iso_test.reg('a) leitura', _tabela, false, 'erro inesperado: ' || SQLERRM);
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      PERFORM iso_test.reg('a) leitura', _tabela, true, 'sem acesso a tabela (permission denied)');
+    WHEN OTHERS THEN
+      PERFORM iso_test.reg('a) leitura', _tabela, false, 'erro inesperado: ' || SQLERRM);
   END;
+
 END $fn$;
 GRANT EXECUTE ON FUNCTION iso_test.check_leitura(text) TO authenticated;
 
