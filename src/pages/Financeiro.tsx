@@ -55,6 +55,8 @@ type LancamentoForm = {
   obra_id?: string | null;
   categoria_id?: string | null;
   centro_custo_id?: string | null;
+  etapa_id?: string | null;
+  orcamento_item_id?: string | null;
 };
 
 const emptyForm: LancamentoForm = {
@@ -72,6 +74,8 @@ const emptyForm: LancamentoForm = {
   obra_id: null,
   categoria_id: null,
   centro_custo_id: null,
+  etapa_id: null,
+  orcamento_item_id: null,
 };
 
 export default function Financeiro() {
