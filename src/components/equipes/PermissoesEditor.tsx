@@ -8,6 +8,9 @@ import { ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { APP_MODULOS, AppModulo, MODULO_LABEL, PermissaoLinha } from "@/hooks/usePermissions";
 import { useUserRole } from "@/hooks/useUserRole";
+import { usePerfis, usePerfilItens } from "@/hooks/usePerfis";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 type Estado = Record<AppModulo, { can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }>;
 
@@ -23,6 +26,40 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
   const podeEditar = isSuperAdmin || isAdmin;
   const [estado, setEstado] = useState<Estado>(emptyEstado());
   const [carregado, setCarregado] = useState(false);
+
+  const { perfis } = usePerfis();
+  const { data: pessoa } = useQuery({
+    queryKey: ["pessoa-perfil", pessoaId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pessoas").select("id, perfil_id").eq("id", pessoaId).single();
+      if (error) throw error;
+      return data as { id: string; perfil_id: string | null };
+    },
+  });
+  const { data: perfilItens } = usePerfilItens(pessoa?.perfil_id);
+
+  const aplicarPerfil = async (perfilId: string) => {
+    const valor = perfilId === "nenhum" ? null : perfilId;
+    const { error } = await supabase.from("pessoas").update({ perfil_id: valor }).eq("id", pessoaId);
+    if (error) return toast.error(error.message);
+    if (valor) {
+      const { error: e2 } = await supabase.rpc("aplicar_perfil_permissao", { _perfil_id: valor, _pessoa_id: pessoaId });
+      if (e2) return toast.error(e2.message);
+    }
+    qc.invalidateQueries({ queryKey: ["pessoa-perfil", pessoaId] });
+    qc.invalidateQueries({ queryKey: ["pessoa-permissoes", pessoaId] });
+    qc.invalidateQueries({ queryKey: ["my-permissions"] });
+    toast.success(valor ? "Perfil aplicado" : "Perfil removido");
+  };
+
+  const foraDoPerfil = (m: AppModulo) => {
+    if (!pessoa?.perfil_id || !perfilItens) return false;
+    const base = perfilItens.find((i) => i.modulo === m);
+    if (!base) return false;
+    return (["can_view", "can_create", "can_edit", "can_delete"] as const).some(
+      (c) => Boolean(base[c]) !== Boolean(estado[m][c]),
+    );
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["pessoa-permissoes", pessoaId],
@@ -117,6 +154,20 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
         </div>
       </div>
 
+      <div className="flex flex-col md:flex-row md:items-center gap-2 rounded-md border p-3">
+        <span className="text-sm font-medium">Perfil</span>
+        <Select value={pessoa?.perfil_id ?? "nenhum"} onValueChange={aplicarPerfil}>
+          <SelectTrigger className="md:w-[280px]"><SelectValue placeholder="Sem perfil" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nenhum">Sem perfil (permissões individuais)</SelectItem>
+            {perfis.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground md:ml-2">
+          As permissões vêm do perfil; ajustes individuais ficam marcados como "ajustado".
+        </p>
+      </div>
+
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
@@ -134,7 +185,10 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
             ) : (
               APP_MODULOS.map((m) => (
                 <TableRow key={m}>
-                  <TableCell className="font-medium">{MODULO_LABEL[m]}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="mr-2">{MODULO_LABEL[m]}</span>
+                    {foraDoPerfil(m) && <Badge variant="outline" className="text-[10px]">ajustado</Badge>}
+                  </TableCell>
                   {(["can_view", "can_create", "can_edit", "can_delete"] as const).map((campo) => (
                     <TableCell key={campo} className="text-center">
                       <Checkbox

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useListaOpcoes } from "@/hooks/useListaOpcoes";
 
 export const UNIDADES = [
   "un", "m", "m²", "m³", "kg", "t", "h", "dia", "mês", "vb", "cj", "pc", "gl", "km", "l", "cx",
@@ -59,6 +60,10 @@ export function ServicoFormDialog({
   const { empresaId } = useAuth();
   const qc = useQueryClient();
   const [form, setForm] = useState<ServicoEdit>(empty());
+  const { opcoes: unidadesCad } = useListaOpcoes("unidade");
+  const unidades = unidadesCad.length
+    ? unidadesCad.map((u) => ({ value: u.valor, label: u.rotulo }))
+    : UNIDADES.map((u) => ({ value: u, label: u.toUpperCase() }));
 
   useEffect(() => {
     if (open) setForm(servico ? { ...empty(), ...servico } : empty());
@@ -185,7 +190,7 @@ export function ServicoFormDialog({
                   <Select value={form.unidade} onValueChange={(v) => set("unidade", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u.toUpperCase()}</SelectItem>)}
+                      {unidades.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

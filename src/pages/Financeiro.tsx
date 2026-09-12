@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { useCentrosCusto } from "@/hooks/usePlanoContas";
 import { format, addDays, isBefore, parseISO } from "date-fns";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -53,6 +54,7 @@ type LancamentoForm = {
   observacoes?: string | null;
   obra_id?: string | null;
   categoria_id?: string | null;
+  centro_custo_id?: string | null;
 };
 
 const emptyForm: LancamentoForm = {
@@ -69,6 +71,7 @@ const emptyForm: LancamentoForm = {
   observacoes: "",
   obra_id: null,
   categoria_id: null,
+  centro_custo_id: null,
 };
 
 export default function Financeiro() {
@@ -83,6 +86,8 @@ export default function Financeiro() {
   const [filtroTipo, setFiltroTipo] = useState("all");
   const [filtroStatus, setFiltroStatus] = useState("all");
   const [filtroObra, setFiltroObra] = useState("all");
+  const [filtroCentro, setFiltroCentro] = useState("all");
+  const { centros } = useCentrosCusto();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"venc_asc" | "venc_desc" | "valor_desc" | "valor_asc" | "criado_desc" | "criado_asc">("venc_asc");
   const anoAtual = new Date().getFullYear();
@@ -236,6 +241,7 @@ export default function Financeiro() {
       if (filtroTipo !== "all" && l.tipo !== filtroTipo) return false;
       if (filtroStatus !== "all" && l.status !== filtroStatus) return false;
       if (filtroObra !== "all" && l.obra_id !== filtroObra) return false;
+      if (filtroCentro !== "all" && (l as { centro_custo_id?: string | null }).centro_custo_id !== filtroCentro) return false;
       if (search) {
         const s = search.toLowerCase();
         const ok = l.descricao?.toLowerCase().includes(s)
@@ -261,7 +267,7 @@ export default function Financeiro() {
       }
     });
     return arr;
-  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, search, sortBy]);
+  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, filtroCentro, search, sortBy]);
 
   const proximosVenc = useMemo(() => {
     const hoje = new Date();
@@ -296,6 +302,7 @@ export default function Financeiro() {
       if (!payload.data_realizado) payload.data_realizado = null;
       if (!payload.obra_id) payload.obra_id = null;
       if (!payload.categoria_id) payload.categoria_id = null;
+      if (!payload.centro_custo_id) payload.centro_custo_id = null;
       if (!payload.forma_pagamento) payload.forma_pagamento = null;
 
       if (editId) {
@@ -376,6 +383,7 @@ export default function Financeiro() {
       data_realizado: l.data_realizado, fornecedor_nome: l.fornecedor_nome,
       documento_num: l.documento_num, forma_pagamento: l.forma_pagamento,
       observacoes: l.observacoes, obra_id: l.obra_id, categoria_id: l.categoria_id,
+      centro_custo_id: l.centro_custo_id ?? null,
     });
     setOpenLanc(true);
   };
@@ -691,6 +699,15 @@ export default function Financeiro() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={filtroCentro} onValueChange={setFiltroCentro}>
+              <SelectTrigger className="h-9 w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os centros de custo</SelectItem>
+                {centros.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.codigo ? `${c.codigo} — ${c.nome}` : c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
               <SelectTrigger className="h-9 w-[200px]"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -837,6 +854,18 @@ export default function Financeiro() {
                 <SelectContent>
                   {categoriasFiltradas.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Centro de custo</Label>
+              <Select value={form.centro_custo_id ?? "nenhum"} onValueChange={(v) => setForm({ ...form, centro_custo_id: v === "nenhum" ? null : v })}>
+                <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nenhum">Sem centro de custo</SelectItem>
+                  {centros.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.codigo ? `${c.codigo} — ${c.nome}` : c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

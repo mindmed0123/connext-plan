@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 import { toast } from "sonner";
 import { StatusConfigCard, RotulosConfigCard, OrigensConfigCard } from "@/components/configuracoes/ConfigObraCards";
+import { GruposConfigCard, CategoriasConfigCard, CentrosCustoConfigCard, ListasConfigCard } from "@/components/configuracoes/ConfigFinanceiroCards";
+import { ConfigPerfisCard } from "@/components/configuracoes/ConfigPerfisCard";
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
@@ -409,6 +411,11 @@ export default function Configuracoes() {
       <RotulosConfigCard />
       <StatusConfigCard />
       <OrigensConfigCard />
+      <GruposConfigCard />
+      <CategoriasConfigCard />
+      <CentrosCustoConfigCard />
+      <ListasConfigCard />
+      <ConfigPerfisCard />
 
       <Card>
         <CardHeader>

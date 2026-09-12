@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useListaOpcoes } from "@/hooks/useListaOpcoes";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ export function OrcamentoFormDialog({
   const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
   const [bdi, setBdi] = useState({ ac: 0, s: 0, r: 0, df: 0, l: 0, i: 0 });
   const [condicaoPagamento, setCondicaoPagamento] = useState<string>("a_vista");
+  const { opcoes: condicoesPagamento } = useListaOpcoes("condicao_pagamento");
   const [numeroParcelas, setNumeroParcelas] = useState(1);
   const [intervaloParcelas, setIntervaloParcelas] = useState(30);
   const [percentualEntrada, setPercentualEntrada] = useState(0);
@@ -689,10 +691,9 @@ export function OrcamentoFormDialog({
                   <Select value={condicaoPagamento} onValueChange={setCondicaoPagamento}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="a_vista">À vista</SelectItem>
-                      <SelectItem value="parcelado">Parcelado</SelectItem>
-                      <SelectItem value="entrada_parcelas">Entrada + parcelas</SelectItem>
-                      <SelectItem value="faturado">Faturado</SelectItem>
+                      {condicoesPagamento.map((c) => (
+                        <SelectItem key={c.id} value={c.valor}>{c.rotulo}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
