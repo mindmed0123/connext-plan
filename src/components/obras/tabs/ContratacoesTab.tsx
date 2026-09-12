@@ -149,7 +149,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
       qc.invalidateQueries({ queryKey: ["financeiro-stats"] });
       qc.invalidateQueries({ queryKey: ["financeiro-contratacoes"] });
       setOpen(false);
-      setForm({ terceirizado_id: "", valor_total: "", quantidade_parcelas: "1", forma_pagamento_prevista: "", observacoes: "" });
+      setForm({ terceirizado_id: "", valor_total: "", quantidade_parcelas: "1", forma_pagamento_prevista: "", observacoes: "", etapa_id: null, orcamento_item_id: null });
       setParcelasInput([{ valor: "", data_prevista: "" }]);
     },
     onError: (e: any) => toast.error(e.message),
