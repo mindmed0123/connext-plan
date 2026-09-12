@@ -8,6 +8,9 @@ import { ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { APP_MODULOS, AppModulo, MODULO_LABEL, PermissaoLinha } from "@/hooks/usePermissions";
 import { useUserRole } from "@/hooks/useUserRole";
+import { usePerfis, usePerfilItens } from "@/hooks/usePerfis";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 type Estado = Record<AppModulo, { can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }>;
 
