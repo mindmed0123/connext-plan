@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PrivacidadeDadosCard } from "@/components/config/PrivacidadeDadosCard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -448,6 +449,8 @@ export default function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <PrivacidadeDadosCard />
     </div>
   );
 }

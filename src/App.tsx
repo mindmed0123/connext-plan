@@ -4,8 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 import PortalObra from "./pages/PortalObra";
 import Notificacoes from "./pages/Notificacoes";
+import { ErroApp } from "@/components/ErroApp";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequirePermission } from "@/components/RequirePermission";
 import { AppLayout } from "@/components/AppLayout";
@@ -47,6 +50,8 @@ import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { instalarErrosEmPortugues } from "@/lib/erros";
 import { hashComEmpresa } from "@/lib/tenant-cache";
+import { detectarLimitePlano } from "@/lib/plano-limite";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient({
   // Qualquer mutação bem-sucedida em qualquer aba atualiza todas as telas,
@@ -55,7 +60,16 @@ const queryClient = new QueryClient({
     onSuccess: () => {
       queryClient.invalidateQueries();
     },
+    onError: (erro) => {
+      const limite = detectarLimitePlano(erro);
+      if (!limite) return;
+      toast.error(limite.mensagem, {
+        duration: 12000,
+        action: { label: "Ver planos", onClick: () => (window.location.href = "/pricing") },
+      });
+    },
   }),
+
   defaultOptions: {
     queries: {
       // Todo cache é isolado por empresa (ver src/lib/tenant-cache.ts)
@@ -72,6 +86,7 @@ instalarErrosEmPortugues();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ErroApp>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -82,6 +97,8 @@ const App = () => (
             <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/termos" element={<Termos />} />
+            <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/portal/:token" element={<PortalObra />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route
@@ -142,6 +159,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </ErroApp>
   </QueryClientProvider>
 );
 

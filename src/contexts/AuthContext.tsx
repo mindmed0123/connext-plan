@@ -1,3 +1,4 @@
+import { identificarUsuario } from "@/lib/monitoring";
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
@@ -167,6 +168,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user?.id) return;
     aplicarEscopoEmpresa(qc, `${user.id}:${empresaId ?? "sem-empresa"}`);
   }, [qc, user?.id, empresaId]);
+
+  // Monitoramento: só identificadores, nunca nome, e-mail ou documento.
+  useEffect(() => {
+    identificarUsuario(user?.id ?? null, empresaId);
+  }, [user?.id, empresaId]);
+
 
   const refreshEmpresa = async () => {
     if (user?.id) await loadEmpresa(user.id);

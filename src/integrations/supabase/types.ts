@@ -1768,6 +1768,59 @@ export type Database = {
         }
         Relationships: []
       }
+      exclusao_solicitacoes: {
+        Row: {
+          cancelada_em: string | null
+          concluida_em: string | null
+          confirmacao: string
+          created_at: string
+          empresa_id: string
+          id: string
+          motivo: string | null
+          prazo_em: string
+          solicitado_por: string
+          solicitado_por_email: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancelada_em?: string | null
+          concluida_em?: string | null
+          confirmacao: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          motivo?: string | null
+          prazo_em?: string
+          solicitado_por?: string
+          solicitado_por_email?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancelada_em?: string | null
+          concluida_em?: string | null
+          confirmacao?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          motivo?: string | null
+          prazo_em?: string
+          solicitado_por?: string
+          solicitado_por_email?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exclusao_solicitacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       execucoes: {
         Row: {
           created_at: string
@@ -4019,6 +4072,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          aceite_privacidade_em: string | null
+          aceite_privacidade_versao: string | null
+          aceite_termos_em: string | null
+          aceite_termos_versao: string | null
           created_at: string
           id: string
           nome: string
@@ -4027,6 +4084,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aceite_privacidade_em?: string | null
+          aceite_privacidade_versao?: string | null
+          aceite_termos_em?: string | null
+          aceite_termos_versao?: string | null
           created_at?: string
           id?: string
           nome: string
@@ -4035,6 +4096,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aceite_privacidade_em?: string | null
+          aceite_privacidade_versao?: string | null
+          aceite_termos_em?: string | null
+          aceite_termos_versao?: string | null
           created_at?: string
           id?: string
           nome?: string
@@ -4509,6 +4574,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_consumo_empresas: {
+        Args: never
+        Returns: {
+          empresa_id: string
+          empresa_nome: string
+          limite_obras: number
+          limite_usuarios: number
+          obras_ativas: number
+          plano: string
+          usuarios_ativos: number
+        }[]
+      }
       admin_list_empresas_contatos: {
         Args: never
         Returns: {
@@ -4573,6 +4650,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      consumo_empresa: { Args: never; Returns: Json }
       criar_obra_segura: {
         Args: {
           _codigo_chamado: string
@@ -4786,6 +4864,14 @@ export type Database = {
       }
       is_admin_or_super: { Args: { _uid: string }; Returns: boolean }
       is_super_admin: { Args: { _uid: string }; Returns: boolean }
+      limites_plano: {
+        Args: { _empresa_id: string }
+        Returns: {
+          limite_obras: number
+          limite_usuarios: number
+          plano_nome: string
+        }[]
+      }
       mesmo_tenant: {
         Args: { _empresa: string; _id: string; _tabela: unknown }
         Returns: boolean
