@@ -895,6 +895,8 @@ export type Database = {
           obra_id: string | null
           observacoes: string | null
           prazo_pagamento_dias: number | null
+          retencao_contratual_pct: number
+          retencao_devolucao_prevista: string | null
           status: Database["public"]["Enums"]["contrato_cliente_status"]
           updated_at: string
           valor_global: number
@@ -907,13 +909,15 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           documento_url?: string | null
-          empresa_id: string
+          empresa_id?: string
           id?: string
           numero_contrato?: string | null
           objeto: string
           obra_id?: string | null
           observacoes?: string | null
           prazo_pagamento_dias?: number | null
+          retencao_contratual_pct?: number
+          retencao_devolucao_prevista?: string | null
           status?: Database["public"]["Enums"]["contrato_cliente_status"]
           updated_at?: string
           valor_global?: number
@@ -933,6 +937,8 @@ export type Database = {
           obra_id?: string | null
           observacoes?: string | null
           prazo_pagamento_dias?: number | null
+          retencao_contratual_pct?: number
+          retencao_devolucao_prevista?: string | null
           status?: Database["public"]["Enums"]["contrato_cliente_status"]
           updated_at?: string
           valor_global?: number
@@ -1812,6 +1818,8 @@ export type Database = {
         Row: {
           aprovado_em: string | null
           aprovado_por: string | null
+          arquivo_nome: string | null
+          arquivo_path: string | null
           contrato_id: string | null
           created_at: string
           created_by: string | null
@@ -1831,11 +1839,13 @@ export type Database = {
         Insert: {
           aprovado_em?: string | null
           aprovado_por?: string | null
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
           contrato_id?: string | null
           created_at?: string
           created_by?: string | null
           data_medicao: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           numero_medicao: number
           obra_id?: string | null
@@ -1850,6 +1860,8 @@ export type Database = {
         Update: {
           aprovado_em?: string | null
           aprovado_por?: string | null
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
           contrato_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1901,6 +1913,7 @@ export type Database = {
           data_emissao: string
           empresa_id: string
           id: string
+          medicao_id: string | null
           numero_nf: string
           obra_id: string | null
           pedido_compra_id: string | null
@@ -1924,6 +1937,7 @@ export type Database = {
           data_emissao: string
           empresa_id?: string
           id?: string
+          medicao_id?: string | null
           numero_nf: string
           obra_id?: string | null
           pedido_compra_id?: string | null
@@ -1947,6 +1961,7 @@ export type Database = {
           data_emissao?: string
           empresa_id?: string
           id?: string
+          medicao_id?: string | null
           numero_nf?: string
           obra_id?: string | null
           pedido_compra_id?: string | null
@@ -1966,6 +1981,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_medicao_id_fkey"
+            columns: ["medicao_id"]
+            isOneToOne: false
+            referencedRelation: "medicoes"
             referencedColumns: ["id"]
           },
           {
