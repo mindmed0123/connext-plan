@@ -45,15 +45,16 @@ export default function Contratos() {
     void (async () => {
       const { data: orc } = await supabase
         .from("orcamentos")
-        .select("id, numero, obra_id, cliente_id, descricao, valor_total, valor_orcamento, obras(codigo_chamado)")
+        .select("id, numero, obra_id, descricao, valor_total, valor_orcamento, obras(codigo_chamado, cliente_id, descricao_servico)")
         .eq("id", orcamentoId)
         .maybeSingle();
       if (!orc) return;
+      const o = orc as any;
       setPrefill({
-        obra_id: orc.obra_id,
-        cliente_id: (orc as any).cliente_id ?? null,
-        objeto: (orc as any).descricao ?? `Contrato referente ao orçamento ${orc.numero ?? ""}`.trim(),
-        valor_global: Number((orc as any).valor_total ?? (orc as any).valor_orcamento ?? 0),
+        obra_id: o.obra_id,
+        cliente_id: o.obras?.cliente_id ?? null,
+        objeto: o.descricao ?? o.obras?.descricao_servico ?? `Contrato referente ao orçamento ${o.numero ?? ""}`.trim(),
+        valor_global: Number(o.valor_total ?? o.valor_orcamento ?? 0),
         numero_contrato: null,
       });
       setEditing(null);
