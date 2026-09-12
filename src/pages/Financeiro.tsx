@@ -85,6 +85,7 @@ export default function Financeiro() {
   const [filtroTipo, setFiltroTipo] = useState("all");
   const [filtroStatus, setFiltroStatus] = useState("all");
   const [filtroObra, setFiltroObra] = useState("all");
+  const [filtroCentro, setFiltroCentro] = useState("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"venc_asc" | "venc_desc" | "valor_desc" | "valor_asc" | "criado_desc" | "criado_asc">("venc_asc");
   const anoAtual = new Date().getFullYear();
