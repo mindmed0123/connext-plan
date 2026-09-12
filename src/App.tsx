@@ -150,6 +150,7 @@ const App = () => (
               <Route path="/compradores/:id" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><CompradorDetalhe /></RequirePermission></RequireModulo>} />
               <Route path="/compras" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><Compras /></RequirePermission></RequireModulo>} />
               <Route path="/estoque" element={<RequireModulo modulo="estoque"><RequirePermission modulo="financeiro"><Estoque /></RequirePermission></RequireModulo>} />
+              <Route path="/desempenho" element={<RequirePermission modulo="dashboard"><Desempenho /></RequirePermission>} />
               <Route path="/aprovacoes" element={<MinhasAprovacoes />} />
 
               <Route path="/campo" element={<Campo />} />
