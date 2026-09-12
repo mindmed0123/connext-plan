@@ -36,7 +36,9 @@ export function StatusConfigCard() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: [empresaId, "obra-status-config"] });
 
-  const salvar = async (id: string, campos: Record<string, unknown>) => {
+  type StatusUpdate = Partial<{ nome: string; cor: string; categoria: string; ordem: number; ativo: boolean }>;
+
+  const salvar = async (id: string, campos: StatusUpdate) => {
     const { error } = await supabase.from("obra_status_config").update(campos).eq("id", id);
     if (error) return toast.error(error.message);
     invalidate();
