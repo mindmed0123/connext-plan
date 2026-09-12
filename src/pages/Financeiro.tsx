@@ -533,6 +533,16 @@ export default function Financeiro() {
 
         {/* Fluxo de caixa */}
         <TabsContent value="fluxo" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Conta bancária:</span>
+            <Select value={filtroConta} onValueChange={setFiltroConta}>
+              <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as contas</SelectItem>
+                {contasBancarias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-base">Previsto vs realizado</CardTitle></CardHeader>
             <CardContent>
