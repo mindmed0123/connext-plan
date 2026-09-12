@@ -347,16 +347,8 @@ SELECT iso_test.expect_bloqueado('c) rpc', 'reabrir_fatura_cartao(cartao de B)',
 SELECT iso_test.expect_bloqueado('c) rpc', 'seed_categorias_financeiras(empresa B)', format(
   $q$SELECT public.seed_categorias_financeiras(%L)$q$, iso_test.v('empresa_b')));
 
--- confirma que pagar_fatura_cartao nao marcou a fatura de B como paga
-DO $chk$
-DECLARE n bigint;
-BEGIN
-  SET LOCAL ROLE postgres;
-  SELECT count(*) INTO n FROM public.cartao_despesas
-   WHERE empresa_id = iso_test.v('empresa_b') AND fatura_paga;
-  PERFORM iso_test.reg('c) rpc', 'fatura de B continua em aberto', n = 0, 'faturas pagas: ' || n);
-END $chk$;
-SET LOCAL ROLE authenticated;
+-- (a verificacao de que a fatura de B continua em aberto roda apos RESET ROLE)
+
 
 -- (d) STORAGE -------------------------------------------------------------
 SELECT iso_test.expect_vazio_ou_erro('d) storage', 'listar/baixar arquivo de B', format(
