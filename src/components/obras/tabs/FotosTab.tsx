@@ -133,6 +133,17 @@ export function FotosTab({ obraId }: { obraId: string }) {
     else toast.warning(`${sucessos} enviada(s), ${falhas} falharam`);
   };
 
+  const alternarVisibilidade = useMutation({
+    mutationFn: async ({ id, visivel }: { id: string; visivel: boolean }) => {
+      const { error } = await supabase.from("fotos_obra").update({ visivel_cliente: visivel }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fotos", obraId] });
+    },
+    onError: (err: Error) => toast.error(err.message ?? "Erro ao alterar"),
+  });
+
   const excluir = useMutation({
     mutationFn: async ({ id, storage_path }: { id: string; storage_path: string | null }) => {
       if (storage_path) {
