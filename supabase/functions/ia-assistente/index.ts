@@ -105,11 +105,11 @@ Deno.serve(async (req) => {
     if (!body.obra_id || !body.inicio || !body.fim) return erro(400, "Informe a obra e o período.");
     const { data: diarios, error: dErr } = await userClient
       .from("diario_obra")
-      .select("data, clima, efetivo, atividades, ocorrencias, observacoes")
+      .select("data_envio, clima_manha, clima_tarde, condicao_trabalho, efetivo, equipamentos, atividades_executadas, ocorrencias, observacoes")
       .eq("obra_id", body.obra_id)
-      .gte("data", body.inicio)
-      .lte("data", body.fim)
-      .order("data");
+      .gte("data_envio", body.inicio)
+      .lte("data_envio", body.fim)
+      .order("data_envio");
     if (dErr) return erro(400, "Não consegui ler o diário desse período.");
     if (!diarios || diarios.length === 0) return erro(400, "Não há diário registrado nesse período.");
     system =
@@ -186,9 +186,10 @@ Deno.serve(async (req) => {
   await admin.from("audit_log").insert({
     empresa_id: empresaId,
     tabela: "ia_usos",
-    operacao: "INSERT",
-    usuario_id: userId,
-    dados_novos: { uso: body.uso, tokens, modelo: MODELO, duracao_ms: Date.now() - t0 },
+    acao: "ia_execucao",
+    ator_user_id: userId,
+    ator_email: userData.user.email ?? null,
+    dados_depois: { uso: body.uso, tokens, modelo: MODELO, duracao_ms: Date.now() - t0 },
   });
 
   return new Response(
