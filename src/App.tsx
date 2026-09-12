@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import PortalObra from "./pages/PortalObra";
+import Notificacoes from "./pages/Notificacoes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequirePermission } from "@/components/RequirePermission";
 import { AppLayout } from "@/components/AppLayout";
@@ -80,6 +82,7 @@ const App = () => (
             <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/portal/:token" element={<PortalObra />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route
               path="/onboarding"
@@ -130,6 +133,7 @@ const App = () => (
 
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/notificacoes" element={<Notificacoes />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="/acessos-suporte" element={<AcessosSuporte />} />
             </Route>
