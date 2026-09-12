@@ -23,5 +23,8 @@ export async function fetchAllRows<T = any>(
   console.warn(
     `[fetchAllRows] Limite de ${maxRows} linhas atingido — a lista pode estar incompleta.`,
   );
+  toast.warning(
+    `Mostrando apenas as primeiras ${maxRows.toLocaleString("pt-BR")} linhas. Use filtros de período para ver o restante.`,
+  );
   return all;
 }
