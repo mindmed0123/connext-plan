@@ -20,6 +20,7 @@ import { Upload, ImageIcon, Trash2, Loader2, Download, FileText } from "lucide-r
 import JSZip from "jszip";
 import { useAuth } from "@/contexts/AuthContext";
 import { gerarRelatorioFotograficoPDF } from "@/lib/relatorio-fotografico-pdf";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
 
 const TIPO_LABEL = { antes: "Antes", durante: "Durante", depois: "Depois" } as const;
 const MAX_FOTOS = 50;
@@ -222,7 +223,7 @@ export function FotosTab({ obraId }: { obraId: string }) {
         empresaId
           ? supabase
               .from("empresas")
-              .select("nome, logo_url")
+              .select("nome, logo_url, cnpj, endereco, cidade, uf, telefone, email")
               .eq("id", empresaId)
               .maybeSingle()
           : Promise.resolve({ data: null, error: null }),
@@ -253,6 +254,14 @@ export function FotosTab({ obraId }: { obraId: string }) {
         {
           nome: empresaRes.data?.nome ?? "Empresa",
           logo_url: empresaRes.data?.logo_url ?? null,
+          cnpj: empresaRes.data?.cnpj ?? null,
+          endereco: empresaRes.data?.endereco ?? null,
+          cidade: empresaRes.data?.cidade ?? null,
+          uf: empresaRes.data?.uf ?? null,
+          telefone: empresaRes.data?.telefone ?? null,
+          email: empresaRes.data?.email ?? null,
+          cor_primaria: config.cor_primaria,
+          texto_rodape: config.texto_rodape,
         },
         {
           codigo_chamado: obraRes.data.codigo_chamado,
