@@ -294,6 +294,8 @@ export default function Cartoes() {
       parcelas: String(d.parcelas ?? "1"),
       observacoes: d.observacoes ?? "",
       categoria: d.categoria ?? "",
+      etapa_id: d.etapa_id ?? null,
+      orcamento_item_id: d.orcamento_item_id ?? null,
     });
     setDespDialog(true);
   };
