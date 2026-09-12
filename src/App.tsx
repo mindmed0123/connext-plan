@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import PortalObra from "./pages/PortalObra";
 import Notificacoes from "./pages/Notificacoes";
+import { ErroApp } from "@/components/ErroApp";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequirePermission } from "@/components/RequirePermission";
 import { AppLayout } from "@/components/AppLayout";
@@ -72,6 +73,7 @@ instalarErrosEmPortugues();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ErroApp>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -142,6 +144,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </ErroApp>
   </QueryClientProvider>
 );
 

@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { registrarServiceWorker } from "./pwa";
+import { iniciarMonitoramento } from "./lib/monitoring";
 
 // Auto-recover from stale Vite chunks after a new deploy.
 // If the browser tries to load a JS/CSS chunk that no longer exists
@@ -30,6 +31,8 @@ window.addEventListener("error", (e) => tryReload(e.error ?? e.message));
 window.addEventListener("unhandledrejection", (e) => tryReload(e.reason));
 // Limpa o flag quando o app montar com sucesso
 setTimeout(() => sessionStorage.removeItem(RELOAD_FLAG), 5000);
+
+iniciarMonitoramento();
 
 createRoot(document.getElementById("root")!).render(<App />);
 
