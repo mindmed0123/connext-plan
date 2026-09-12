@@ -1,5 +1,6 @@
 // Portal do cliente: leitura pública por token, sem login.
 // Recebe SOMENTE o token; nunca aceita empresa_id nem obra_id do corpo.
+import { capturarErro } from "../_shared/erro.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
