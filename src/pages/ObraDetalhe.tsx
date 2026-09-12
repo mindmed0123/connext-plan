@@ -33,6 +33,7 @@ export default function ObraDetalhe() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin } = useUserRole();
+  const { statuses, statusLabel, rotulos } = useObraConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabAtual = searchParams.get("tab") ?? "dre";
 
