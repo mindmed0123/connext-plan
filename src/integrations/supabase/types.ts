@@ -89,6 +89,65 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          acao: string
+          ator_email: string | null
+          ator_user_id: string | null
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          empresa_id: string | null
+          id: string
+          ip: string | null
+          justificativa: string | null
+          papel: string | null
+          registro_id: string | null
+          suporte: boolean
+          tabela: string
+        }
+        Insert: {
+          acao: string
+          ator_email?: string | null
+          ator_user_id?: string | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          empresa_id?: string | null
+          id?: string
+          ip?: string | null
+          justificativa?: string | null
+          papel?: string | null
+          registro_id?: string | null
+          suporte?: boolean
+          tabela: string
+        }
+        Update: {
+          acao?: string
+          ator_email?: string | null
+          ator_user_id?: string | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          empresa_id?: string | null
+          id?: string
+          ip?: string | null
+          justificativa?: string | null
+          papel?: string | null
+          registro_id?: string | null
+          suporte?: boolean
+          tabela?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_events: {
         Row: {
           cakto_subscription_id: string | null
@@ -2814,6 +2873,50 @@ export type Database = {
           },
         ]
       }
+      suporte_sessoes: {
+        Row: {
+          created_at: string
+          criada_por: string
+          criada_por_email: string | null
+          empresa_id: string
+          encerrada_em: string | null
+          expira_em: string
+          id: string
+          motivo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criada_por: string
+          criada_por_email?: string | null
+          empresa_id: string
+          encerrada_em?: string | null
+          expira_em: string
+          id?: string
+          motivo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criada_por?: string
+          criada_por_email?: string | null
+          empresa_id?: string
+          encerrada_em?: string | null
+          expira_em?: string
+          id?: string
+          motivo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suporte_sessoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -3171,6 +3274,7 @@ export type Database = {
         Args: { _nome_empresa: string }
         Returns: string
       }
+      suporte_sessao_ativa: { Args: { _empresa_id: string }; Returns: boolean }
       tenant_can_write: { Args: { _empresa_id: string }; Returns: boolean }
       tenant_match: { Args: { _empresa_id: string }; Returns: boolean }
       verificar_razao: {

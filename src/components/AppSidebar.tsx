@@ -182,6 +182,14 @@ export function AppSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.startsWith("/acessos-suporte")}>
+                      <NavLink to="/acessos-suporte">
+                        <Shield className="h-4 w-4" />
+                        {!collapsed && <span>Acessos do suporte</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

@@ -32,6 +32,7 @@ import Cartoes from "./pages/Cartoes";
 import Compradores from "./pages/Compradores";
 import CompradorDetalhe from "./pages/CompradorDetalhe";
 import PessoaDetalhe from "./pages/PessoaDetalhe";
+import AcessosSuporte from "./pages/AcessosSuporte";
 
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/acessos-suporte" element={<AcessosSuporte />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

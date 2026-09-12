@@ -6,6 +6,7 @@ const InviteSchema = z.object({
   email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
   nome: z.string().trim().max(150).optional(),
   role: z.enum(["admin", "gestor", "financeiro", "engenheiro", "operacional"]),
+  empresa_id: z.string().uuid().optional(),
 });
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
@@ -40,27 +41,37 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Verificar role do caller (apenas admin/super_admin pode convidar)
+    // Papel do autor do convite, sempre derivado do JWT e escopado por empresa
     const { data: callerRoles, error: callerRoleError } = await admin
       .from("user_roles")
       .select("role, empresa_id")
       .eq("user_id", userRes.user.id);
     if (callerRoleError) return json({ error: "Não foi possível validar sua permissão." }, 500);
 
-    const callerRow = callerRoles?.find((r: any) =>
-      ["super_admin", "admin", "gestor"].includes(r.role)
-    );
-    if (!callerRow) {
-      return json({ error: "Sem permissão para convidar" }, 403);
+    const tenantRoles = (callerRoles ?? []).filter((r: any) => r.empresa_id);
+    const empresasDoCaller = [...new Set(tenantRoles.map((r: any) => r.empresa_id as string))];
+
+    let empresaId = parsed.data.empresa_id ?? null;
+    if (!empresaId) {
+      if (empresasDoCaller.length === 1) empresaId = empresasDoCaller[0];
+      else if (empresasDoCaller.length === 0) {
+        return json({ error: "Você precisa pertencer a uma empresa" }, 400);
+      } else {
+        return json({ error: "Informe a empresa do convite." }, 400);
+      }
     }
-    const callerIsAdmin = callerRoles?.some((r: any) => ["super_admin", "admin"].includes(r.role));
-    if (role === "admin" && !callerIsAdmin) {
-      return json({ error: "Somente administradores podem convidar outro administrador." }, 403);
+    if (!empresasDoCaller.includes(empresaId)) {
+      return json({ error: "Sem permissão para convidar nesta empresa" }, 403);
     }
 
-    const empresaId = callerRow.empresa_id;
-    if (!empresaId) {
-      return json({ error: "Você precisa pertencer a uma empresa" }, 400);
+    const rolesNaEmpresa = tenantRoles
+      .filter((r: any) => r.empresa_id === empresaId)
+      .map((r: any) => r.role as string);
+    if (!rolesNaEmpresa.some((r) => ["admin", "gestor"].includes(r))) {
+      return json({ error: "Sem permissão para convidar" }, 403);
+    }
+    if (role === "admin" && !rolesNaEmpresa.includes("admin")) {
+      return json({ error: "Somente administradores podem convidar outro administrador." }, 403);
     }
 
     // Convite
@@ -84,11 +95,33 @@ Deno.serve(async (req) => {
     const newUserId = inv.user?.id;
     if (!newUserId) return json({ error: "O convite não retornou um usuário válido." }, 500);
 
-    const { error: roleError } = await admin.from("user_roles").upsert(
-      { user_id: newUserId, role, empresa_id: empresaId },
-      { onConflict: "user_id,role" },
+    // Nunca sobrescrever o vínculo de outra empresa
+    const { data: rolesExistentes, error: rolesExistentesErr } = await admin
+      .from("user_roles")
+      .select("role, empresa_id")
+      .eq("user_id", newUserId);
+    if (rolesExistentesErr) {
+      return json({ error: "Convite enviado, mas não foi possível validar o vínculo do usuário." }, 500);
+    }
+    const outraEmpresa = (rolesExistentes ?? []).some(
+      (r: any) => r.empresa_id && r.empresa_id !== empresaId,
     );
-    if (roleError) return json({ error: "Convite enviado, mas não foi possível atribuir a função ao usuário." }, 500);
+    if (outraEmpresa) {
+      return json({
+        error: "Este e-mail já está vinculado a outra empresa. Peça para o administrador dela liberar o acesso antes de convidar.",
+      }, 409);
+    }
+    const jaTemRole = (rolesExistentes ?? []).some(
+      (r: any) => r.empresa_id === empresaId && r.role === role,
+    );
+    if (!jaTemRole) {
+      const { error: roleError } = await admin
+        .from("user_roles")
+        .insert({ user_id: newUserId, role, empresa_id: empresaId });
+      if (roleError) {
+        return json({ error: "Convite enviado, mas não foi possível atribuir a função ao usuário." }, 500);
+      }
+    }
 
     const { data: existing, error: lookupError } = await admin
       .from("pessoas")
