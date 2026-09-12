@@ -46,6 +46,8 @@ export default function Onboarding() {
   const { user, empresaId, empresaNome, refreshEmpresa } = useAuth();
   const [stepIdx, setStepIdx] = useState(0);
   const [busy, setBusy] = useState(false);
+  const { perfil, aplicarPerfil } = useModulos();
+  const [perfilSel, setPerfilSel] = useState<PerfilOperacao | null>(null);
 
   // form state
   const [nome, setNome] = useState("");
@@ -107,6 +109,23 @@ export default function Onboarding() {
 
   const next = () => setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
   const prev = () => setStepIdx((i) => Math.max(i - 1, 0));
+
+  async function saveOperacao() {
+    const escolhido = perfilSel ?? perfil;
+    if (!escolhido) {
+      toast.error("Escolha como a sua empresa trabalha");
+      return;
+    }
+    setBusy(true);
+    try {
+      await aplicarPerfil(escolhido);
+      next();
+    } catch (e: any) {
+      toast.error(e.message ?? "Não foi possível salvar o tipo de operação");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function saveProfile() {
     if (!user?.id) return;
