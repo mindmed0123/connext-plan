@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
+import { VERSAO_PRIVACIDADE, VERSAO_TERMOS } from "@/lib/legal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
