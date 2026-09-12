@@ -12,12 +12,14 @@ import { toast } from "sonner";
 import { erroEmPortugues } from "@/lib/erros";
 import { getTodayDateInputValue } from "@/lib/date";
 import { useAuth } from "@/contexts/AuthContext";
+import { useObraConfig } from "@/hooks/useObraConfig";
 
 export function ObraFormDialog({
   open, onOpenChange, onCreated,
 }: { open: boolean; onOpenChange: (v: boolean) => void; onCreated?: () => void }) {
   const qc = useQueryClient();
   const { empresaId } = useAuth();
+  const { rotulos } = useObraConfig();
   const [novaOrigem, setNovaOrigem] = useState("");
   const [showAddOrigem, setShowAddOrigem] = useState(false);
   const [novaRegiao, setNovaRegiao] = useState("");
@@ -33,21 +35,20 @@ export function ObraFormDialog({
     cliente_id: "",
   });
 
-  // Compradores cadastrados (fonte única de verdade — aba Compradores)
+  // Origens cadastradas pela própria empresa
   const { data: origens } = useQuery({
-    queryKey: ["compradores"],
+    queryKey: [empresaId, "origens-obra"],
+    enabled: !!empresaId,
     queryFn: async () => {
-      const { data, error } = await (supabase.from("compradores"))
-        .select("id, nome, ativo")
-        .order("nome");
+      const { data, error } = await supabase.from("origens_obra").select("id, nome").order("nome");
       if (error) throw error;
-      return ((data ?? [])).filter((c) => c.ativo !== false);
+      return data ?? [];
     },
   });
 
   // Clientes (quem paga a obra — define o prazo de pagamento dos recebimentos)
   const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes-obra-select"],
+    queryKey: [empresaId, "clientes-obra-select"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clientes")
@@ -59,7 +60,7 @@ export function ObraFormDialog({
   });
 
   const { data: regioes } = useQuery({
-    queryKey: ["regioes-obra"],
+    queryKey: [empresaId, "regioes-obra"],
     queryFn: async () => {
       const { data, error } = await supabase.from("regioes_obra").select("*").order("nome");
       if (error) throw error;
@@ -67,32 +68,25 @@ export function ObraFormDialog({
     },
   });
 
-  // Defaults
-  if (origens && origens.length > 0 && !form.origem) {
-    setForm((f) => ({ ...f, origem: origens[0].nome }));
-  }
-  if (regioes && regioes.length > 0 && !form.regiao_label) {
-    setForm((f) => ({ ...f, regiao_label: regioes[0].nome }));
-  }
 
   const addOrigem = useMutation({
     mutationFn: async (nome: string) => {
-      const { data, error } = await (supabase.from("compradores"))
-        .insert([{ nome, tipo_instituicao: "outro" }])
+      const { data, error } = await supabase
+        .from("origens_obra")
+        .insert({ nome, empresa_id: empresaId as string })
         .select("id, nome")
         .single();
       if (error) throw error;
       return data;
     },
     onSuccess: (data: any) => {
-      qc.invalidateQueries({ queryKey: ["compradores"] });
-      qc.invalidateQueries({ queryKey: ["compradores-full"] });
+      qc.invalidateQueries({ queryKey: [empresaId, "origens-obra"] });
       setForm((f) => ({ ...f, origem: data.nome }));
       setNovaOrigem("");
       setShowAddOrigem(false);
-      toast.success("Comprador adicionado");
+      toast.success("Adicionado");
     },
-    onError: (e: any) => toast.error(erroEmPortugues(e, "Erro ao adicionar comprador")),
+    onError: (e: any) => toast.error(erroEmPortugues(e, "Erro ao adicionar")),
   });
 
 
@@ -103,7 +97,7 @@ export function ObraFormDialog({
       return data;
     },
     onSuccess: (data: any) => {
-      qc.invalidateQueries({ queryKey: ["regioes-obra"] });
+      qc.invalidateQueries({ queryKey: [empresaId, "regioes-obra"] });
       setForm((f) => ({ ...f, regiao_label: data.nome }));
       setNovaRegiao("");
       setShowAddRegiao(false);
@@ -131,7 +125,7 @@ export function ObraFormDialog({
       return data;
     },
     onSuccess: () => {
-      toast.success("Obra cadastrada");
+      toast.success(`${rotulos.obra_singular} cadastrada`);
       onCreated?.();
       onOpenChange(false);
       setForm({ ...form, codigo_chamado: "", engenheiro_responsavel: "", descricao_servico: "", endereco: "" });
@@ -143,19 +137,21 @@ export function ObraFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Nova obra</DialogTitle>
-          <DialogDescription>Cadastre um novo chamado para iniciar o fluxo</DialogDescription>
+          <DialogTitle>Nova {rotulos.obra_singular.toLowerCase()}</DialogTitle>
+          <DialogDescription>Cadastre um novo registro para iniciar o fluxo</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Código do chamado</Label>
-            <Input
-              value={form.codigo_chamado}
-              onChange={(e) => setForm({ ...form, codigo_chamado: e.target.value })}
-              placeholder="Deixe em branco para gerar automaticamente"
-            />
-          </div>
+          {rotulos.usa_codigo_obra && (
+            <div className="space-y-2">
+              <Label>{rotulos.codigo_obra}</Label>
+              <Input
+                value={form.codigo_chamado}
+                onChange={(e) => setForm({ ...form, codigo_chamado: e.target.value })}
+                placeholder="Deixe em branco para gerar automaticamente"
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Data de recebimento</Label>
             <Input
@@ -165,9 +161,10 @@ export function ObraFormDialog({
             />
           </div>
 
-          {/* Comprador */}
+          {/* Origem / comprador */}
+          {rotulos.usa_comprador && (
           <div className="space-y-2">
-            <Label>Comprador</Label>
+            <Label>{rotulos.comprador}</Label>
             {showAddOrigem ? (
               <div className="flex gap-1">
                 <Input
@@ -188,7 +185,7 @@ export function ObraFormDialog({
               </div>
             ) : (origens?.length ?? 0) === 0 ? (
               <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
-                Nenhum comprador cadastrado.{" "}
+                Nada cadastrado ainda.{" "}
                 <button
                   type="button"
                   className="font-medium text-primary hover:underline"
@@ -207,14 +204,16 @@ export function ObraFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setShowAddOrigem(true)} title="Adicionar comprador">
+                <Button type="button" size="icon" variant="outline" onClick={() => setShowAddOrigem(true)} title="Adicionar">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
             )}
           </div>
+          )}
 
           {/* Região */}
+          {rotulos.usa_regiao && (
           <div className="space-y-2">
             <Label>Região</Label>
             {showAddRegiao ? (
@@ -262,10 +261,11 @@ export function ObraFormDialog({
               </div>
             )}
           </div>
+          )}
 
           {/* Cliente */}
           <div className="space-y-2 col-span-2">
-            <Label>Cliente (quem paga)</Label>
+            <Label>{rotulos.cliente} (quem paga)</Label>
             <Select
               value={form.cliente_id || "none"}
               onValueChange={(v) => setForm({ ...form, cliente_id: v === "none" ? "" : v })}
@@ -285,13 +285,15 @@ export function ObraFormDialog({
             </p>
           </div>
 
-          <div className="space-y-2 col-span-2">
-            <Label>Engenheiro responsável *</Label>
-            <Input
-              value={form.engenheiro_responsavel}
-              onChange={(e) => setForm({ ...form, engenheiro_responsavel: e.target.value })}
-            />
-          </div>
+          {rotulos.usa_engenheiro && (
+            <div className="space-y-2 col-span-2">
+              <Label>Engenheiro responsável *</Label>
+              <Input
+                value={form.engenheiro_responsavel}
+                onChange={(e) => setForm({ ...form, engenheiro_responsavel: e.target.value })}
+              />
+            </div>
+          )}
           <div className="space-y-2 col-span-2">
             <Label>Endereço *</Label>
             <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} />
@@ -312,13 +314,13 @@ export function ObraFormDialog({
             onClick={() => mut.mutate()}
             disabled={
               mut.isPending ||
-              !form.origem ||
-              !form.engenheiro_responsavel ||
+              (rotulos.usa_comprador && !form.origem) ||
+              (rotulos.usa_engenheiro && !form.engenheiro_responsavel) ||
               !form.endereco ||
               !form.descricao_servico
             }
           >
-            {mut.isPending ? "Salvando..." : "Cadastrar obra"}
+            {mut.isPending ? "Salvando..." : `Cadastrar ${rotulos.obra_singular.toLowerCase()}`}
           </Button>
         </DialogFooter>
       </DialogContent>
