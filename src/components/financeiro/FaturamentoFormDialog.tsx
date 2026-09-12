@@ -220,6 +220,22 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
             </div>
           )}
 
+          {tipo === "nf" && vinculo === "existente" && (
+            <div className="space-y-1.5">
+              <Label>Pedido de compra</Label>
+              <Select value={pcId || "none"} onValueChange={(v) => setPcId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Sem pedido vinculado" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem pedido vinculado</SelectItem>
+                  {(pcsObra.data ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>PC {p.numero_pedido ?? "s/nº"} — R$ {Number(p.valor ?? 0).toFixed(2)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">Vincular ao pedido evita recebimento duplicado.</p>
+            </div>
+          )}
+
           {tipo === "nf" && (
             <RetencoesNfFields
               value={{ ...retencoes, valor_bruto: retencoes.valor_bruto || valor }}
