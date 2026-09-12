@@ -198,6 +198,14 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
               <Label className="text-xs">Observações</Label>
               <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
             </div>
+            <div className="col-span-2">
+              <EtapaItemSelect
+                obraId={obraId}
+                etapaId={form.etapa_id}
+                itemId={form.orcamento_item_id}
+                onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => { setOpen(false); setForm(empty); setFile(null); }}>Cancelar</Button>
