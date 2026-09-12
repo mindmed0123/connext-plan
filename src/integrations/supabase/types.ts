@@ -4337,6 +4337,36 @@ export type Database = {
           },
         ]
       }
+      rotina_execucoes: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          execucoes: number
+          rotina: string
+          ultima_execucao: string
+          ultimo_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          execucoes?: number
+          rotina: string
+          ultima_execucao?: string
+          ultimo_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          execucoes?: number
+          rotina?: string
+          ultima_execucao?: string
+          ultimo_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       servicos: {
         Row: {
           aliquota_iss: number
@@ -4694,6 +4724,10 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      disparar_rotina: {
+        Args: { _rotina: string; _url: string }
+        Returns: undefined
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
       empresa_assinatura_ativa: {
