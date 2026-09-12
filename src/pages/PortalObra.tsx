@@ -39,6 +39,17 @@ export default function PortalObra() {
     document.title = data?.obra ? `Acompanhamento da obra ${data.obra.codigo}` : "Acompanhamento de obra";
   }, [data]);
 
+  // Link privado do cliente: nunca deve ser indexado por buscadores.
+  useEffect(() => {
+    const meta = document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex, nofollow, noarchive";
+    document.head.appendChild(meta);
+    return () => {
+      document.head.removeChild(meta);
+    };
+  }, []);
+
   if (carregando) {
     return (
       <div className="flex min-h-screen items-center justify-center">
