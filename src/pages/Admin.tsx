@@ -17,6 +17,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { ConsumoEmpresas } from "@/components/admin/ConsumoEmpresas";
 import { RotinasStatus } from "@/components/admin/RotinasStatus";
+import { ExclusoesPendentes } from "@/components/admin/ExclusoesPendentes";
 
 export default function Admin() {
   const { isSuperAdmin, isLoading } = useUserRole();
@@ -102,6 +103,8 @@ export default function Admin() {
           <Plus className="h-4 w-4 mr-2" /> Criar empresa cliente
         </Button>
       </div>
+
+      <ExclusoesPendentes />
 
       <ConsumoEmpresas />
 

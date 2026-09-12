@@ -21,7 +21,15 @@ Produção: https://gestaodeobra.online
 | **Cartões** | Cartões de crédito da empresa, despesas por obra/categoria, parcelamento automático e fechamento/pagamento de fatura. |
 | **Compradores** | Clientes institucionais (construtoras e outros), contratos anexados e histórico de obras. |
 | **Equipes** | Pessoas (CLT, administrativo, terceirizado), documentos (NRs, ASO, ficha de registro) e permissões por módulo. |
-| **Configurações** | Dados da empresa, regime tributário, saldo inicial de caixa e assinatura do plano. |
+| **Contratos** | Contratos com clientes: vigência, valor, reajuste, situação (ativo, suspenso, encerrado, em negociação) e obras vinculadas. |
+| **Medições** | Boletins de medição por obra e etapa, do rascunho ao aprovado, com geração da nota fiscal a partir da medição aprovada. |
+| **Contas a pagar** | Despesas a vencer com parcelamento, baixa de parcelas, vínculo com fornecedor, obra e centro de custo. |
+| **Bancos e conciliação** | Contas bancárias, saldos, importação de extrato (OFX) e conciliação do extrato com os lançamentos do razão. |
+| **Portal do cliente** | Link por obra (token próprio, fora dos buscadores) para o cliente acompanhar avanço, fotos e documentos sem precisar de login. |
+| **Notificações** | Preferências por usuário e canal, resumo diário de vencimentos e prazos, envio por e-mail com registro do que foi enviado. |
+| **RDO / aplicativo de campo** | Diário de obra, fotos e apontamentos direto do canteiro, em tela de celular instalável (PWA). |
+| **Privacidade e LGPD** | Aceite de termos e política, exportação completa dos dados da empresa em CSV e pedido de exclusão da conta. |
+| **Configurações** | Dados da empresa, regime tributário, saldo inicial de caixa, rótulos e assinatura do plano. |
 
 ---
 

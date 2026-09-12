@@ -2,7 +2,7 @@
   "name": "Gestão de Obra",
   "short_name": "Obra",
   "description": "Diário de obra, fotos e acompanhamento direto do canteiro.",
-  "start_url": "/campo",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

@@ -12,6 +12,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { PRAZO_EXCLUSAO_DIAS } from "@/lib/legal";
+import { fetchAllRows } from "@/lib/fetch-all";
+
+type LinhaExport = { tabela: string; total: number; erro?: string };
 
 // Tabelas exportadas no ZIP. A RLS já limita tudo à empresa do usuário.
 const TABELAS = [
@@ -37,6 +40,7 @@ export function PrivacidadeDadosCard() {
   const { empresaId, empresaNome, user } = useAuth();
   const qc = useQueryClient();
   const [exportando, setExportando] = useState(false);
+  const [resultado, setResultado] = useState<LinhaExport[] | null>(null);
   const [confirmacao, setConfirmacao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -60,16 +64,49 @@ export function PrivacidadeDadosCard() {
   async function exportar() {
     if (!empresaId) return;
     setExportando(true);
+    setResultado(null);
     try {
       const zip = new JSZip();
+      const linhasResultado: LinhaExport[] = [];
       for (const tabela of TABELAS) {
-        const { data, error } = await supabase.from(tabela).select("*").eq("empresa_id", empresaId);
-        if (error) continue;
-        zip.file(`${tabela}.csv`, paraCsv((data ?? []) as Record<string, unknown>[]));
+        try {
+          // Pagina até acabar: sem isso o banco devolve no máximo 1.000 linhas.
+          const linhas = await fetchAllRows<Record<string, unknown>>((de, ate) =>
+            supabase
+              .from(tabela)
+              .select("*")
+              .eq("empresa_id", empresaId)
+              .order("id")
+              .range(de, ate),
+          );
+          zip.file(`${tabela}.csv`, paraCsv(linhas));
+          linhasResultado.push({ tabela, total: linhas.length });
+        } catch (e) {
+          linhasResultado.push({
+            tabela,
+            total: 0,
+            erro: e instanceof Error ? e.message : "falha ao ler",
+          });
+        }
       }
+      setResultado(linhasResultado);
+      const falhas = linhasResultado.filter((l) => l.erro);
       zip.file(
         "LEIA-ME.txt",
-        `Exportação de dados de ${empresaNome ?? "sua empresa"}\nGerada em ${new Date().toLocaleString("pt-BR")}\nArquivos CSV separados por ponto e vírgula.`,
+        [
+          `Exportação de dados de ${empresaNome ?? "sua empresa"}`,
+          `Gerada em ${new Date().toLocaleString("pt-BR")}`,
+          "Arquivos CSV separados por ponto e vírgula.",
+          "",
+          "Linhas exportadas por arquivo:",
+          ...linhasResultado.map((l) =>
+            l.erro ? `- ${l.tabela}: FALHOU (${l.erro})` : `- ${l.tabela}: ${l.total}`,
+          ),
+          "",
+          falhas.length
+            ? `ATENÇÃO: ${falhas.length} arquivo(s) não puderam ser lidos. A cópia está incompleta.`
+            : "Todos os arquivos foram lidos por completo.",
+        ].join("\n"),
       );
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
@@ -78,7 +115,13 @@ export function PrivacidadeDadosCard() {
       a.download = `dados-${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Exportação concluída.");
+      if (falhas.length) {
+        toast.error(`Exportação incompleta: ${falhas.length} arquivo(s) falharam.`);
+      } else {
+        toast.success(
+          `Exportação concluída: ${linhasResultado.reduce((s, l) => s + l.total, 0).toLocaleString("pt-BR")} linhas.`,
+        );
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível exportar agora.");
     } finally {
@@ -128,6 +171,37 @@ export function PrivacidadeDadosCard() {
           <span className="text-sm text-muted-foreground">Arquivo ZIP com planilhas CSV.</span>
         </div>
 
+        {resultado && (
+          <div className="space-y-2">
+            {resultado.some((l) => l.erro) && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Alguns arquivos não puderam ser lidos e a cópia está incompleta:{" "}
+                  {resultado.filter((l) => l.erro).map((l) => l.tabela).join(", ")}. Tente de novo ou
+                  fale com o suporte.
+                </AlertDescription>
+              </Alert>
+            )}
+            <div className="rounded-lg border">
+              <div className="border-b px-3 py-2 text-sm font-medium">
+                Linhas exportadas ({resultado.reduce((s, l) => s + l.total, 0).toLocaleString("pt-BR")} no
+                total)
+              </div>
+              <ul className="max-h-56 divide-y overflow-auto text-sm">
+                {resultado.map((l) => (
+                  <li key={l.tabela} className="flex justify-between px-3 py-1.5">
+                    <span className="text-muted-foreground">{l.tabela}</span>
+                    <span className={l.erro ? "font-medium text-destructive" : "tabular-nums"}>
+                      {l.erro ? "falhou" : l.total.toLocaleString("pt-BR")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+
         <div className="space-y-3 rounded-lg border border-destructive/30 p-4">
           <div className="flex items-center gap-2 text-destructive">
             <ShieldAlert className="h-4 w-4" />
@@ -137,16 +211,17 @@ export function PrivacidadeDadosCard() {
           {pedido ? (
             <Alert>
               <AlertDescription>
-                Pedido registrado em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}. A
-                exclusão será concluída até {new Date(pedido.prazo_em).toLocaleDateString("pt-BR")}.
-                Fale com o suporte para cancelar.
+                Pedido registrado em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}. Nossa
+                equipe apaga os dados até {new Date(pedido.prazo_em).toLocaleDateString("pt-BR")}. Fale
+                com o suporte para cancelar.
               </AlertDescription>
             </Alert>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Apaga os dados da empresa em até {PRAZO_EXCLUSAO_DIAS} dias, respeitando prazos
-                fiscais. Exporte antes: a ação não pode ser desfeita.
+                Seu pedido é registrado e nossa equipe apaga os dados da empresa em até{" "}
+                {PRAZO_EXCLUSAO_DIAS} dias, respeitando prazos fiscais. A conta continua funcionando
+                até lá. Exporte antes: depois de concluída, a exclusão não pode ser desfeita.
               </p>
               <div className="space-y-2">
                 <Label htmlFor="motivo-exclusao">Motivo (opcional)</Label>
