@@ -53,6 +53,8 @@ const modulosAdmin: NavItem[] = [
 
 const financeiroAdmin: NavItem[] = [
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, modulo: "financeiro" },
+  { title: "Contratos", url: "/contratos", icon: FileSignature, modulo: "contratos" },
+  { title: "Medições", url: "/medicoes", icon: Ruler, modulo: "medicoes" },
   { title: "Faturamento", url: "/faturamento", icon: Receipt, modulo: "faturamento" },
   { title: "Recebimentos", url: "/recebimentos", icon: Wallet, modulo: "financeiro" },
   { title: "Cartões", url: "/cartoes", icon: CreditCard, modulo: "financeiro" },
