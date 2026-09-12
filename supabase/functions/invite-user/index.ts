@@ -6,6 +6,7 @@ const InviteSchema = z.object({
   email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
   nome: z.string().trim().max(150).optional(),
   role: z.enum(["admin", "gestor", "financeiro", "engenheiro", "operacional"]),
+  empresa_id: z.string().uuid().optional(),
 });
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
