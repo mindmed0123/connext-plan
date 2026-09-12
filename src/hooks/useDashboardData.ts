@@ -108,6 +108,15 @@ export function useDashboardData(filters: DashboardFilters) {
         supabase.rpc("get_obra_financeiro_resumo", { _obra_id: null }),
       ]);
 
+      const { data: statusCfg } = await supabase
+        .from("obra_status_config")
+        .select("chave,categoria");
+      const statusCategoria = new Map<string, string>(
+        (statusCfg ?? []).map((s: { chave: string; categoria: string }) => [s.chave, s.categoria]),
+      );
+
+
+
       const adendos = adendosRaw as Array<{
         id: string;
         obra_id: string;
