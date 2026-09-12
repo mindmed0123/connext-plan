@@ -171,6 +171,37 @@ export function PrivacidadeDadosCard() {
           <span className="text-sm text-muted-foreground">Arquivo ZIP com planilhas CSV.</span>
         </div>
 
+        {resultado && (
+          <div className="space-y-2">
+            {resultado.some((l) => l.erro) && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Alguns arquivos não puderam ser lidos e a cópia está incompleta:{" "}
+                  {resultado.filter((l) => l.erro).map((l) => l.tabela).join(", ")}. Tente de novo ou
+                  fale com o suporte.
+                </AlertDescription>
+              </Alert>
+            )}
+            <div className="rounded-lg border">
+              <div className="border-b px-3 py-2 text-sm font-medium">
+                Linhas exportadas ({resultado.reduce((s, l) => s + l.total, 0).toLocaleString("pt-BR")} no
+                total)
+              </div>
+              <ul className="max-h-56 divide-y overflow-auto text-sm">
+                {resultado.map((l) => (
+                  <li key={l.tabela} className="flex justify-between px-3 py-1.5">
+                    <span className="text-muted-foreground">{l.tabela}</span>
+                    <span className={l.erro ? "font-medium text-destructive" : "tabular-nums"}>
+                      {l.erro ? "falhou" : l.total.toLocaleString("pt-BR")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+
         <div className="space-y-3 rounded-lg border border-destructive/30 p-4">
           <div className="flex items-center gap-2 text-destructive">
             <ShieldAlert className="h-4 w-4" />
@@ -180,16 +211,17 @@ export function PrivacidadeDadosCard() {
           {pedido ? (
             <Alert>
               <AlertDescription>
-                Pedido registrado em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}. A
-                exclusão será concluída até {new Date(pedido.prazo_em).toLocaleDateString("pt-BR")}.
-                Fale com o suporte para cancelar.
+                Pedido registrado em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}. Nossa
+                equipe apaga os dados até {new Date(pedido.prazo_em).toLocaleDateString("pt-BR")}. Fale
+                com o suporte para cancelar.
               </AlertDescription>
             </Alert>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Apaga os dados da empresa em até {PRAZO_EXCLUSAO_DIAS} dias, respeitando prazos
-                fiscais. Exporte antes: a ação não pode ser desfeita.
+                Seu pedido é registrado e nossa equipe apaga os dados da empresa em até{" "}
+                {PRAZO_EXCLUSAO_DIAS} dias, respeitando prazos fiscais. A conta continua funcionando
+                até lá. Exporte antes: depois de concluída, a exclusão não pode ser desfeita.
               </p>
               <div className="space-y-2">
                 <Label htmlFor="motivo-exclusao">Motivo (opcional)</Label>
