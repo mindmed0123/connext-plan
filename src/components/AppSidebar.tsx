@@ -19,6 +19,7 @@ import {
   Bell,
   ShoppingCart,
   Package,
+  TrendingUp,
   FileSignature,
   Ruler,
   Truck,
