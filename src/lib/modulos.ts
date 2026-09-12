@@ -43,7 +43,10 @@ export type ModuloChave =
   | "compras"
   | "estoque"
   | "portal"
-  | "equipes";
+  | "equipes"
+  | "orcamento_composicoes"
+  | "cronograma"
+  | "ia";
 
 export const MODULOS: { chave: ModuloChave; nome: string; descricao: string }[] = [
   { chave: "obras", nome: "Obras / chamados", descricao: "Cadastro e acompanhamento do trabalho em campo." },
@@ -64,6 +67,9 @@ export const MODULOS: { chave: ModuloChave; nome: string; descricao: string }[] 
   { chave: "estoque", nome: "Estoque", descricao: "Depósitos, entradas pelo recebimento, saídas para a obra e saldo com custo médio." },
   { chave: "portal", nome: "Portal do cliente", descricao: "Link para o contratante acompanhar a obra." },
   { chave: "equipes", nome: "Equipes", descricao: "Pessoas, permissões e vínculo com obras." },
+  { chave: "orcamento_composicoes", nome: "Insumos e composições", descricao: "Base de custos própria ou importada (SINAPI e similares), com composições e atualização de preço por data." },
+  { chave: "cronograma", nome: "Cronograma de Gantt", descricao: "Barras por etapa, dependências, caminho crítico e previsto financeiro do mês." },
+  { chave: "ia", nome: "Inteligência artificial", descricao: "Assistente de orçamento, leitura de cotação e relatório do diário. Cada uso é ligado separadamente." },
 ];
 
 export const PRESETS: Record<PerfilOperacao, ModuloChave[]> = {
@@ -75,6 +81,7 @@ export const PRESETS: Record<PerfilOperacao, ModuloChave[]> = {
   obra_propria: [
     "obras", "etapas", "diario", "orcamentos", "servicos", "execucoes", "compras", "estoque",
     "recebimentos", "contas_pagar", "bancos", "cartoes", "portal", "equipes",
+    "orcamento_composicoes", "cronograma",
   ],
   manutencao: ["obras", "diario", "orcamentos", "servicos", "execucoes", "faturamento", "recebimentos", "equipes"],
 };
