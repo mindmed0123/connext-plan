@@ -14,7 +14,8 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown, ChevronDown, Send, Save } from "lucide-react";
+import { Plus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown, ChevronDown, Send, Save, Upload } from "lucide-react";
+import { ImportarItensDialog, type ItemImportado } from "@/components/orcamentos/ImportarItensDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
