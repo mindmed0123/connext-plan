@@ -97,6 +97,18 @@ export function DreTab({ obraId }: { obraId: string }) {
     },
   });
 
+  const { data: medicoes = [] } = useQuery({
+    queryKey: ["obra-dre-medicoes", obraId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("medicoes")
+        .select("valor_medido, contratos_clientes(retencao_contratual_pct, retencao_devolucao_prevista)")
+        .eq("obra_id", obraId)
+        .eq("status", "aprovada");
+      return data ?? [];
+    },
+  });
+
   const excluirManual = useMutation({
     mutationFn: async (l: Lancamento) => {
       const { data, error } = await supabase
