@@ -1,4 +1,4 @@
-import { hexToRgb, lighten } from "@/hooks/useEmpresaConfig";
+import { hexToRgb, lighten } from "@/lib/color";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, addDays, parseISO } from "date-fns";
