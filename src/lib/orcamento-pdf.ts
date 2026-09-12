@@ -1,3 +1,4 @@
+import { hexToRgb, lighten } from "@/hooks/useEmpresaConfig";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, addDays, parseISO } from "date-fns";
@@ -92,6 +93,9 @@ export async function gerarOrcamentoPDF(
     cep?: string | null;
     telefone?: string | null;
     logo_url?: string | null;
+    cor_primaria?: string | null;
+    texto_rodape?: string | null;
+    email?: string | null;
   },
   rotuloCodigo = "Chamado"
 ) {
@@ -101,8 +105,8 @@ export async function gerarOrcamentoPDF(
   const margin = 15;
 
   // Cores estilo do modelo
-  const TEAL: [number, number, number] = [82, 196, 184];
-  const TEAL_LIGHT: [number, number, number] = [225, 244, 241];
+  const TEAL: [number, number, number] = hexToRgb(empresa.cor_primaria ?? "", [82, 196, 184]);
+  const TEAL_LIGHT: [number, number, number] = lighten(TEAL, 0.86);
   const TEXT: [number, number, number] = [40, 40, 40];
   const MUTED: [number, number, number] = [110, 110, 110];
 
@@ -458,6 +462,11 @@ export async function gerarOrcamentoPDF(
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
   const geradoEm = format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+  const rodape = (empresa.texto_rodape ?? "").trim();
+  if (rodape) {
+    const linhasRodape = doc.splitTextToSize(rodape, pageW - margin * 2);
+    doc.text(linhasRodape, pageW / 2, pageH - 19, { align: "center" });
+  }
   doc.text(`Gerado em ${geradoEm}`, pageW / 2, pageH - 14, { align: "center" });
   doc.text("Página 1 de 1", pageW / 2, pageH - 9, { align: "center" });
 
