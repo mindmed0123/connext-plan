@@ -23,8 +23,8 @@ export class ErroApp extends Component<Props, State> {
         <div className="w-full max-w-md space-y-4 rounded-lg border bg-card p-6 text-center">
           <h1 className="text-xl font-semibold">Algo deu errado nesta tela</h1>
           <p className="text-sm text-muted-foreground">
-            Já avisamos a equipe. Você pode recarregar e continuar de onde parou; nada do que foi salvo se
-            perdeu.
+            Copie o código do erro abaixo e nos envie pelo suporte. Você pode recarregar e continuar de
+            onde parou; nada do que foi salvo se perdeu.
           </p>
           <p className="text-xs text-muted-foreground">
             Código do incidente: <span className="font-mono">{this.state.codigo}</span>
