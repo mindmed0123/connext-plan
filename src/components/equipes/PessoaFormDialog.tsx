@@ -13,6 +13,7 @@ import {
   PESSOA_TIPO_LIST, PESSOA_TIPO_LABEL, PessoaTipo, CARGOS_OPERACIONAIS,
 } from "@/lib/pessoas-helpers";
 import { PermissoesEditor } from "./PermissoesEditor";
+import { usePerfis } from "@/hooks/usePerfis";
 import { TerceirizadoObrasTab } from "./TerceirizadoObrasTab";
 import { PessoaObrasVinculadasTab } from "./PessoaObrasVinculadasTab";
 
@@ -33,6 +34,7 @@ type Pessoa = {
   conta: string | null;
   observacoes: string | null;
   status: "ativo" | "inativo";
+  perfil_id?: string | null;
 };
 
 const empty = (tipo: PessoaTipo): Pessoa => ({
@@ -64,6 +66,7 @@ export function PessoaFormDialog({
   const qc = useQueryClient();
   const editing = !!pessoa?.id;
   const [form, setForm] = useState<Pessoa>(empty(defaultTipo));
+  const { perfis } = usePerfis();
 
   useEffect(() => {
     if (pessoa) {
@@ -95,14 +98,27 @@ export function PessoaFormDialog({
         conta: form.conta || null,
         observacoes: form.observacoes || null,
         status: form.status,
+        perfil_id: form.perfil_id ?? null,
       };
       if (editing) {
         const { error } = await supabase.from("pessoas").update(payload).eq("id", pessoa.id);
         if (error) throw error;
+        if (payload.perfil_id) {
+          const { error: e2 } = await supabase.rpc("aplicar_perfil_permissao", { _perfil_id: payload.perfil_id, _pessoa_id: pessoa.id });
+          if (e2) throw e2;
+        }
       } else {
         const { data: u } = await supabase.auth.getUser();
-        const { error } = await supabase.from("pessoas").insert([{ ...payload, created_by: u.user?.id ?? null }]);
+        const { data: nova, error } = await supabase
+          .from("pessoas")
+          .insert([{ ...payload, created_by: u.user?.id ?? null }])
+          .select("id")
+          .single();
         if (error) throw error;
+        if (payload.perfil_id && nova?.id) {
+          const { error: e2 } = await supabase.rpc("aplicar_perfil_permissao", { _perfil_id: payload.perfil_id, _pessoa_id: nova.id });
+          if (e2) throw e2;
+        }
       }
     },
     onSuccess: () => {
@@ -165,6 +181,20 @@ export function PessoaFormDialog({
                   <SelectContent>
                     <SelectItem value="ativo">Ativo</SelectItem>
                     <SelectItem value="inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs">Perfil de permissão</Label>
+                <Select
+                  value={form.perfil_id ?? "nenhum"}
+                  onValueChange={(v) => setForm({ ...form, perfil_id: v === "nenhum" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Sem perfil" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhum">Sem perfil</SelectItem>
+                    {perfis.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
