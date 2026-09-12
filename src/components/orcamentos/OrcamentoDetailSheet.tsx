@@ -28,6 +28,7 @@ export function OrcamentoDetailSheet({
   const { rotulos } = useObraConfig();
   const { config } = useEmpresaConfig();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const { data } = useQuery({
     queryKey: ["orc-detail", orcamentoId],
