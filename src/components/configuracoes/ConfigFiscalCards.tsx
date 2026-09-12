@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 type Campos = Partial<EmpresaConfig>;
 
-function useSalvarConfig() {
+export function useSalvarConfig() {
   const qc = useQueryClient();
   const { empresaId } = useAuth();
   const [salvando, setSalvando] = useState(false);

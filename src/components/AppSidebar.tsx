@@ -18,6 +18,7 @@ import {
   Settings,
   Bell,
   ShoppingCart,
+  Package,
   FileSignature,
   Ruler,
   Truck,
@@ -71,6 +72,7 @@ const financeiroAdmin: NavItem[] = [
   { title: "Bancos", url: "/bancos", icon: Landmark, modulo: "financeiro", mod: "bancos" },
   { title: "Cartões", url: "/cartoes", icon: CreditCard, modulo: "financeiro", mod: "cartoes" },
   { title: "Compras", url: "/compras", icon: ShoppingCart, modulo: "financeiro", mod: "compras" },
+  { title: "Estoque", url: "/estoque", icon: Package, modulo: "financeiro", mod: "estoque" },
   { title: "Compradores", url: "/compradores", icon: ShoppingCart, modulo: "financeiro", mod: "compras" },
 ];
 

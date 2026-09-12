@@ -41,6 +41,7 @@ export type ModuloChave =
   | "bancos"
   | "cartoes"
   | "compras"
+  | "estoque"
   | "portal"
   | "equipes";
 
@@ -60,6 +61,7 @@ export const MODULOS: { chave: ModuloChave; nome: string; descricao: string }[] 
   { chave: "bancos", nome: "Bancos e conciliação", descricao: "Contas bancárias, extrato e conciliação." },
   { chave: "cartoes", nome: "Cartões de crédito", descricao: "Despesas de cartão e fechamento de fatura." },
   { chave: "compras", nome: "Compras e materiais", descricao: "Compradores, pedidos e materiais aplicados na obra." },
+  { chave: "estoque", nome: "Estoque", descricao: "Depósitos, entradas pelo recebimento, saídas para a obra e saldo com custo médio." },
   { chave: "portal", nome: "Portal do cliente", descricao: "Link para o contratante acompanhar a obra." },
   { chave: "equipes", nome: "Equipes", descricao: "Pessoas, permissões e vínculo com obras." },
 ];
@@ -71,7 +73,7 @@ export const PRESETS: Record<PerfilOperacao, ModuloChave[]> = {
     "cartoes", "portal", "equipes",
   ],
   obra_propria: [
-    "obras", "etapas", "diario", "orcamentos", "servicos", "execucoes", "compras",
+    "obras", "etapas", "diario", "orcamentos", "servicos", "execucoes", "compras", "estoque",
     "recebimentos", "contas_pagar", "bancos", "cartoes", "portal", "equipes",
   ],
   manutencao: ["obras", "diario", "orcamentos", "servicos", "execucoes", "faturamento", "recebimentos", "equipes"],

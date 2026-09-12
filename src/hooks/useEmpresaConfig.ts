@@ -30,6 +30,7 @@ export interface EmpresaConfig {
   cor_primaria: string;
   email_remetente_nome: string | null;
   email_remetente_endereco: string | null;
+  usa_estoque: boolean;
 }
 
 export const CONFIG_PADRAO: Omit<EmpresaConfig, "empresa_id"> = {
@@ -58,6 +59,7 @@ export const CONFIG_PADRAO: Omit<EmpresaConfig, "empresa_id"> = {
   cor_primaria: "#52C4B8",
   email_remetente_nome: null,
   email_remetente_endereco: null,
+  usa_estoque: false,
 };
 
 export function useEmpresaConfig() {
