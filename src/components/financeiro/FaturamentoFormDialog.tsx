@@ -95,7 +95,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");
     setStatus(tipo === "nf" ? "" : "aguardando");
-    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor(""); setRetencoes(emptyRetencoes());
+    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor(""); setRetencoes(emptyRetencoes()); setPcId("");
   };
 
   const save = useMutation({
