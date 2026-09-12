@@ -154,6 +154,20 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
         </div>
       </div>
 
+      <div className="flex flex-col md:flex-row md:items-center gap-2 rounded-md border p-3">
+        <span className="text-sm font-medium">Perfil</span>
+        <Select value={pessoa?.perfil_id ?? "nenhum"} onValueChange={aplicarPerfil}>
+          <SelectTrigger className="md:w-[280px]"><SelectValue placeholder="Sem perfil" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nenhum">Sem perfil (permissões individuais)</SelectItem>
+            {perfis.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground md:ml-2">
+          As permissões vêm do perfil; ajustes individuais ficam marcados como "ajustado".
+        </p>
+      </div>
+
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
