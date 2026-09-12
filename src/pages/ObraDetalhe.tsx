@@ -237,6 +237,18 @@ export default function ObraDetalhe() {
           <div><span className="text-muted-foreground">Região: </span>{getRegiaoLabel(obra)}</div>
           <div><span className="text-muted-foreground">Engenheiro: </span>{obra.engenheiro_responsavel || "—"}</div>
           <div><span className="text-muted-foreground">Recebido: </span>{formatDateBR(obra.data_recebimento)}</div>
+          <div>
+            <span className="text-muted-foreground">Contrato: </span>
+            {contratoObra ? (
+              <button className="underline underline-offset-2" onClick={() => navigate("/contratos")}>
+                {contratoObra.numero_contrato ?? "s/nº"} · {formatCurrency(Number(contratoObra.valor_global ?? 0))}
+              </button>
+            ) : (
+              <button className="underline underline-offset-2 text-muted-foreground" onClick={() => navigate("/contratos")}>
+                sem contrato — cadastrar
+              </button>
+            )}
+          </div>
           <div className="sm:col-span-2 lg:col-span-4">
             <span className="text-muted-foreground">Endereço: </span>{obra.endereco || "—"}
           </div>
