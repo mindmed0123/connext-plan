@@ -16,6 +16,7 @@ import {
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { ConsumoEmpresas } from "@/components/admin/ConsumoEmpresas";
+import { RotinasStatus } from "@/components/admin/RotinasStatus";
 
 export default function Admin() {
   const { isSuperAdmin, isLoading } = useUserRole();
@@ -103,6 +104,8 @@ export default function Admin() {
       </div>
 
       <ConsumoEmpresas />
+
+      <RotinasStatus />
 
       <div className="rounded-lg border bg-card overflow-hidden">
         <Table>
