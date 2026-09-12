@@ -145,6 +145,13 @@ export function DreTab({ obraId }: { obraId: string }) {
   const saldo = Number(r.saldo || 0);
   const margemPct = receitaOrcada > 0 ? (saldo / receitaOrcada) * 100 : 0;
 
+  const receitaMedida = (medicoes as any[]).reduce((s, m) => s + Number(m.valor_medido || 0), 0);
+  const caucaoRetida = (medicoes as any[]).reduce(
+    (s, m) => s + (Number(m.valor_medido || 0) * Number(m.contratos_clientes?.retencao_contratual_pct ?? 0)) / 100, 0);
+  const devolucaoCaucao = (medicoes as any[])
+    .map((m) => m.contratos_clientes?.retencao_devolucao_prevista).filter(Boolean)[0] as string | undefined;
+  const aFaturar = Math.max(0, receitaMedida - receitaFaturada);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
