@@ -26,4 +26,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.notificacoes-agenda]
-verify_jwt = false
+verify_jwt = true
+
+[functions.send-trial-reminders]
+verify_jwt = true
