@@ -361,7 +361,7 @@ SET LOCAL session_replication_role = replica;
 
 DO $seed$
 DECLARE
-  passada int; emp uuid; s text; t record; sql text; novo uuid; faltando int;
+  passada int; emp uuid; s text; t record; sql text; novo uuid; faltando int; tem_id boolean;
 BEGIN
   FOR passada IN 1..6 LOOP
     faltando := 0;
@@ -375,9 +375,20 @@ BEGIN
         sql := iso_test.insert_sql(t.tabela, emp);
         IF sql IS NULL THEN faltando := faltando + 1; CONTINUE; END IF;
 
+        SELECT EXISTS (SELECT 1 FROM information_schema.columns c
+                        WHERE c.table_schema = 'public' AND c.table_name = t.tabela
+                          AND c.column_name = 'id' AND c.udt_name = 'uuid')
+          INTO tem_id;
+
         BEGIN
-          EXECUTE sql || ' RETURNING id' INTO novo;
-          INSERT INTO iso_test.seeded(tabela, empresa, id) VALUES (t.tabela, emp, novo);
+          IF tem_id THEN
+            EXECUTE sql || ' RETURNING id' INTO novo;
+          ELSE
+            EXECUTE sql;
+            novo := NULL;
+          END IF;
+          INSERT INTO iso_test.seeded(tabela, empresa, id)
+          VALUES (t.tabela, emp, coalesce(novo, '00000000-0000-0000-0000-000000000000'::uuid));
         EXCEPTION WHEN OTHERS THEN
           faltando := faltando + 1;
         END;
