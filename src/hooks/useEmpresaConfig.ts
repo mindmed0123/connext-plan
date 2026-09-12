@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,7 +74,10 @@ export function useEmpresaConfig() {
     },
   });
 
-  const config = { ...CONFIG_PADRAO, empresa_id: empresaId ?? "", ...(query.data ?? {}) } as EmpresaConfig;
+  const config = useMemo(
+    () => ({ ...CONFIG_PADRAO, empresa_id: empresaId ?? "", ...(query.data ?? {}) }) as EmpresaConfig,
+    [query.data, empresaId],
+  );
 
   return { config, raw: query.data ?? null, isLoading: query.isLoading, empresaId };
 }
