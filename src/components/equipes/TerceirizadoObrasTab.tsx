@@ -23,6 +23,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export function TerceirizadoObrasTab({ pessoaId }: { pessoaId: string }) {
+  const { statusLabel } = useObraConfig();
   const { data, isLoading } = useQuery({
     queryKey: ["terceirizado-obras", pessoaId],
     queryFn: async () => {

@@ -37,6 +37,7 @@ export function PessoaObrasVinculadasTab({
   tipo: PessoaTipo;
 }) {
   const qc = useQueryClient();
+  const { statusLabel } = useObraConfig();
   const papel = PAPEL_POR_TIPO[tipo];
   const [openAdd, setOpenAdd] = useState(false);
   const [removerId, setRemoverId] = useState<string | null>(null);
