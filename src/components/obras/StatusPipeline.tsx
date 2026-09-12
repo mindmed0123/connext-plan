@@ -1,48 +1,28 @@
-import { OBRA_STATUS_LABEL } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/integrations/supabase/types";
-
-type ObraStatus = Database["public"]["Enums"]["obra_status"];
+import { useObraConfig } from "@/hooks/useObraConfig";
 
 interface Props {
-  currentStatus: ObraStatus;
-  onChangeStatus: (s: ObraStatus) => void;
+  currentStatus: string;
+  onChangeStatus: (s: string) => void;
   canEdit: boolean;
 }
 
-const PIPELINE: ObraStatus[] = [
-  "recebido",
-  "em_vistoria",
-  "aguardando_orcamento",
-  "em_aprovacao",
-  "em_execucao",
-  "finalizado",
-  "aguardando_rc",
-  "aguardando_pedido_compra",
-  "aguardando_nf",
-  "aguardando_pagamento",
-  "pago",
-];
-
 export function StatusPipeline({ currentStatus, onChangeStatus, canEdit }: Props) {
-  const currentIdx = PIPELINE.indexOf(currentStatus);
+  const { statuses } = useObraConfig();
+  const pipeline = statuses.map((s) => s.chave);
+  const currentIdx = pipeline.indexOf(currentStatus);
   return (
     <div className="flex items-center gap-1 overflow-x-auto py-2">
-      {PIPELINE.map((s, i) => (
-        <div key={s} className="flex items-center gap-1 shrink-0">
+      {statuses.map((cfg, i) => (
+        <div key={cfg.chave} className="flex items-center gap-1 shrink-0">
           {i > 0 && (
-            <span
-              className={cn(
-                "block h-px w-3",
-                i <= currentIdx ? "bg-primary/40" : "bg-border"
-              )}
-            />
+            <span className={cn("block h-px w-3", i <= currentIdx ? "bg-primary/40" : "bg-border")} />
           )}
           <button
             type="button"
             disabled={!canEdit}
-            onClick={() => canEdit && onChangeStatus(s)}
-            title={OBRA_STATUS_LABEL[s]}
+            onClick={() => canEdit && onChangeStatus(cfg.chave)}
+            title={cfg.nome}
             className={cn(
               "h-7 w-7 shrink-0 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-all",
               i < currentIdx

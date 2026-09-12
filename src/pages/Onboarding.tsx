@@ -55,7 +55,8 @@ export default function Onboarding() {
   const [obraCodigo, setObraCodigo] = useState("");
   const [obraDescricao, setObraDescricao] = useState("");
   const [obraEngenheiro, setObraEngenheiro] = useState("");
-  const [obraRegiao, setObraRegiao] = useState<string>("leste");
+  const [obraRegiao, setObraRegiao] = useState<string>("");
+  const [obraOrigem, setObraOrigem] = useState<string>("");
 
   const [servNome, setServNome] = useState("");
   const [servUnidade, setServUnidade] = useState("m²");
@@ -162,15 +163,21 @@ export default function Onboarding() {
     setBusy(true);
     try {
       const { error } = await supabase.rpc("criar_obra_segura", {
-        _codigo_chamado: obraCodigo || `OB-${Date.now().toString().slice(-5)}`,
-        _origem: "Sabesp",
-        _regiao_label: obraRegiao || "",
+        _codigo_chamado: obraCodigo,
+        _origem: obraOrigem.trim(),
+        _regiao_label: obraRegiao.trim(),
         _engenheiro_responsavel: obraEngenheiro || nome || "—",
         _descricao_servico: obraDescricao || "—",
         _endereco: obraEndereco,
         _data_recebimento: getTodayDateInputValue(),
       });
       if (error) throw error;
+      if (obraRegiao.trim()) {
+        await supabase.from("regioes_obra").insert({ nome: obraRegiao.trim(), empresa_id: empresaId as string });
+      }
+      if (obraOrigem.trim()) {
+        await supabase.from("origens_obra").insert({ nome: obraOrigem.trim(), empresa_id: empresaId as string });
+      }
       qc.invalidateQueries({ queryKey: ["obras"] });
       toast.success("Obra cadastrada!");
       next();
@@ -410,7 +417,7 @@ export default function Onboarding() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ob-cod">Código do chamado</Label>
+                  <Label htmlFor="ob-cod">Código da obra</Label>
                   <Input
                     id="ob-cod"
                     value={obraCodigo}
@@ -419,19 +426,22 @@ export default function Onboarding() {
                   />
                 </div>
                 <div>
-                  <Label>Região</Label>
-                  <Select value={obraRegiao} onValueChange={setObraRegiao}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="leste">Leste</SelectItem>
-                      <SelectItem value="oeste">Oeste</SelectItem>
-                      <SelectItem value="norte">Norte</SelectItem>
-                      <SelectItem value="sul">Sul</SelectItem>
-                      <SelectItem value="interior">Interior</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="ob-regiao">Região (opcional)</Label>
+                  <Input
+                    id="ob-regiao"
+                    value={obraRegiao}
+                    onChange={(e) => setObraRegiao(e.target.value)}
+                    placeholder="Ex: Centro"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ob-origem">Origem / cliente (opcional)</Label>
+                  <Input
+                    id="ob-origem"
+                    value={obraOrigem}
+                    onChange={(e) => setObraOrigem(e.target.value)}
+                    placeholder="De quem veio esta obra"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <Label htmlFor="ob-eng">Engenheiro responsável</Label>

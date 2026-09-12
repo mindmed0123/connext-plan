@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { StatusPipeline } from "@/components/obras/StatusPipeline";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function ObraDetalhe() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin } = useUserRole();
+  const { statuses, statusLabel, rotulos } = useObraConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabAtual = searchParams.get("tab") ?? "dre";
 
@@ -76,7 +78,7 @@ export default function ObraDetalhe() {
         obra_id: obraId!,
         user_id: u.user?.id,
         evento: "Status alterado",
-        detalhes: `Novo status: ${OBRA_STATUS_LABEL[status as keyof typeof OBRA_STATUS_LABEL]}`,
+        detalhes: `Novo status: ${statusLabel(status)}`,
       }]);
     },
     onSuccess: () => {
@@ -145,8 +147,8 @@ export default function ObraDetalhe() {
               <Select value={obra.status} onValueChange={(v) => updateStatus.mutate(v)}>
                 <SelectTrigger className="h-9 w-[230px] text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {OBRA_STATUS_LIST.map((s) => (
-                    <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>
+                  {statuses.map((s) => (
+                    <SelectItem key={s.chave} value={s.chave}>{s.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

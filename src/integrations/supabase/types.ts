@@ -1001,6 +1001,65 @@ export type Database = {
           },
         ]
       }
+      empresa_rotulos: {
+        Row: {
+          cliente: string
+          codigo_obra: string
+          comprador: string
+          created_at: string
+          empresa_id: string
+          medicao: string
+          obra_plural: string
+          obra_singular: string
+          orcamento: string
+          updated_at: string
+          usa_codigo_obra: boolean
+          usa_comprador: boolean
+          usa_engenheiro: boolean
+          usa_regiao: boolean
+        }
+        Insert: {
+          cliente?: string
+          codigo_obra?: string
+          comprador?: string
+          created_at?: string
+          empresa_id?: string
+          medicao?: string
+          obra_plural?: string
+          obra_singular?: string
+          orcamento?: string
+          updated_at?: string
+          usa_codigo_obra?: boolean
+          usa_comprador?: boolean
+          usa_engenheiro?: boolean
+          usa_regiao?: boolean
+        }
+        Update: {
+          cliente?: string
+          codigo_obra?: string
+          comprador?: string
+          created_at?: string
+          empresa_id?: string
+          medicao?: string
+          obra_plural?: string
+          obra_singular?: string
+          orcamento?: string
+          updated_at?: string
+          usa_codigo_obra?: boolean
+          usa_comprador?: boolean
+          usa_engenheiro?: boolean
+          usa_regiao?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_rotulos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativo: boolean
@@ -1721,6 +1780,56 @@ export type Database = {
           },
         ]
       }
+      obra_status_config: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          chave: string
+          cor: string
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+          padrao: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          chave: string
+          cor?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome: string
+          ordem?: number
+          padrao?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          chave?: string
+          cor?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          padrao?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_status_config_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_timeline: {
         Row: {
           created_at: string
@@ -1787,7 +1896,7 @@ export type Database = {
           origem: string
           regiao: Database["public"]["Enums"]["obra_regiao"] | null
           regiao_label: string | null
-          status: Database["public"]["Enums"]["obra_status"]
+          status: string
           updated_at: string
         }
         Insert: {
@@ -1807,10 +1916,10 @@ export type Database = {
           endereco?: string | null
           engenheiro_responsavel?: string | null
           id?: string
-          origem?: string
+          origem: string
           regiao?: Database["public"]["Enums"]["obra_regiao"] | null
           regiao_label?: string | null
-          status?: Database["public"]["Enums"]["obra_status"]
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -1833,7 +1942,7 @@ export type Database = {
           origem?: string
           regiao?: Database["public"]["Enums"]["obra_regiao"] | null
           regiao_label?: string | null
-          status?: Database["public"]["Enums"]["obra_status"]
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -3115,7 +3224,7 @@ export type Database = {
           origem: string
           regiao: Database["public"]["Enums"]["obra_regiao"] | null
           regiao_label: string | null
-          status: Database["public"]["Enums"]["obra_status"]
+          status: string
           updated_at: string
         }
         SetofOptions: {
@@ -3246,6 +3355,10 @@ export type Database = {
         }
         Returns: number
       }
+      obra_status_padrao: {
+        Args: { _categoria: string; _empresa: string }
+        Returns: string
+      }
       pagar_fatura_cartao: {
         Args: {
           _cartao_id: string
@@ -3352,7 +3465,6 @@ export type Database = {
       lancamento_status: "previsto" | "realizado" | "cancelado"
       lancamento_tipo: "receita" | "despesa"
       medicao_status: "rascunho" | "enviada" | "aprovada" | "rejeitada"
-      obra_origem: "veman" | "sabesp"
       obra_papel:
         | "responsavel_administrativo"
         | "executor_operacional"
@@ -3582,7 +3694,6 @@ export const Constants = {
       lancamento_status: ["previsto", "realizado", "cancelado"],
       lancamento_tipo: ["receita", "despesa"],
       medicao_status: ["rascunho", "enviada", "aprovada", "rejeitada"],
-      obra_origem: ["veman", "sabesp"],
       obra_papel: [
         "responsavel_administrativo",
         "executor_operacional",

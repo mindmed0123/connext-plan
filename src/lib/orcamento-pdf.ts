@@ -92,7 +92,8 @@ export async function gerarOrcamentoPDF(
     cep?: string | null;
     telefone?: string | null;
     logo_url?: string | null;
-  }
+  },
+  rotuloCodigo = "Chamado"
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -436,7 +437,7 @@ export async function gerarOrcamentoPDF(
   const chamadoLabel = orc.codigo_chamado || orc.obras?.codigo_chamado || "";
   if (chamadoLabel) {
     doc.setFont("helvetica", "bold");
-    doc.text("CHAMADOS:", margin, y);
+    doc.text(`${rotuloCodigo.toUpperCase()}:`, margin, y);
     y += 5;
     doc.setFont("helvetica", "normal");
     const linhaChamado = orc.titulo ? `${chamadoLabel} - ${orc.titulo}` : chamadoLabel;

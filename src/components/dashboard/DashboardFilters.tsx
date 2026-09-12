@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { RotateCcw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ interface Props {
 }
 
 export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: Props) {
+  const { statuses } = useObraConfig();
   const reset = () => setFilters({ regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos" });
   const responsaveis = pessoas.filter((p) => p.tipo !== "terceirizado");
   const terceirizados = pessoas.filter((p) => p.tipo === "terceirizado");
@@ -53,7 +54,7 @@ export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: 
             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
-              {OBRA_STATUS_LIST.map((s) => <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>)}
+              {statuses.map((s) => <SelectItem key={s.chave} value={s.chave}>{s.nome}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

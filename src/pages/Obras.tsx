@@ -11,7 +11,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OBRA_STATUS_LIST, OBRA_STATUS_LABEL, ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { ObraFormDialog } from "@/components/obras/ObraFormDialog";
 import { formatDateBR } from "@/lib/date";
 
@@ -19,6 +20,7 @@ export default function Obras() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const { statuses, rotulos } = useObraConfig();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [regiaoFilter, setRegiaoFilter] = useState<string>("all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
@@ -101,8 +103,8 @@ export default function Obras() {
           <SelectTrigger className="w-[200px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
-            {OBRA_STATUS_LIST.map((s) => (
-              <SelectItem key={s} value={s}>{OBRA_STATUS_LABEL[s]}</SelectItem>
+            {statuses.map((s) => (
+              <SelectItem key={s.chave} value={s.chave}>{s.nome}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -128,7 +130,7 @@ export default function Obras() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Chamado</TableHead>
+              <TableHead>{rotulos.codigo_obra}</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Região</TableHead>
               <TableHead>Engenheiro</TableHead>
