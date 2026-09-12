@@ -81,6 +81,7 @@ export const PRESETS: Record<PerfilOperacao, ModuloChave[]> = {
   obra_propria: [
     "obras", "etapas", "diario", "orcamentos", "servicos", "execucoes", "compras", "estoque",
     "recebimentos", "contas_pagar", "bancos", "cartoes", "portal", "equipes",
+    "orcamento_composicoes", "cronograma",
   ],
   manutencao: ["obras", "diario", "orcamentos", "servicos", "execucoes", "faturamento", "recebimentos", "equipes"],
 };
