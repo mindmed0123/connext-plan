@@ -14,13 +14,18 @@ export type RetencoesNf = {
   ret_pcc: string;
 };
 
-export const emptyRetencoes = (valor = ""): RetencoesNf => ({
+/** Estado inicial. As alíquotas reais vêm da configuração fiscal da empresa
+ *  e substituem estes valores assim que o formulário carrega. */
+export const emptyRetencoes = (
+  valor = "",
+  aliquotas: { inss?: number | string; iss?: number | string } = {},
+): RetencoesNf => ({
   valor_bruto: valor,
   valor_deducoes_inss: "0",
   base_inss: valor || "0",
-  aliquota_inss: "11",
+  aliquota_inss: String(aliquotas.inss ?? "0"),
   ret_inss: "0",
-  aliquota_iss: "0",
+  aliquota_iss: String(aliquotas.iss ?? "0"),
   ret_iss: "0",
   ret_irrf: "0",
   ret_pcc: "0",
