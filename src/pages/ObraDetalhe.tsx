@@ -282,6 +282,7 @@ export default function ObraDetalhe() {
             </TabsList>
           </div>
           <TabsContent value="dre" className="mt-4"><DreTab obraId={obra.id} /></TabsContent>
+          <TabsContent value="orcado-realizado" className="mt-4"><OrcadoRealizadoTab obraId={obra.id} /></TabsContent>
           <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
           <TabsContent value="orcamento" className="mt-4"><OrcamentoTab obraId={obra.id} /></TabsContent>
           <TabsContent value="execucao" className="mt-4"><ExecucaoTab obraId={obra.id} /></TabsContent>
