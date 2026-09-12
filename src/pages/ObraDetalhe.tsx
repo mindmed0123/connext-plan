@@ -48,6 +48,23 @@ export default function ObraDetalhe() {
     },
   });
 
+  const { data: contratoObra } = useQuery({
+    queryKey: ["obra-contrato-cliente", obraId],
+    enabled: !!obraId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("contratos_clientes")
+        .select("id, numero_contrato, valor_global, status, retencao_contratual_pct")
+        .eq("obra_id", obraId!)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+
+
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra", obraId],
     enabled: !!obraId,
