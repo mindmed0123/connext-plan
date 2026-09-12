@@ -2544,6 +2544,147 @@ export type Database = {
           },
         ]
       }
+      notificacao_canais: {
+        Row: {
+          ativo: boolean
+          canal: string
+          config: Json
+          created_at: string
+          empresa_id: string
+          id: string
+          provedor: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal: string
+          config?: Json
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          provedor?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string
+          config?: Json
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          provedor?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_canais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificacao_envios: {
+        Row: {
+          canal: string
+          chave: string
+          destinatario: string
+          empresa_id: string
+          enviado_em: string
+          evento: string
+          id: string
+          referencia_data: string
+          user_id: string
+        }
+        Insert: {
+          canal?: string
+          chave: string
+          destinatario: string
+          empresa_id?: string
+          enviado_em?: string
+          evento: string
+          id?: string
+          referencia_data?: string
+          user_id: string
+        }
+        Update: {
+          canal?: string
+          chave?: string
+          destinatario?: string
+          empresa_id?: string
+          enviado_em?: string
+          evento?: string
+          id?: string
+          referencia_data?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_envios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificacao_preferencias: {
+        Row: {
+          ativo: boolean
+          contas_a_vencer: boolean
+          created_at: string
+          empresa_id: string
+          frequencia: string
+          id: string
+          medicao_aprovada: boolean
+          nf_emitida: boolean
+          orcamento_decidido: boolean
+          rdo_reprovado: boolean
+          recebimento_vencido: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          contas_a_vencer?: boolean
+          created_at?: string
+          empresa_id?: string
+          frequencia?: string
+          id?: string
+          medicao_aprovada?: boolean
+          nf_emitida?: boolean
+          orcamento_decidido?: boolean
+          rdo_reprovado?: boolean
+          recebimento_vencido?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          contas_a_vencer?: boolean
+          created_at?: string
+          empresa_id?: string
+          frequencia?: string
+          id?: string
+          medicao_aprovada?: boolean
+          nf_emitida?: boolean
+          orcamento_decidido?: boolean
+          rdo_reprovado?: boolean
+          recebimento_vencido?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_preferencias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_adendos: {
         Row: {
           arquivo_nome: string | null
