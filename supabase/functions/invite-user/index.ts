@@ -95,11 +95,33 @@ Deno.serve(async (req) => {
     const newUserId = inv.user?.id;
     if (!newUserId) return json({ error: "O convite não retornou um usuário válido." }, 500);
 
-    const { error: roleError } = await admin.from("user_roles").upsert(
-      { user_id: newUserId, role, empresa_id: empresaId },
-      { onConflict: "user_id,role" },
+    // Nunca sobrescrever o vínculo de outra empresa
+    const { data: rolesExistentes, error: rolesExistentesErr } = await admin
+      .from("user_roles")
+      .select("role, empresa_id")
+      .eq("user_id", newUserId);
+    if (rolesExistentesErr) {
+      return json({ error: "Convite enviado, mas não foi possível validar o vínculo do usuário." }, 500);
+    }
+    const outraEmpresa = (rolesExistentes ?? []).some(
+      (r: any) => r.empresa_id && r.empresa_id !== empresaId,
     );
-    if (roleError) return json({ error: "Convite enviado, mas não foi possível atribuir a função ao usuário." }, 500);
+    if (outraEmpresa) {
+      return json({
+        error: "Este e-mail já está vinculado a outra empresa. Peça para o administrador dela liberar o acesso antes de convidar.",
+      }, 409);
+    }
+    const jaTemRole = (rolesExistentes ?? []).some(
+      (r: any) => r.empresa_id === empresaId && r.role === role,
+    );
+    if (!jaTemRole) {
+      const { error: roleError } = await admin
+        .from("user_roles")
+        .insert({ user_id: newUserId, role, empresa_id: empresaId });
+      if (roleError) {
+        return json({ error: "Convite enviado, mas não foi possível atribuir a função ao usuário." }, 500);
+      }
+    }
 
     const { data: existing, error: lookupError } = await admin
       .from("pessoas")
