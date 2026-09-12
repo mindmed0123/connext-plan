@@ -197,7 +197,14 @@ export function DreTab({ obraId }: { obraId: string }) {
               </span>
             </div>
           </div>
+          {caucaoRetida > 0 && (
+            <p className="border-t px-4 py-2 text-[11px] text-muted-foreground">
+              A caução retida é valor a receber no futuro
+              {devolucaoCaucao ? `, previsto para ${formatDateBR(devolucaoCaucao)}` : ""} — não entra como perda.
+            </p>
+          )}
         </div>
+
 
         <div className="grid content-start gap-3 sm:grid-cols-2">
           <Kpi label="Materiais" value={custoMateriais} tone="despesa" />
