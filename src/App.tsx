@@ -31,6 +31,8 @@ import Configuracoes from "./pages/Configuracoes";
 import Cartoes from "./pages/Cartoes";
 import Compradores from "./pages/Compradores";
 import CompradorDetalhe from "./pages/CompradorDetalhe";
+import Contratos from "./pages/Contratos";
+import Medicoes from "./pages/Medicoes";
 import PessoaDetalhe from "./pages/PessoaDetalhe";
 import AcessosSuporte from "./pages/AcessosSuporte";
 
