@@ -859,6 +859,18 @@ export default function Financeiro() {
               </Select>
             </div>
             <div>
+              <Label>Centro de custo</Label>
+              <Select value={form.centro_custo_id ?? "nenhum"} onValueChange={(v) => setForm({ ...form, centro_custo_id: v === "nenhum" ? null : v })}>
+                <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nenhum">Sem centro de custo</SelectItem>
+                  {centros.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.codigo ? `${c.codigo} — ${c.nome}` : c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Data competência *</Label>
               <Input type="date" value={form.data_competencia}
                      onChange={(e) => setForm({ ...form, data_competencia: e.target.value })} />
