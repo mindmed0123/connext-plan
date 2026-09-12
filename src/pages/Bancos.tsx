@@ -167,6 +167,7 @@ export default function Bancos() {
         data_competencia: linha.data,
         data_realizado: linha.data,
         conta_bancaria_id: contaAtual,
+        empresa_id: empresaId!,
       }]).select("id").single();
       if (error) throw error;
       const { error: e2 } = await supabase

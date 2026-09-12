@@ -18,7 +18,7 @@ import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR, getTodayDateInputValue, toDateKey } from "@/lib/date";
 import { dividirParcelas } from "@/lib/money";
 import { useContasBancarias, useFornecedores } from "@/hooks/useContasBancarias";
-import { usePlanoContas } from "@/hooks/usePlanoContas";
+import { useCategoriasFinanceiras } from "@/hooks/usePlanoContas";
 
 type Filtro = "todas" | "hoje" | "atrasadas" | "30dias" | "pagas";
 
@@ -34,8 +34,7 @@ export default function ContasPagar() {
   const qc = useQueryClient();
   const { fornecedores } = useFornecedores();
   const { contas: contasBancarias } = useContasBancarias();
-  const plano = usePlanoContas();
-  const categorias: any[] = (plano as any)?.categorias ?? [];
+  const { categorias = [] } = useCategoriasFinanceiras() as any;
 
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [fornFiltro, setFornFiltro] = useState("todos");
