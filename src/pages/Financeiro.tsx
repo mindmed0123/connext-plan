@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useCentrosCusto } from "@/hooks/usePlanoContas";
 import { format, addDays, isBefore, parseISO } from "date-fns";
 import {
