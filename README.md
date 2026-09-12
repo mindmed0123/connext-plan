@@ -109,3 +109,57 @@ para cache e sincronização em tempo real entre as telas.
 Os testes cobrem as regras críticas de cálculo em `src/lib`:
 datas (`date.test.ts`), dinheiro e parcelamento (`money.test.ts`),
 faturas de cartão (`cartao-helpers.test.ts`) e totais do orçamento (`orcamento-calc.test.ts`).
+
+## Isolamento entre empresas (multiempresa)
+
+O sistema é usado por várias construtoras no mesmo banco. Existe uma prova automática de
+que uma empresa não alcança os dados de outra: `supabase/tests/isolamento.sql`.
+
+O script cria duas empresas de teste (A e B) com um usuário administrador cada, popula
+obra, orçamento, contratação, parcela, cartão, despesa, nota fiscal, recebimento e
+pagamento nas duas e, autenticado como o usuário de A, verifica:
+
+- **(a) Leitura** — nenhuma linha da empresa B aparece em nenhuma tabela.
+- **(b) Escrita** — inserções e alterações apontando para registros de B (obra, orçamento,
+  contratação, cartão, recebimento, cliente, pessoa) são todas recusadas.
+- **(c) Funções do banco** — `get_dre_obra`, `get_obra_financeiro_resumo`,
+  `get_financeiro_kpis`, `get_fluxo_caixa_mensal`, `salvar_orcamento`, `aprovar_orcamento`,
+  `confirmar_recebimento`, `pagar_fatura_cartao`, `reabrir_fatura_cartao`,
+  `verificar_razao` e `seed_categorias_financeiras` chamadas com ids da empresa B falham
+  ou voltam vazias.
+- **(d) Arquivos** — arquivos da empresa B não podem ser lidos, gravados nem apagados.
+
+No fim o script apaga as duas empresas de teste, imprime uma linha por caso
+(`PASSOU` / `FALHOU`) e encerra com erro se algum caso falhar.
+
+### Rodar localmente
+
+Requisitos: Docker e [Supabase CLI](https://supabase.com/docs/guides/cli).
+
+```sh
+supabase start                # sobe Postgres + Storage e aplica todas as migrations
+npm run test:isolamento       # roda a prova de isolamento
+supabase stop --no-backup
+```
+
+Sem o script npm, o comando equivalente é:
+
+```sh
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+  -v ON_ERROR_STOP=1 -f supabase/tests/isolamento.sql
+```
+
+### No CI
+
+O workflow `.github/workflows/isolamento.yml` roda em todo pull request: sobe o Postgres,
+aplica todas as migrations e executa o script. Pull request com qualquer caso `FALHOU`
+não passa.
+
+### Regra de cobertura
+
+**Toda tabela nova entra no script de isolamento no mesmo pull request em que é criada.**
+Na prática: adicionar o nome da tabela na lista de leitura (seção "a) LEITURA") e, se ela
+tiver chave estrangeira para outra tabela de negócio, incluir um caso de escrita cruzada
+na seção "b) ESCRITA COM FK DE OUTRA EMPRESA". Toda função nova em `SECURITY DEFINER`
+também ganha um caso na seção "c) RPCs".
+

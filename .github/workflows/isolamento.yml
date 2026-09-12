@@ -1,0 +1,31 @@
+name: Isolamento multiempresa
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  isolamento:
+    name: Prova de isolamento entre empresas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Subir Postgres + Storage e aplicar todas as migrations
+        run: supabase start -x studio,imgproxy,inbucket,edge-runtime,logflare,vector,supavisor,realtime,mailpit
+
+      - name: Rodar teste de isolamento
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            -v ON_ERROR_STOP=1 -f supabase/tests/isolamento.sql
+
+      - name: Derrubar ambiente
+        if: always()
+        run: supabase stop --no-backup
