@@ -1,0 +1,21 @@
+{
+  "name": "Gestão de Obra",
+  "short_name": "Obra",
+  "description": "Diário de obra, fotos e acompanhamento direto do canteiro.",
+  "start_url": "/campo",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0d5c63",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Novo RDO", "short_name": "RDO", "url": "/campo/rdo", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Nova foto", "short_name": "Foto", "url": "/campo/foto", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Minhas obras", "short_name": "Obras", "url": "/obras", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

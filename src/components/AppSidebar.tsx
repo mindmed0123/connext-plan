@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   HardHat,
   Columns3,
+  Camera,
   ClipboardList,
   FileText,
   Hammer,
@@ -46,6 +47,7 @@ const operacionalAdmin: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, modulo: "dashboard" },
   { title: "Obras", url: "/obras", icon: HardHat, modulo: "obras" },
   { title: "Etapas", url: "/etapas", icon: Columns3, modulo: "etapas" },
+  { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario" },
 ];
 
 const modulosAdmin: NavItem[] = [
@@ -74,6 +76,8 @@ const gestaoAdmin: NavItem[] = [
 // Operacional / terceirizado: apenas obras vinculadas
 const operacionalRestrito: NavItem[] = [
   { title: "Minhas obras", url: "/obras", icon: HardHat, modulo: "obras" },
+  { title: "Canteiro", url: "/campo", icon: Camera, modulo: "obras" },
+  { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario" },
 ];
 
 export function AppSidebar() {

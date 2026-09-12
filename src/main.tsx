@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { registrarServiceWorker } from "./pwa";
 
 // Auto-recover from stale Vite chunks after a new deploy.
 // If the browser tries to load a JS/CSS chunk that no longer exists
@@ -31,3 +32,5 @@ window.addEventListener("unhandledrejection", (e) => tryReload(e.reason));
 setTimeout(() => sessionStorage.removeItem(RELOAD_FLAG), 5000);
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+registrarServiceWorker();
