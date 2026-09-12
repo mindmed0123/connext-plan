@@ -5859,6 +5859,31 @@ export type Database = {
           realizado_acum: number
         }[]
       }
+      get_desempenho_obras: {
+        Args: { _obra_id?: string }
+        Returns: {
+          codigo_chamado: string
+          comprometido: number
+          contas_a_vencer: number
+          custo_orcado: number
+          custo_previsto_fim: number
+          custo_realizado: number
+          descricao: string
+          estouro_projetado: number
+          idc: number
+          idp: number
+          margem_projetada: number
+          medido_acumulado: number
+          obra_id: string
+          pct_executado: number
+          pct_previsto: number
+          receita_orcada: number
+          saldo_a_medir: number
+          tem_linha_base: boolean
+          valor_agregado: number
+          valor_planejado: number
+        }[]
+      }
       get_dre_obra: {
         Args: { _empresa_id: string; _obra_id?: string }
         Returns: {
