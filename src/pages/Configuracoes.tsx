@@ -12,6 +12,7 @@ import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 import { toast } from "sonner";
 import { StatusConfigCard, RotulosConfigCard, OrigensConfigCard } from "@/components/configuracoes/ConfigObraCards";
 import { GruposConfigCard, CategoriasConfigCard, CentrosCustoConfigCard, ListasConfigCard } from "@/components/configuracoes/ConfigFinanceiroCards";
+import { ConfigFiscalCard, ConfigDocumentosCard, ConfigMarcaCard } from "@/components/configuracoes/ConfigFiscalCards";
 import { ConfigPerfisCard } from "@/components/configuracoes/ConfigPerfisCard";
 
 const formatCnpj = (v: string) => {
@@ -416,6 +417,9 @@ export default function Configuracoes() {
       <CentrosCustoConfigCard />
       <ListasConfigCard />
       <ConfigPerfisCard />
+      <ConfigFiscalCard />
+      <ConfigDocumentosCard />
+      <ConfigMarcaCard />
 
       <Card>
         <CardHeader>
