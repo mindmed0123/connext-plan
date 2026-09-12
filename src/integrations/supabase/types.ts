@@ -4324,6 +4324,7 @@ export type Database = {
       }
       get_fluxo_caixa_mensal: {
         Args: {
+          _conta_id?: string
           _empresa_id: string
           _meses_atras?: number
           _meses_frente?: number
@@ -4395,6 +4396,18 @@ export type Database = {
           mes: string
           pcc: number
           total: number
+        }[]
+      }
+      get_saldos_contas: {
+        Args: { _empresa_id: string }
+        Returns: {
+          banco: string
+          conta_id: string
+          movimento: number
+          nao_conciliado: number
+          nome: string
+          saldo_atual: number
+          saldo_inicial: number
         }[]
       }
       get_user_empresa_id: { Args: never; Returns: string }
