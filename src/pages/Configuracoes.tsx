@@ -15,6 +15,8 @@ import { StatusConfigCard, RotulosConfigCard, OrigensConfigCard } from "@/compon
 import { GruposConfigCard, CategoriasConfigCard, CentrosCustoConfigCard, ListasConfigCard } from "@/components/configuracoes/ConfigFinanceiroCards";
 import { ConfigFiscalCard, ConfigDocumentosCard, ConfigMarcaCard } from "@/components/configuracoes/ConfigFiscalCards";
 import { ConfigPerfisCard } from "@/components/configuracoes/ConfigPerfisCard";
+import { ModelosPropostaCard } from "@/components/configuracoes/ModelosPropostaCard";
+import { AlcadasCard } from "@/components/configuracoes/AlcadasCard";
 import { ConfigPerfilCard, ConfigModulosCard, ConfigDadosExemploCard } from "@/components/configuracoes/ConfigPerfilCard";
 
 const formatCnpj = (v: string) => {
@@ -423,6 +425,8 @@ export default function Configuracoes() {
       <CentrosCustoConfigCard />
       <ListasConfigCard />
       <ConfigPerfisCard />
+      <ModelosPropostaCard />
+      <AlcadasCard />
       <ConfigFiscalCard />
       <ConfigDocumentosCard />
       <ConfigMarcaCard />

@@ -200,6 +200,9 @@ export function OrcamentoDetailSheet({
 
             <div className="flex flex-wrap gap-2 pt-3 border-t">
               <Button variant="outline" onClick={handlePDF}><FileDown className="h-4 w-4" /> Gerar PDF</Button>
+              <Button variant="outline" onClick={() => setPropostaAberta(true)}>
+                <FileText className="h-4 w-4" /> Gerar proposta
+              </Button>
               {orc.status !== "aprovado" ? (
                 <Button variant="outline" onClick={() => onEdit(orc.id)}><Pencil className="h-4 w-4" /> Editar</Button>
               ) : (
@@ -225,6 +228,11 @@ export function OrcamentoDetailSheet({
             </div>
           </div>
         )}
+        <GerarPropostaDialog
+          orcamentoId={orcamentoId}
+          open={propostaAberta}
+          onOpenChange={setPropostaAberta}
+        />
       </SheetContent>
     </Sheet>
   );
