@@ -239,6 +239,7 @@ export default function Financeiro() {
       if (filtroTipo !== "all" && l.tipo !== filtroTipo) return false;
       if (filtroStatus !== "all" && l.status !== filtroStatus) return false;
       if (filtroObra !== "all" && l.obra_id !== filtroObra) return false;
+      if (filtroCentro !== "all" && (l as { centro_custo_id?: string | null }).centro_custo_id !== filtroCentro) return false;
       if (search) {
         const s = search.toLowerCase();
         const ok = l.descricao?.toLowerCase().includes(s)
