@@ -129,6 +129,14 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
   let periodo: string | null = null;
 
   const RENEWAL_EVENTS = ["subscription_renewed", "payment.approved", "payment.completed"];
+  // Só uma ativação consome o checkout_intent (pix gerado / recusa NÃO consomem)
+  const ACTIVATION_EVENTS = [
+    "purchase_approved", "subscription_created", "subscription.activated",
+    ...RENEWAL_EVENTS,
+  ];
+  const evtLower = String(eventType).toLowerCase();
+  const ehAtivacao = ACTIVATION_EVENTS.includes(evtLower);
+  let intentBloqueado = false;
 
   if (refRaw && typeof refRaw === "string") {
     const refTrim = refRaw.trim();
@@ -142,9 +150,11 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
         const jaUsado = !!(intent as Any).usado_em;
         if (!jaUsado) {
           empresa_id = (intent as Any).empresa_id;
-          await supabase.from("checkout_intents")
-            .update({ usado_em: new Date().toISOString() })
-            .eq("id", refTrim);
+          if (ehAtivacao) {
+            await supabase.from("checkout_intents")
+              .update({ usado_em: new Date().toISOString() })
+              .eq("id", refTrim);
+          }
         } else {
           // Intent já usado: só vale para renovação da MESMA assinatura
           let renovacaoValida = false;
@@ -156,11 +166,12 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
               .maybeSingle();
             renovacaoValida =
               (assin as Any)?.cakto_subscription_id === subscriptionId &&
-              RENEWAL_EVENTS.includes(String(eventType).toLowerCase());
+              RENEWAL_EVENTS.includes(evtLower);
           }
           if (renovacaoValida) {
             empresa_id = (intent as Any).empresa_id;
           } else {
+            intentBloqueado = true;
             await registrarAlerta("checkout_intent_reutilizado", {
               intent_id: refTrim, subscriptionId, orderId,
             });
@@ -168,6 +179,7 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
         }
       }
     } else if (refTrim.includes("|") && new Date() <= LEGACY_REF_DEADLINE) {
+
       // Formato antigo: usa APENAS a empresa, ignora plano/período. Expira em 11/10/2026.
       const legacyEmpresa = refTrim.split("|")[0];
       if (UUID_RE.test(legacyEmpresa)) empresa_id = legacyEmpresa;
