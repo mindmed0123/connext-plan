@@ -16,6 +16,8 @@ import {
   Wrench,
   Settings,
   ShoppingCart,
+  FileSignature,
+  Ruler,
 } from "lucide-react";
 import iconLogo from "@/assets/icon.png";
 import {
