@@ -26,6 +26,7 @@ import { MateriaisTab } from "@/components/obras/tabs/MateriaisTab";
 import { AdendosTab } from "@/components/obras/tabs/AdendosTab";
 import { MedicoesTab } from "@/components/obras/tabs/MedicoesTab";
 import { DreTab } from "@/components/obras/tabs/DreTab";
+import { OrcadoRealizadoTab } from "@/components/obras/tabs/OrcadoRealizadoTab";
 import { useUserRole } from "@/hooks/useUserRole";
 import { formatDateBR } from "@/lib/date";
 
