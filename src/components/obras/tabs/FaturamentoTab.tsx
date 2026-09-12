@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
@@ -14,6 +15,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   const [rc, setRc] = useState({ numero_rc: "", data_rc: getTodayDateInputValue() });
   const [pc, setPc] = useState({ numero_pedido: "", data_recebimento: getTodayDateInputValue(), valor: "" });
   const [nf, setNf] = useState({ numero_nf: "", data_emissao: getTodayDateInputValue(), valor: "" });
+  const [nfPcId, setNfPcId] = useState<string>("");
   const [nfRetencoes, setNfRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [regrasNf, setRegrasNf] = useState<any>(null);
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
@@ -96,6 +98,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
     mutationFn: async () => {
       const { error } = await supabase.from("notas_fiscais").insert([{
         obra_id: obraId, numero_nf: nf.numero_nf, data_emissao: nf.data_emissao,
+        pedido_compra_id: nfPcId || null,
         ...nfPayload({ ...nfRetencoes, valor_bruto: nfRetencoes.valor_bruto || nf.valor }),
       }]);
       if (error) throw error;
@@ -104,9 +107,16 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
     onSuccess: () => {
       toast.success("NF registrada"); qc.invalidateQueries({ queryKey: ["nfs", obraId] });
       qc.invalidateQueries({ queryKey: ["timeline", obraId] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setNf({ ...nf, numero_nf: "", valor: "" }); setNfRetencoes(emptyRetencoes());
+      setNf({ ...nf, numero_nf: "", valor: "" }); setNfRetencoes(emptyRetencoes()); setNfPcId("");
     },
   });
+
+  const pcsSemNf = (pcs ?? []).filter((p: any) => !(nfs ?? []).some((n: any) => n.pedido_compra_id === p.id));
+
+  useEffect(() => {
+    if (!nfPcId && pcsSemNf.length === 1) setNfPcId(pcsSemNf[0].id);
+  }, [pcsSemNf.length]);
+
 
   const addRec = useMutation({
     mutationFn: async () => {
@@ -165,6 +175,19 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
           <div><Label className="text-xs">Emissão</Label><Input type="date" value={nf.data_emissao} onChange={(e) => setNf({ ...nf, data_emissao: e.target.value })} /></div>
           <div><Label className="text-xs">Valor</Label><Input type="number" step="0.01" value={nf.valor} onChange={(e) => setNf({ ...nf, valor: e.target.value })} /></div>
           <div className="flex items-end"><Button size="sm" className="w-full" onClick={() => addNf.mutate()} disabled={!nf.numero_nf}>Adicionar</Button></div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Pedido de compra</Label>
+          <Select value={nfPcId || "none"} onValueChange={(v) => setNfPcId(v === "none" ? "" : v)}>
+            <SelectTrigger><SelectValue placeholder="Sem pedido vinculado" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem pedido vinculado</SelectItem>
+              {pcsSemNf.map((p: any) => (
+                <SelectItem key={p.id} value={p.id}>PC {p.numero_pedido ?? "s/nº"} — {formatCurrency(p.valor)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground">Vincular ao pedido evita recebimento duplicado.</p>
         </div>
         <RetencoesNfFields value={{ ...nfRetencoes, valor_bruto: nfRetencoes.valor_bruto || nf.valor }} onChange={(next) => { setNfRetencoes(next); setNf({ ...nf, valor: next.valor_bruto }); }} />
         {nfs?.map((n: any) => <p key={n.id} className="text-xs text-muted-foreground">• NF {n.numero_nf} — bruto {formatCurrency(n.valor_bruto ?? n.valor)} · líquido {formatCurrency(n.valor_liquido ?? n.valor)}</p>)}

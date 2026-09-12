@@ -37,11 +37,31 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [nfData, setNfData] = useState("");
   const [nfValor, setNfValor] = useState("");
 
+  const [pcId, setPcId] = useState<string>("");
+
   const obras = useQuery({
     queryKey: ["obras-select"],
     enabled: open && vinculo === "existente",
     queryFn: async () => (await (supabase.from("obras")).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
+
+  const pcsObra = useQuery({
+    queryKey: ["pcs-sem-nf", obraId],
+    enabled: open && tipo === "nf" && !!obraId,
+    queryFn: async () => {
+      const [{ data: pcs }, { data: nfs }] = await Promise.all([
+        supabase.from("pedidos_compra").select("id, numero_pedido, valor").eq("obra_id", obraId).order("created_at", { ascending: false }),
+        supabase.from("notas_fiscais").select("pedido_compra_id").eq("obra_id", obraId),
+      ]);
+      const usados = new Set((nfs ?? []).map((n) => n.pedido_compra_id).filter(Boolean));
+      return (pcs ?? []).filter((p) => !usados.has(p.id));
+    },
+  });
+
+  useEffect(() => {
+    const lista = pcsObra.data ?? [];
+    if (!pcId && lista.length === 1) setPcId(lista[0].id);
+  }, [pcsObra.data]);
 
   useEffect(() => {
     if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !obraId) return;
@@ -75,7 +95,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const reset = () => {
     setVinculo("existente"); setObraId(""); setCodigoAvulso(""); setNumero(""); setData(getTodayDateInputValue()); setValor("");
     setStatus(tipo === "nf" ? "" : "aguardando");
-    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor(""); setRetencoes(emptyRetencoes());
+    setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor(""); setRetencoes(emptyRetencoes()); setPcId("");
   };
 
   const save = useMutation({
@@ -120,6 +140,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
           ...baseObra,
           numero_nf: numero.trim(),
           data_emissao: data,
+          pedido_compra_id: (vinculo === "existente" && pcId) ? pcId : null,
           ...nfPayload({ ...retencoes, valor_bruto: retencoes.valor_bruto || valor }),
         }]);
         if (error) throw error;
@@ -196,6 +217,22 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
             <div className="space-y-1.5">
               <Label>Valor (R$)</Label>
               <Input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} />
+            </div>
+          )}
+
+          {tipo === "nf" && vinculo === "existente" && (
+            <div className="space-y-1.5">
+              <Label>Pedido de compra</Label>
+              <Select value={pcId || "none"} onValueChange={(v) => setPcId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Sem pedido vinculado" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem pedido vinculado</SelectItem>
+                  {(pcsObra.data ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>PC {p.numero_pedido ?? "s/nº"} — R$ {Number(p.valor ?? 0).toFixed(2)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">Vincular ao pedido evita recebimento duplicado.</p>
             </div>
           )}
 
