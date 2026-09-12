@@ -62,6 +62,16 @@ export function InviteUserDialog({ open, onOpenChange }: { open: boolean; onOpen
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Perfil de permissão</Label>
+            <Select value={perfilId} onValueChange={setPerfilId}>
+              <SelectTrigger><SelectValue placeholder="Sem perfil" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Sem perfil</SelectItem>
+                {perfis.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
