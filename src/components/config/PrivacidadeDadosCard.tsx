@@ -28,7 +28,7 @@ function paraCsv(linhas: Record<string, unknown>[]) {
   const escapar = (v: unknown) => {
     if (v === null || v === undefined) return "";
     const texto = typeof v === "object" ? JSON.stringify(v) : String(v);
-    return /[";\n]/.test(texto) ? `"${texto.replaceAll('"', '""')}"` : texto;
+    return /[";\n]/.test(texto) ? `"${texto.split('"').join('""')}"` : texto;
   };
   return [colunas.join(";"), ...linhas.map((l) => colunas.map((c) => escapar(l[c])).join(";"))].join("\n");
 }

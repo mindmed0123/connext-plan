@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 import PortalObra from "./pages/PortalObra";
 import Notificacoes from "./pages/Notificacoes";
 import { ErroApp } from "@/components/ErroApp";
@@ -95,6 +97,8 @@ const App = () => (
             <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/termos" element={<Termos />} />
+            <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/portal/:token" element={<PortalObra />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route
