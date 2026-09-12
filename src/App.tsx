@@ -36,6 +36,7 @@ import PessoaDetalhe from "./pages/PessoaDetalhe";
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { instalarErrosEmPortugues } from "@/lib/erros";
+import { hashComEmpresa } from "@/lib/tenant-cache";
 
 const queryClient = new QueryClient({
   // Qualquer mutação bem-sucedida em qualquer aba atualiza todas as telas,
@@ -47,6 +48,8 @@ const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
+      // Todo cache é isolado por empresa (ver src/lib/tenant-cache.ts)
+      queryKeyHashFn: hashComEmpresa,
       staleTime: 5 * 60_000,
       gcTime: 30 * 60_000,
       refetchOnWindowFocus: false,
