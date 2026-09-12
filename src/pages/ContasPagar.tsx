@@ -207,7 +207,7 @@ export default function ContasPagar() {
   const anexar = async (parcelaId: string, file: File) => {
     if (!empresaId) return;
     const path = `${empresaId}/contas-pagar/${parcelaId}-${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("comprovantes-pagamento").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("contas-pagar-comprovantes").upload(path, file, { upsert: true });
     if (error) return toast.error(error.message);
     const { error: e2 } = await supabase.from("contas_pagar_parcelas").update({ comprovante_url: path }).eq("id", parcelaId);
     if (e2) return toast.error(e2.message);
@@ -216,7 +216,7 @@ export default function ContasPagar() {
   };
 
   const abrirComprovante = async (path: string) => {
-    const { data, error } = await supabase.storage.from("comprovantes-pagamento").createSignedUrl(path, 600);
+    const { data, error } = await supabase.storage.from("contas-pagar-comprovantes").createSignedUrl(path, 600);
     if (error || !data) return toast.error("Não foi possível abrir o comprovante");
     window.open(data.signedUrl, "_blank");
   };
