@@ -249,6 +249,8 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
       Date.now() + ((periodo === "anual" ? 365 : 30) * 86400000),
     ).toISOString();
     updates.cancel_at_period_end = false;
+    // Assinatura paga não é mais trial — limpar evita bloqueio indevido em past_due
+    updates.trial_ends_at = null;
   };
 
   switch (evt) {
