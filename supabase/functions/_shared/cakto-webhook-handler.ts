@@ -310,8 +310,9 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
         .maybeSingle();
       target = existing as Any;
     }
-    // Fallback por e-mail: comparação exata em minúsculas, sem curingas
-    if (!target && customerEmail) {
+    // Fallback por e-mail: comparação exata em minúsculas, sem curingas.
+    // Não vale quando o checkout_intent já tinha sido usado (possível reuso de link).
+    if (!target && customerEmail && !intentBloqueado) {
       let emp: string | null = null;
       const { data: pessoasMatch } = await supabase
         .from("pessoas")
