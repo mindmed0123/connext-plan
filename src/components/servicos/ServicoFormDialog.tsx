@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useListaOpcoes } from "@/hooks/useListaOpcoes";
 
 export const UNIDADES = [
   "un", "m", "m²", "m³", "kg", "t", "h", "dia", "mês", "vb", "cj", "pc", "gl", "km", "l", "cx",
@@ -185,7 +186,7 @@ export function ServicoFormDialog({
                   <Select value={form.unidade} onValueChange={(v) => set("unidade", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {UNIDADES.map((u) => <SelectItem key={u} value={u}>{u.toUpperCase()}</SelectItem>)}
+                      {unidades.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
