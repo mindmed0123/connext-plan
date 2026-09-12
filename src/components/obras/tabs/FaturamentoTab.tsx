@@ -107,9 +107,16 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
     onSuccess: () => {
       toast.success("NF registrada"); qc.invalidateQueries({ queryKey: ["nfs", obraId] });
       qc.invalidateQueries({ queryKey: ["timeline", obraId] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setNf({ ...nf, numero_nf: "", valor: "" }); setNfRetencoes(emptyRetencoes());
+      setNf({ ...nf, numero_nf: "", valor: "" }); setNfRetencoes(emptyRetencoes()); setNfPcId("");
     },
   });
+
+  const pcsSemNf = (pcs ?? []).filter((p: any) => !(nfs ?? []).some((n: any) => n.pedido_compra_id === p.id));
+
+  useEffect(() => {
+    if (!nfPcId && pcsSemNf.length === 1) setNfPcId(pcsSemNf[0].id);
+  }, [pcsSemNf.length]);
+
 
   const addRec = useMutation({
     mutationFn: async () => {
