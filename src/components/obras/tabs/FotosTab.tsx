@@ -28,6 +28,7 @@ const MAX_FOTOS = 50;
 export function FotosTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const { empresaId } = useAuth();
+  const { config } = useEmpresaConfig();
   const [tipo, setTipo] = useState<"antes" | "durante" | "depois">("durante");
   const [observacao, setObservacao] = useState("");
   const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
