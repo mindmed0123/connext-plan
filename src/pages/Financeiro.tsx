@@ -943,6 +943,17 @@ export default function Financeiro() {
               )}
             </div>
 
+            {form.obra_id && (
+              <div className="col-span-2">
+                <EtapaItemSelect
+                  obraId={form.obra_id}
+                  etapaId={form.etapa_id}
+                  itemId={form.orcamento_item_id}
+                  onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+                />
+              </div>
+            )}
+
             <div>
               <Label>Fornecedor / cliente</Label>
               <Input value={form.fornecedor_nome ?? ""}
