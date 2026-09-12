@@ -96,14 +96,17 @@ export default function Financeiro() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"venc_asc" | "venc_desc" | "valor_desc" | "valor_asc" | "criado_desc" | "criado_asc">("venc_asc");
   const anoAtual = new Date().getFullYear();
+  const [filtroConta, setFiltroConta] = useState("all");
+  const { contas: contasBancarias } = useContasBancarias();
 
   // ── Queries ────────────────────────────────────────────────────────────
   const { data: fluxo = [] } = useQuery({
-    queryKey: ["fluxo-caixa-mensal", empresaId],
+    queryKey: ["fluxo-caixa-mensal", empresaId, filtroConta],
     enabled: !!empresaId,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal", {
         _empresa_id: empresaId!, _meses_atras: 5, _meses_frente: 3,
+        _conta_id: filtroConta === "all" ? null : filtroConta,
       });
       if (error) throw error;
       return (data ?? []);
