@@ -218,9 +218,39 @@ async function handleWebhook(req: Request): Promise<Response> {
     )
   }
 
+  // Cliente de serviço — usado tanto para a marca da empresa quanto para a fila
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  // Marca da empresa do destinatário (derivada do cadastro, nunca do payload).
+  // O domínio de envio continua sendo o do produto.
+  let brandName = SITE_NAME
+  try {
+    const { data: pessoa } = await supabase
+      .from('pessoas')
+      .select('empresa_id, empresas(nome)')
+      .eq('email', String(payload.data.email ?? '').trim().toLowerCase())
+      .not('empresa_id', 'is', null)
+      .limit(2)
+    if (pessoa && pessoa.length === 1) {
+      const empresaId = (pessoa[0] as any).empresa_id as string
+      const { data: cfg } = await supabase
+        .from('empresa_config')
+        .select('email_remetente_nome')
+        .eq('empresa_id', empresaId)
+        .maybeSingle()
+      const nome = (cfg?.email_remetente_nome || (pessoa[0] as any).empresas?.nome || '').trim()
+      if (nome) brandName = nome
+    }
+  } catch (e) {
+    console.warn('Falha ao resolver marca da empresa para o e-mail', e)
+  }
+
   // Build template props from payload.data (HookData structure)
   const templateProps = {
-    siteName: SITE_NAME,
+    siteName: brandName,
     siteUrl: `https://${ROOT_DOMAIN}`,
     recipient: payload.data.email,
     confirmationUrl: payload.data.url,
@@ -237,11 +267,6 @@ async function handleWebhook(req: Request): Promise<Response> {
   })
 
   // Enqueue email for async processing by the dispatcher (process-email-queue).
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
-
   const messageId = crypto.randomUUID()
 
   // Log pending BEFORE enqueue so we have a record even if enqueue crashes
@@ -258,9 +283,9 @@ async function handleWebhook(req: Request): Promise<Response> {
       run_id,
       message_id: messageId,
       to: payload.data.email,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: `${brandName} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+      subject: `${brandName} — ${EMAIL_SUBJECTS[emailType] || 'Notification'}`,
       html,
       text,
       purpose: 'transactional',
