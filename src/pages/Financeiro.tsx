@@ -1,3 +1,4 @@
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 import type { Database } from "@/integrations/supabase/types";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +56,8 @@ type LancamentoForm = {
   obra_id?: string | null;
   categoria_id?: string | null;
   centro_custo_id?: string | null;
+  etapa_id?: string | null;
+  orcamento_item_id?: string | null;
 };
 
 const emptyForm: LancamentoForm = {
@@ -72,6 +75,8 @@ const emptyForm: LancamentoForm = {
   obra_id: null,
   categoria_id: null,
   centro_custo_id: null,
+  etapa_id: null,
+  orcamento_item_id: null,
 };
 
 export default function Financeiro() {
@@ -304,6 +309,9 @@ export default function Financeiro() {
       if (!payload.categoria_id) payload.categoria_id = null;
       if (!payload.centro_custo_id) payload.centro_custo_id = null;
       if (!payload.forma_pagamento) payload.forma_pagamento = null;
+      if (!payload.obra_id) { payload.etapa_id = null; payload.orcamento_item_id = null; }
+      if (!payload.etapa_id) payload.etapa_id = null;
+      if (!payload.orcamento_item_id) payload.orcamento_item_id = null;
 
       if (editId) {
         const { error } = await supabase
@@ -384,6 +392,7 @@ export default function Financeiro() {
       documento_num: l.documento_num, forma_pagamento: l.forma_pagamento,
       observacoes: l.observacoes, obra_id: l.obra_id, categoria_id: l.categoria_id,
       centro_custo_id: l.centro_custo_id ?? null,
+      etapa_id: l.etapa_id ?? null, orcamento_item_id: l.orcamento_item_id ?? null,
     });
     setOpenLanc(true);
   };
@@ -934,6 +943,17 @@ export default function Financeiro() {
                 </p>
               )}
             </div>
+
+            {form.obra_id && (
+              <div className="col-span-2">
+                <EtapaItemSelect
+                  obraId={form.obra_id}
+                  etapaId={form.etapa_id}
+                  itemId={form.orcamento_item_id}
+                  onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+                />
+              </div>
+            )}
 
             <div>
               <Label>Fornecedor / cliente</Label>

@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 type FormaPagamento = Database["public"]["Enums"]["forma_pagamento"];
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,8 @@ const empty = {
   forma_pagamento: "",
   numero_nf: "",
   observacoes: "",
+  etapa_id: null as string | null,
+  orcamento_item_id: null as string | null,
 };
 
 export function MateriaisTab({ obraId }: { obraId: string }) {
@@ -81,6 +84,8 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
         numero_nf: form.numero_nf || null,
         observacoes: form.observacoes || null,
         anexo_path,
+        etapa_id: form.etapa_id,
+        orcamento_item_id: form.orcamento_item_id,
         created_by: u.user?.id,
       }]);
       if (error) throw error;
@@ -193,6 +198,14 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
             <div className="col-span-2">
               <Label className="text-xs">Observações</Label>
               <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <EtapaItemSelect
+                obraId={obraId}
+                etapaId={form.etapa_id}
+                itemId={form.orcamento_item_id}
+                onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">

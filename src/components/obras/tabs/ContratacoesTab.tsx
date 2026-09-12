@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 type FormaPagamento = Database["public"]["Enums"]["forma_pagamento"];
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +33,8 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
     quantidade_parcelas: "1",
     forma_pagamento_prevista: "" as string,
     observacoes: "",
+    etapa_id: null as string | null,
+    orcamento_item_id: null as string | null,
   });
   const [parcelasInput, setParcelasInput] = useState<ParcelaInput[]>([{ valor: "", data_prevista: "" }]);
 
@@ -121,6 +124,8 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
           quantidade_parcelas: qtd,
           forma_pagamento_prevista: (form.forma_pagamento_prevista || null) as FormaPagamento | null,
           observacoes: form.observacoes || null,
+          etapa_id: form.etapa_id,
+          orcamento_item_id: form.orcamento_item_id,
           created_by: u.user?.id,
         }])
         .select("id")
@@ -147,7 +152,7 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
       qc.invalidateQueries({ queryKey: ["financeiro-stats"] });
       qc.invalidateQueries({ queryKey: ["financeiro-contratacoes"] });
       setOpen(false);
-      setForm({ terceirizado_id: "", valor_total: "", quantidade_parcelas: "1", forma_pagamento_prevista: "", observacoes: "" });
+      setForm({ terceirizado_id: "", valor_total: "", quantidade_parcelas: "1", forma_pagamento_prevista: "", observacoes: "", etapa_id: null, orcamento_item_id: null });
       setParcelasInput([{ valor: "", data_prevista: "" }]);
     },
     onError: (e: any) => toast.error(e.message),
@@ -275,6 +280,13 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
             <Label className="text-xs">Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           </div>
+
+          <EtapaItemSelect
+            obraId={obraId}
+            etapaId={form.etapa_id}
+            itemId={form.orcamento_item_id}
+            onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+          />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button

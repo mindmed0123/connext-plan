@@ -26,6 +26,7 @@ import { MateriaisTab } from "@/components/obras/tabs/MateriaisTab";
 import { AdendosTab } from "@/components/obras/tabs/AdendosTab";
 import { MedicoesTab } from "@/components/obras/tabs/MedicoesTab";
 import { DreTab } from "@/components/obras/tabs/DreTab";
+import { OrcadoRealizadoTab } from "@/components/obras/tabs/OrcadoRealizadoTab";
 import { useUserRole } from "@/hooks/useUserRole";
 import { formatDateBR } from "@/lib/date";
 
@@ -266,6 +267,7 @@ export default function ObraDetalhe() {
           <div className="overflow-x-auto pb-1">
             <TabsList className="inline-flex h-auto w-auto gap-1 p-1">
               <TabsTrigger value="dre" className={tabCls}>DRE / Balanço</TabsTrigger>
+              <TabsTrigger value="orcado-realizado" className={tabCls}>Orçado × Realizado</TabsTrigger>
               <TabsTrigger value="vistoria" className={tabCls}>Vistoria</TabsTrigger>
               <TabsTrigger value="orcamento" className={tabCls}>Orçamento</TabsTrigger>
               <TabsTrigger value="execucao" className={tabCls}>Execução</TabsTrigger>
@@ -280,6 +282,7 @@ export default function ObraDetalhe() {
             </TabsList>
           </div>
           <TabsContent value="dre" className="mt-4"><DreTab obraId={obra.id} /></TabsContent>
+          <TabsContent value="orcado-realizado" className="mt-4"><OrcadoRealizadoTab obraId={obra.id} /></TabsContent>
           <TabsContent value="vistoria" className="mt-4"><VistoriaTab obraId={obra.id} /></TabsContent>
           <TabsContent value="orcamento" className="mt-4"><OrcamentoTab obraId={obra.id} /></TabsContent>
           <TabsContent value="execucao" className="mt-4"><ExecucaoTab obraId={obra.id} /></TabsContent>

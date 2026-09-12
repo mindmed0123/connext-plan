@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +26,7 @@ type Cartao = {
 };
 
 const emptyCartao = { apelido: "", banco: "", bandeira: "", ultimos_4: "", titular: "", limite: "0", dia_fechamento: "", dia_vencimento: "" };
-const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: getTodayDateInputValue(), parcelas: "1", observacoes: "", categoria: "" };
+const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: getTodayDateInputValue(), parcelas: "1", observacoes: "", categoria: "", etapa_id: null as string | null, orcamento_item_id: null as string | null };
 
 const CATEGORIAS_DESPESA = [
   "Almoço", "Café", "Mercado", "Combustível", "Transporte", "Estacionamento",
@@ -164,6 +165,8 @@ export default function Cartoes() {
         parcelas: totalParcelas,
         observacoes: despForm.observacoes || null,
         categoria: despForm.categoria || null,
+        etapa_id: despForm.obra_id ? despForm.etapa_id : null,
+        orcamento_item_id: despForm.obra_id ? despForm.orcamento_item_id : null,
       };
       if (editingDespId) {
         const atual: any = editingDesp ?? {};
@@ -292,6 +295,8 @@ export default function Cartoes() {
       parcelas: String(d.parcelas ?? "1"),
       observacoes: d.observacoes ?? "",
       categoria: d.categoria ?? "",
+      etapa_id: d.etapa_id ?? null,
+      orcamento_item_id: d.orcamento_item_id ?? null,
     });
     setDespDialog(true);
   };
@@ -600,7 +605,7 @@ export default function Cartoes() {
             </div>
             <div>
               <Label>Obra (origem)</Label>
-              <Select value={despForm.obra_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, obra_id: v === "none" ? "" : v })}>
+              <Select value={despForm.obra_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, obra_id: v === "none" ? "" : v, etapa_id: null, orcamento_item_id: null })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra —</SelectItem>
@@ -608,6 +613,16 @@ export default function Cartoes() {
                 </SelectContent>
               </Select>
             </div>
+            {despForm.obra_id && (
+              <div className="col-span-2">
+                <EtapaItemSelect
+                  obraId={despForm.obra_id}
+                  etapaId={despForm.etapa_id}
+                  itemId={despForm.orcamento_item_id}
+                  onChange={(v) => setDespForm((f) => ({ ...f, ...v }))}
+                />
+              </div>
+            )}
             <div className="col-span-2">
               <Label>Comprador</Label>
               <Select value={despForm.comprador_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, comprador_id: v === "none" ? "" : v })}>

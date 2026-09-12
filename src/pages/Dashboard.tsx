@@ -16,6 +16,7 @@ import { AgendaRecebimentos } from "@/components/dashboard/AgendaRecebimentos";
 import { AgendaPagamentos } from "@/components/dashboard/AgendaPagamentos";
 import { RankingTerceirizados, RankingResponsaveis } from "@/components/dashboard/Rankings";
 import { ChartsBlock } from "@/components/dashboard/ChartsBlock";
+import { AvancoObras } from "@/components/dashboard/AvancoObras";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 
@@ -98,6 +99,7 @@ export default function Dashboard() {
         <SectionTitle>Operação</SectionTitle>
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2"><EtapasOverview porEtapa={data?.porEtapa ?? new Map()} /></div>
+          <div className="lg:col-span-3"><AvancoObras /></div>
           <div><AlertsList data={data!} /></div>
         </div>
         <div className="mt-4"><ObrasRecentes data={data!} /></div>
