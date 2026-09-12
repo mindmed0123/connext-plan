@@ -176,6 +176,19 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
           <div><Label className="text-xs">Valor</Label><Input type="number" step="0.01" value={nf.valor} onChange={(e) => setNf({ ...nf, valor: e.target.value })} /></div>
           <div className="flex items-end"><Button size="sm" className="w-full" onClick={() => addNf.mutate()} disabled={!nf.numero_nf}>Adicionar</Button></div>
         </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Pedido de compra</Label>
+          <Select value={nfPcId || "none"} onValueChange={(v) => setNfPcId(v === "none" ? "" : v)}>
+            <SelectTrigger><SelectValue placeholder="Sem pedido vinculado" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem pedido vinculado</SelectItem>
+              {pcsSemNf.map((p: any) => (
+                <SelectItem key={p.id} value={p.id}>PC {p.numero_pedido ?? "s/nº"} — {formatCurrency(p.valor)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground">Vincular ao pedido evita recebimento duplicado.</p>
+        </div>
         <RetencoesNfFields value={{ ...nfRetencoes, valor_bruto: nfRetencoes.valor_bruto || nf.valor }} onChange={(next) => { setNfRetencoes(next); setNf({ ...nf, valor: next.valor_bruto }); }} />
         {nfs?.map((n: any) => <p key={n.id} className="text-xs text-muted-foreground">• NF {n.numero_nf} — bruto {formatCurrency(n.valor_bruto ?? n.valor)} · líquido {formatCurrency(n.valor_liquido ?? n.valor)}</p>)}
       </div>
