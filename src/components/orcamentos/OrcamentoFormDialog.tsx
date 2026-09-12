@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useListaOpcoes } from "@/hooks/useListaOpcoes";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,7 @@ export function OrcamentoFormDialog({
   const [bdi, setBdi] = useState({ ac: 0, s: 0, r: 0, df: 0, l: 0, i: 0 });
   const [condicaoPagamento, setCondicaoPagamento] = useState<string>("a_vista");
   const { opcoes: condicoesPagamento } = useListaOpcoes("condicao_pagamento");
+  const { config } = useEmpresaConfig();
   const [numeroParcelas, setNumeroParcelas] = useState(1);
   const [intervaloParcelas, setIntervaloParcelas] = useState(30);
   const [percentualEntrada, setPercentualEntrada] = useState(0);
@@ -172,10 +174,14 @@ export function OrcamentoFormDialog({
       setChamado(""); setTitulo(""); setDataOrcamento(getTodayDateInputValue());
       setValidadeDias(30); setClienteNome(""); setClienteCnpj("");
       setClienteIE(""); setClienteEndereco(""); setClienteEmail(""); setClienteTelefone("");
-      setObservacoes(""); setItens([]); setNumero(null);
+      setObservacoes(config.texto_observacoes ?? ""); setItens([]); setNumero(null);
       setObjeto(""); setPrazoExecucao(""); setLocalExecucao("");
       setDescontoGlobalPct(0); setCondicaoPagamento("a_vista");
-      setBdi({ ac: 0, s: 0, r: 0, df: 0, l: 0, i: 0 });
+      setValidadeDias(config.validade_orcamento_dias ?? 30);
+      setBdi({
+        ac: Number(config.bdi_ac) || 0, s: Number(config.bdi_s) || 0, r: Number(config.bdi_r) || 0,
+        df: Number(config.bdi_df) || 0, l: Number(config.bdi_l) || 0, i: Number(config.bdi_i) || 0,
+      });
       setNumeroParcelas(1); setIntervaloParcelas(30); setPercentualEntrada(0);
       setObservacoesInternas("");
       return;
@@ -219,7 +225,7 @@ export function OrcamentoFormDialog({
         aliquota_iss: Number(i.aliquota_iss ?? 0),
       })));
     })();
-  }, [open, orcamentoId]);
+  }, [open, orcamentoId, config]);
 
   // Regra única (igual ao banco e ao PDF): ISS incide após o desconto global
   const totais = useMemo(
