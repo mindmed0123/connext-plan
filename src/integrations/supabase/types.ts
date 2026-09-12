@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      alcadas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          documento: string
+          empresa_id: string
+          id: string
+          ordem: number
+          perfil_id: string | null
+          pessoa_id: string | null
+          updated_at: string
+          valor_ate: number | null
+          valor_de: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          documento: string
+          empresa_id?: string
+          id?: string
+          ordem?: number
+          perfil_id?: string | null
+          pessoa_id?: string | null
+          updated_at?: string
+          valor_ate?: number | null
+          valor_de?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          documento?: string
+          empresa_id?: string
+          id?: string
+          ordem?: number
+          perfil_id?: string | null
+          pessoa_id?: string | null
+          updated_at?: string
+          valor_ate?: number | null
+          valor_de?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alcadas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alcadas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_permissao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alcadas_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aprovacoes: {
+        Row: {
+          alcada_id: string | null
+          created_at: string
+          decidido_em: string | null
+          decidido_por: string | null
+          descricao: string | null
+          documento: string
+          empresa_id: string
+          id: string
+          justificativa: string | null
+          ordem: number
+          perfil_id: string | null
+          pessoa_id: string | null
+          registro_id: string
+          solicitado_por: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          alcada_id?: string | null
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          descricao?: string | null
+          documento: string
+          empresa_id?: string
+          id?: string
+          justificativa?: string | null
+          ordem?: number
+          perfil_id?: string | null
+          pessoa_id?: string | null
+          registro_id: string
+          solicitado_por?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          alcada_id?: string | null
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          descricao?: string | null
+          documento?: string
+          empresa_id?: string
+          id?: string
+          justificativa?: string | null
+          ordem?: number
+          perfil_id?: string | null
+          pessoa_id?: string | null
+          registro_id?: string
+          solicitado_por?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aprovacoes_alcada_id_fkey"
+            columns: ["alcada_id"]
+            isOneToOne: false
+            referencedRelation: "alcadas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprovacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprovacoes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_permissao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aprovacoes_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinaturas: {
         Row: {
           cakto_customer_id: string | null
@@ -2669,6 +2822,59 @@ export type Database = {
           },
         ]
       }
+      modelos_proposta: {
+        Row: {
+          capa: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          mostra_bdi: boolean
+          nome: string
+          padrao: boolean
+          texto_condicoes: string | null
+          texto_introducao: string | null
+          texto_rodape: string | null
+          updated_at: string
+        }
+        Insert: {
+          capa?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          mostra_bdi?: boolean
+          nome: string
+          padrao?: boolean
+          texto_condicoes?: string | null
+          texto_introducao?: string | null
+          texto_rodape?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capa?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          mostra_bdi?: boolean
+          nome?: string
+          padrao?: boolean
+          texto_condicoes?: string | null
+          texto_introducao?: string | null
+          texto_rodape?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modelos_proposta_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais: {
         Row: {
           aliquota_inss: number
@@ -3436,6 +3642,7 @@ export type Database = {
       orcamento_itens: {
         Row: {
           aliquota_iss: number
+          bdi_pct: number | null
           codigo: string | null
           created_at: string
           desconto_pct: number
@@ -3455,6 +3662,7 @@ export type Database = {
         }
         Insert: {
           aliquota_iss?: number
+          bdi_pct?: number | null
           codigo?: string | null
           created_at?: string
           desconto_pct?: number
@@ -3474,6 +3682,7 @@ export type Database = {
         }
         Update: {
           aliquota_iss?: number
+          bdi_pct?: number | null
           codigo?: string | null
           created_at?: string
           desconto_pct?: number
@@ -4586,6 +4795,64 @@ export type Database = {
         }
         Relationships: []
       }
+      proposta_versoes: {
+        Row: {
+          conteudo: Json
+          created_at: string
+          empresa_id: string
+          gerado_por: string | null
+          gerado_por_email: string | null
+          id: string
+          modelo_id: string | null
+          orcamento_id: string
+          versao: number
+        }
+        Insert: {
+          conteudo: Json
+          created_at?: string
+          empresa_id?: string
+          gerado_por?: string | null
+          gerado_por_email?: string | null
+          id?: string
+          modelo_id?: string | null
+          orcamento_id: string
+          versao?: number
+        }
+        Update: {
+          conteudo?: Json
+          created_at?: string
+          empresa_id?: string
+          gerado_por?: string | null
+          gerado_por_email?: string | null
+          id?: string
+          modelo_id?: string | null
+          orcamento_id?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposta_versoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "modelos_proposta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rcs: {
         Row: {
           codigo_chamado_avulso: string | null
@@ -5353,6 +5620,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decidir_aprovacao: {
+        Args: {
+          _aprovacao_id: string
+          _aprovado: boolean
+          _justificativa?: string
+        }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -5605,6 +5880,15 @@ export type Database = {
       signup_create_company: {
         Args: { _nome_empresa: string }
         Returns: string
+      }
+      solicitar_aprovacao: {
+        Args: {
+          _descricao?: string
+          _documento: string
+          _registro_id: string
+          _valor: number
+        }
+        Returns: number
       }
       suporte_sessao_ativa: { Args: { _empresa_id: string }; Returns: boolean }
       tenant_can_write: { Args: { _empresa_id: string }; Returns: boolean }
