@@ -364,7 +364,18 @@ SELECT iso_test.expect_bloqueado('d) storage', 'apagar arquivo de B', format(
   iso_test.v('empresa_b')::text || '/%'));
 
 RESET ROLE;
+
+-- confirma que nenhuma RPC de B foi executada de fato (fatura de B segue em aberto)
+DO $chk$
+DECLARE n bigint;
+BEGIN
+  SELECT count(*) INTO n FROM public.cartao_despesas
+   WHERE empresa_id = iso_test.v('empresa_b') AND fatura_paga;
+  PERFORM iso_test.reg('c) rpc', 'fatura de B continua em aberto', n = 0, 'faturas pagas: ' || n);
+END $chk$;
+
 COMMIT;
+
 
 -- ---------------------------------------------------------------------
 -- 3. Limpeza: apaga as duas empresas de teste
