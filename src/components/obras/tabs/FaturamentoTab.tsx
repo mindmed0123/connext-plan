@@ -15,6 +15,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   const [rc, setRc] = useState({ numero_rc: "", data_rc: getTodayDateInputValue() });
   const [pc, setPc] = useState({ numero_pedido: "", data_recebimento: getTodayDateInputValue(), valor: "" });
   const [nf, setNf] = useState({ numero_nf: "", data_emissao: getTodayDateInputValue(), valor: "" });
+  const [nfPcId, setNfPcId] = useState<string>("");
   const [nfRetencoes, setNfRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [regrasNf, setRegrasNf] = useState<any>(null);
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
@@ -97,6 +98,7 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
     mutationFn: async () => {
       const { error } = await supabase.from("notas_fiscais").insert([{
         obra_id: obraId, numero_nf: nf.numero_nf, data_emissao: nf.data_emissao,
+        pedido_compra_id: nfPcId || null,
         ...nfPayload({ ...nfRetencoes, valor_bruto: nfRetencoes.valor_bruto || nf.valor }),
       }]);
       if (error) throw error;
