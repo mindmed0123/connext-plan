@@ -165,11 +165,9 @@ export async function carregarDadosExemplo(
 /** Apaga tudo o que foi criado como exemplo, na ordem certa. */
 export async function apagarDadosExemplo(empresaId: string): Promise<{ obras: number; falhas: string[] }> {
   const falhas: string[] = [];
-  const { data: obras, error } = await supabase
-    .from("obras")
-    .select("id")
+  const { data: obras, error } = (await (supabase.from("obras").select("id") as any)
     .eq("empresa_id", empresaId)
-    .eq("exemplo" as any, true);
+    .eq("exemplo", true)) as { data: { id: string }[] | null; error: { message: string } | null };
   if (error) throw error;
   const ids = (obras ?? []).map((o: any) => o.id as string);
   if (ids.length === 0) return { obras: 0, falhas };
