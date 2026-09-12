@@ -17,17 +17,19 @@ function buildMonthBuckets(months = 6) {
 }
 
 export function ChartsBlock({ data }: { data: DashboardData }) {
+  const { statuses } = useObraConfig();
   const getMonthKey = (value?: string | null) => {
     const date = parseDateString(value);
     return date ? `${date.getUTCFullYear()}-${date.getUTCMonth()}` : null;
   };
 
-  const porEtapaQtd = OBRA_STATUS_LIST.map((s) => ({
-    etapa: OBRA_STATUS_LABEL[s].slice(0, 12),
-    qtd: data.porEtapa.get(s)?.qtd ?? 0,
-    valor: data.porEtapa.get(s)?.valor ?? 0,
-    color: `hsl(var(--${OBRA_STATUS_COLOR[s as ObraStatus]}))`,
+  const porEtapaQtd = statuses.map((s) => ({
+    etapa: s.nome.slice(0, 12),
+    qtd: data.porEtapa.get(s.chave)?.qtd ?? 0,
+    valor: data.porEtapa.get(s.chave)?.valor ?? 0,
+    color: s.cor,
   }));
+
 
   const buckets = buildMonthBuckets(6);
   const recebidosMes = buckets.map((b) => {
