@@ -27,6 +27,40 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
   const [estado, setEstado] = useState<Estado>(emptyEstado());
   const [carregado, setCarregado] = useState(false);
 
+  const { perfis } = usePerfis();
+  const { data: pessoa } = useQuery({
+    queryKey: ["pessoa-perfil", pessoaId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pessoas").select("id, perfil_id").eq("id", pessoaId).single();
+      if (error) throw error;
+      return data as { id: string; perfil_id: string | null };
+    },
+  });
+  const { data: perfilItens } = usePerfilItens(pessoa?.perfil_id);
+
+  const aplicarPerfil = async (perfilId: string) => {
+    const valor = perfilId === "nenhum" ? null : perfilId;
+    const { error } = await supabase.from("pessoas").update({ perfil_id: valor }).eq("id", pessoaId);
+    if (error) return toast.error(error.message);
+    if (valor) {
+      const { error: e2 } = await supabase.rpc("aplicar_perfil_permissao", { _perfil_id: valor, _pessoa_id: pessoaId });
+      if (e2) return toast.error(e2.message);
+    }
+    qc.invalidateQueries({ queryKey: ["pessoa-perfil", pessoaId] });
+    qc.invalidateQueries({ queryKey: ["pessoa-permissoes", pessoaId] });
+    qc.invalidateQueries({ queryKey: ["my-permissions"] });
+    toast.success(valor ? "Perfil aplicado" : "Perfil removido");
+  };
+
+  const foraDoPerfil = (m: AppModulo) => {
+    if (!pessoa?.perfil_id || !perfilItens) return false;
+    const base = perfilItens.find((i) => i.modulo === m);
+    if (!base) return false;
+    return (["can_view", "can_create", "can_edit", "can_delete"] as const).some(
+      (c) => Boolean(base[c]) !== Boolean(estado[m][c]),
+    );
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: ["pessoa-permissoes", pessoaId],
     queryFn: async () => {
