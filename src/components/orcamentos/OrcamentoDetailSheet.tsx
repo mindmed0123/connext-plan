@@ -12,6 +12,7 @@ import { FileDown, Pencil, Check, X, MessageSquare } from "lucide-react";
 import { gerarOrcamentoPDF } from "@/lib/orcamento-pdf";
 import { toast } from "sonner";
 import { ORC_STATUS_BADGE } from "./orc-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 
 export function OrcamentoDetailSheet({
   orcamentoId, open, onOpenChange, onEdit,
@@ -22,6 +23,7 @@ export function OrcamentoDetailSheet({
   onEdit: (id: string) => void;
 }) {
   const { empresaId } = useAuth();
+  const { rotulos } = useObraConfig();
   const qc = useQueryClient();
 
   const { data } = useQuery({
@@ -113,7 +115,7 @@ export function OrcamentoDetailSheet({
         ) : (
           <div className="space-y-5 py-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-muted-foreground">Chamado:</span> <span className="font-medium">{(orc as { codigo_chamado?: string | null }).codigo_chamado || orc.obras?.codigo_chamado || "—"}</span></div>
+              <div><span className="text-muted-foreground">{rotulos.codigo_obra}:</span> <span className="font-medium">{(orc as { codigo_chamado?: string | null }).codigo_chamado || orc.obras?.codigo_chamado || "—"}</span></div>
               <div><span className="text-muted-foreground">Data:</span> {format(parseISO(orc.data_orcamento), "dd/MM/yyyy")}</div>
               <div><span className="text-muted-foreground">Validade:</span> {orc.validade_dias} dias (até {format(addDays(parseISO(orc.data_orcamento), orc.validade_dias), "dd/MM/yyyy")})</div>
               <div><span className="text-muted-foreground">Pagamento:</span> {(orc as { condicao_pagamento?: string }).condicao_pagamento || orc.condicoes_pagamento || "—"}</div>

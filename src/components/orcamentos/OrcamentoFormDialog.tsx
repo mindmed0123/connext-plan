@@ -19,6 +19,7 @@ import { formatCurrency } from "@/lib/obra-helpers";
 import { cn } from "@/lib/utils";
 import { getTodayDateInputValue } from "@/lib/date";
 import { calcularBdiPct, calcularTotaisOrcamento, subtotalItem } from "@/lib/orcamento-calc";
+import { useObraConfig } from "@/hooks/useObraConfig";
 
 type ItemForm = {
   id?: string;
@@ -52,6 +53,7 @@ export function OrcamentoFormDialog({
   orcamentoId?: string | null;
 }) {
   const { empresaId } = useAuth();
+  const { rotulos } = useObraConfig();
   const qc = useQueryClient();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -384,10 +386,10 @@ export function OrcamentoFormDialog({
           <div className="space-y-5">
             {/* Cabeçalho */}
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground">Chamado</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">{rotulos.codigo_obra}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
-                  <Label>Chamado *</Label>
+                  <Label>{rotulos.codigo_obra} *</Label>
                   <Input
                     value={chamado}
                     onChange={(e) => setChamado(e.target.value)}
@@ -510,7 +512,7 @@ export function OrcamentoFormDialog({
           <div className="space-y-5">
             {chamado && (
               <div className="rounded-md border bg-muted/30 p-3 text-sm">
-                <span className="font-semibold">Chamado: {chamado}</span>
+                <span className="font-semibold">{rotulos.codigo_obra}: {chamado}</span>
                 {clienteNome && <span className="text-muted-foreground"> · {clienteNome}</span>}
               </div>
             )}
