@@ -115,7 +115,13 @@ export function PrivacidadeDadosCard() {
       a.download = `dados-${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Exportação concluída.");
+      if (falhas.length) {
+        toast.error(`Exportação incompleta: ${falhas.length} arquivo(s) falharam.`);
+      } else {
+        toast.success(
+          `Exportação concluída: ${linhasResultado.reduce((s, l) => s + l.total, 0).toLocaleString("pt-BR")} linhas.`,
+        );
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível exportar agora.");
     } finally {
