@@ -170,6 +170,9 @@ export function DreTab({ obraId }: { obraId: string }) {
           <div className="divide-y text-sm">
             {[
               ["(+) Receita orçada", receitaOrcada, "text-success"],
+              ["(+) Receita medida (medições aprovadas)", receitaMedida, "text-success"],
+              ["(=) A faturar (medido − faturado)", aFaturar, "text-muted-foreground"],
+              ["(•) Caução retida a receber", caucaoRetida, "text-muted-foreground"],
               ["(+) Receita bruta faturada", receitaFaturada, "text-muted-foreground"],
               ["(-) Retenções", retencoes, "text-destructive"],
               ["(=) Receita líquida", receitaFaturada - retencoes, "text-success"],
