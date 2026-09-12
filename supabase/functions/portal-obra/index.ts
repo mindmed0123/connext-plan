@@ -40,9 +40,10 @@ Deno.serve(async (req) => {
     _user_agent: ua,
   });
   if (error) {
-    console.error("portal-obra", error.message);
-    return json({ erro: "invalido" }, 400);
+    const incidente = await capturarErro(error, { funcao: "portal-obra" });
+    return json({ erro: "invalido", incidente }, 400);
   }
+
   const payload = data as Record<string, unknown> | null;
   if (!payload || payload.erro) return json({ erro: payload?.erro ?? "invalido" }, 404);
 
