@@ -25,7 +25,7 @@ type Cartao = {
 };
 
 const emptyCartao = { apelido: "", banco: "", bandeira: "", ultimos_4: "", titular: "", limite: "0", dia_fechamento: "", dia_vencimento: "" };
-const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: getTodayDateInputValue(), parcelas: "1", observacoes: "", categoria: "" };
+const emptyDesp = { cartao_id: "", obra_id: "", comprador_id: "", descricao: "", valor: "", data_compra: getTodayDateInputValue(), parcelas: "1", observacoes: "", categoria: "", etapa_id: null as string | null, orcamento_item_id: null as string | null };
 
 const CATEGORIAS_DESPESA = [
   "Almoço", "Café", "Mercado", "Combustível", "Transporte", "Estacionamento",
@@ -164,6 +164,8 @@ export default function Cartoes() {
         parcelas: totalParcelas,
         observacoes: despForm.observacoes || null,
         categoria: despForm.categoria || null,
+        etapa_id: despForm.obra_id ? despForm.etapa_id : null,
+        orcamento_item_id: despForm.obra_id ? despForm.orcamento_item_id : null,
       };
       if (editingDespId) {
         const atual: any = editingDesp ?? {};
