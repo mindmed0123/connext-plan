@@ -1,5 +1,7 @@
 // Resumo de prazos e novidades por e-mail.
 // Chamada apenas pelo agendador (pg_cron) com a service role.
+// Auth: verify_jwt = true no config.toml — o gateway valida a assinatura do JWT
+// antes de chegar aqui; a checagem de role abaixo é defesa em profundidade.
 // Multiempresa: tudo é filtrado por empresa_id; nunca aceita ids do corpo.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
