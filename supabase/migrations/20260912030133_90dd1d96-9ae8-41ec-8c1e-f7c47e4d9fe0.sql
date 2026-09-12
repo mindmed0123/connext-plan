@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.fn_valida_obra_mesmo_tenant() FROM anon, authenticated, public;

@@ -129,6 +129,14 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
   let periodo: string | null = null;
 
   const RENEWAL_EVENTS = ["subscription_renewed", "payment.approved", "payment.completed"];
+  // Só uma ativação consome o checkout_intent (pix gerado / recusa NÃO consomem)
+  const ACTIVATION_EVENTS = [
+    "purchase_approved", "subscription_created", "subscription.activated",
+    ...RENEWAL_EVENTS,
+  ];
+  const evtLower = String(eventType).toLowerCase();
+  const ehAtivacao = ACTIVATION_EVENTS.includes(evtLower);
+  let intentBloqueado = false;
 
   if (refRaw && typeof refRaw === "string") {
     const refTrim = refRaw.trim();
@@ -142,9 +150,11 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
         const jaUsado = !!(intent as Any).usado_em;
         if (!jaUsado) {
           empresa_id = (intent as Any).empresa_id;
-          await supabase.from("checkout_intents")
-            .update({ usado_em: new Date().toISOString() })
-            .eq("id", refTrim);
+          if (ehAtivacao) {
+            await supabase.from("checkout_intents")
+              .update({ usado_em: new Date().toISOString() })
+              .eq("id", refTrim);
+          }
         } else {
           // Intent já usado: só vale para renovação da MESMA assinatura
           let renovacaoValida = false;
@@ -156,11 +166,12 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
               .maybeSingle();
             renovacaoValida =
               (assin as Any)?.cakto_subscription_id === subscriptionId &&
-              RENEWAL_EVENTS.includes(String(eventType).toLowerCase());
+              RENEWAL_EVENTS.includes(evtLower);
           }
           if (renovacaoValida) {
             empresa_id = (intent as Any).empresa_id;
           } else {
+            intentBloqueado = true;
             await registrarAlerta("checkout_intent_reutilizado", {
               intent_id: refTrim, subscriptionId, orderId,
             });
@@ -168,6 +179,7 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
         }
       }
     } else if (refTrim.includes("|") && new Date() <= LEGACY_REF_DEADLINE) {
+
       // Formato antigo: usa APENAS a empresa, ignora plano/período. Expira em 11/10/2026.
       const legacyEmpresa = refTrim.split("|")[0];
       if (UUID_RE.test(legacyEmpresa)) empresa_id = legacyEmpresa;
@@ -237,6 +249,8 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
       Date.now() + ((periodo === "anual" ? 365 : 30) * 86400000),
     ).toISOString();
     updates.cancel_at_period_end = false;
+    // Assinatura paga não é mais trial — limpar evita bloqueio indevido em past_due
+    updates.trial_ends_at = null;
   };
 
   switch (evt) {
@@ -296,8 +310,9 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
         .maybeSingle();
       target = existing as Any;
     }
-    // Fallback por e-mail: comparação exata em minúsculas, sem curingas
-    if (!target && customerEmail) {
+    // Fallback por e-mail: comparação exata em minúsculas, sem curingas.
+    // Não vale quando o checkout_intent já tinha sido usado (possível reuso de link).
+    if (!target && customerEmail && !intentBloqueado) {
       let emp: string | null = null;
       const { data: pessoasMatch } = await supabase
         .from("pessoas")
@@ -345,6 +360,7 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
 
     if (target) {
       // Nunca troca o id de assinatura de uma assinatura ativa sem registrar o caso
+      let outraCompra = false;
       if (subscriptionId) {
         const atual = target.cakto_subscription_id ?? null;
         if (!atual) {
@@ -354,10 +370,17 @@ export async function handleCaktoWebhook(req: Request, serviceName: string): Pro
             assinatura_id: target.id, empresa_id: target.empresa_id,
             atual, recebido: subscriptionId, status: target.status,
           });
-          if (target.status !== "active") updates.cakto_subscription_id = subscriptionId;
+          if (target.status === "active") {
+            // Evento de OUTRA compra não altera a assinatura ativa: fica só no histórico
+            outraCompra = true;
+          } else {
+            updates.cakto_subscription_id = subscriptionId;
+          }
         }
       }
-      await supabase.from("assinaturas").update(updates).eq("id", target.id);
+      if (!outraCompra) {
+        await supabase.from("assinaturas").update(updates).eq("id", target.id);
+      }
       empresa_id = empresa_id ?? target.empresa_id;
     } else {
       console.warn(`${serviceName}: assinatura não encontrada`, {
