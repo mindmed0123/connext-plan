@@ -56,7 +56,16 @@ const queryClient = new QueryClient({
     onSuccess: () => {
       queryClient.invalidateQueries();
     },
+    onError: (erro) => {
+      const limite = detectarLimitePlano(erro);
+      if (!limite) return;
+      toast.error(limite.mensagem, {
+        duration: 12000,
+        action: { label: "Ver planos", onClick: () => (window.location.href = "/pricing") },
+      });
+    },
   }),
+
   defaultOptions: {
     queries: {
       // Todo cache é isolado por empresa (ver src/lib/tenant-cache.ts)
