@@ -59,6 +59,8 @@ const financeiroAdmin: NavItem[] = [
   { title: "Medições", url: "/medicoes", icon: Ruler, modulo: "medicoes" },
   { title: "Faturamento", url: "/faturamento", icon: Receipt, modulo: "faturamento" },
   { title: "Recebimentos", url: "/recebimentos", icon: Wallet, modulo: "financeiro" },
+  { title: "Contas a pagar", url: "/contas-pagar", icon: Truck, modulo: "financeiro" },
+  { title: "Bancos", url: "/bancos", icon: Landmark, modulo: "financeiro" },
   { title: "Cartões", url: "/cartoes", icon: CreditCard, modulo: "financeiro" },
   { title: "Compradores", url: "/compradores", icon: ShoppingCart, modulo: "financeiro" },
 ];
