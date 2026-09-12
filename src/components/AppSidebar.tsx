@@ -24,6 +24,9 @@ import {
   Ruler,
   Truck,
   Landmark,
+  Layers,
+  CalendarRange,
+  Sparkles,
 } from "lucide-react";
 import iconLogo from "@/assets/icon.png";
 import {
