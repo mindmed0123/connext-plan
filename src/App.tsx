@@ -43,6 +43,7 @@ import Estoque from "./pages/Estoque";
 import Insumos from "./pages/Insumos";
 import Composicoes from "./pages/Composicoes";
 import Cronograma from "./pages/Cronograma";
+import Ia from "./pages/Ia";
 import Desempenho from "./pages/Desempenho";
 import MinhasAprovacoes from "./pages/MinhasAprovacoes";
 import CompradorDetalhe from "./pages/CompradorDetalhe";
@@ -155,6 +156,7 @@ const App = () => (
               <Route path="/estoque" element={<RequireModulo modulo="estoque"><RequirePermission modulo="financeiro"><Estoque /></RequirePermission></RequireModulo>} />
               <Route path="/insumos" element={<RequireModulo modulo="orcamento_composicoes"><RequirePermission modulo="orcamentos"><Insumos /></RequirePermission></RequireModulo>} />
               <Route path="/composicoes" element={<RequireModulo modulo="orcamento_composicoes"><RequirePermission modulo="orcamentos"><Composicoes /></RequirePermission></RequireModulo>} />
+              <Route path="/ia" element={<RequireModulo modulo="ia"><Ia /></RequireModulo>} />
               <Route path="/cronograma" element={<RequireModulo modulo="cronograma"><RequirePermission modulo="etapas"><Cronograma /></RequirePermission></RequireModulo>} />
               <Route path="/desempenho" element={<RequirePermission modulo="dashboard"><Desempenho /></RequirePermission>} />
               <Route path="/aprovacoes" element={<MinhasAprovacoes />} />
