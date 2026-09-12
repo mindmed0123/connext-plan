@@ -40,6 +40,7 @@ import Bancos from "./pages/Bancos";
 import Compradores from "./pages/Compradores";
 import Compras from "./pages/Compras";
 import Estoque from "./pages/Estoque";
+import Desempenho from "./pages/Desempenho";
 import MinhasAprovacoes from "./pages/MinhasAprovacoes";
 import CompradorDetalhe from "./pages/CompradorDetalhe";
 import Contratos from "./pages/Contratos";
