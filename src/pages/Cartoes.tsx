@@ -318,16 +318,20 @@ export default function Cartoes() {
             ? calcularFaturas(c.dia_fechamento, c.dia_vencimento)
             : null;
           const despesasDoCartao = (despesas).filter((d) => d.cartao_id === c.id);
+          // Classifica pela FATURA calculada no banco (cada parcela cai na sua fatura)
+          const vencAtual = info ? toDateKey(info.faturaAtual.vence) : null;
+          const vencProxima = info ? toDateKey(info.proximaFatura.vence) : null;
           const totalFaturaAtual = info
             ? despesasDoCartao
-                .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "atual")
+                .filter((d) => d.fatura_vencimento === vencAtual)
                 .reduce((s, d) => s + Number(d.valor || 0), 0)
             : 0;
           const totalFaturaProxima = info
             ? despesasDoCartao
-                .filter((d) => faturaDeCompra(d.data_compra, c.dia_fechamento!, c.dia_vencimento!) === "proxima")
+                .filter((d) => d.fatura_vencimento === vencProxima)
                 .reduce((s, d) => s + Number(d.valor || 0), 0)
             : 0;
+
 
           return (
             <Card key={c.id} className={(c).ativo === false ? "opacity-70" : undefined}>
