@@ -25,6 +25,7 @@ export function OrcamentoDetailSheet({
 }) {
   const { empresaId } = useAuth();
   const { rotulos } = useObraConfig();
+  const { config } = useEmpresaConfig();
   const qc = useQueryClient();
 
   const { data } = useQuery({
