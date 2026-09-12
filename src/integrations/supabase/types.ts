@@ -1572,6 +1572,60 @@ export type Database = {
           },
         ]
       }
+      depositos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          obra_id: string | null
+          observacoes: string | null
+          padrao: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome: string
+          obra_id?: string | null
+          observacoes?: string | null
+          padrao?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          padrao?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depositos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "depositos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diario_obra: {
         Row: {
           aprovado_em: string | null
@@ -1814,6 +1868,7 @@ export type Database = {
           texto_observacoes: string | null
           texto_rodape: string | null
           updated_at: string
+          usa_estoque: boolean
           validade_orcamento_dias: number
         }
         Insert: {
@@ -1849,6 +1904,7 @@ export type Database = {
           texto_observacoes?: string | null
           texto_rodape?: string | null
           updated_at?: string
+          usa_estoque?: boolean
           validade_orcamento_dias?: number
         }
         Update: {
@@ -1884,6 +1940,7 @@ export type Database = {
           texto_observacoes?: string | null
           texto_rodape?: string | null
           updated_at?: string
+          usa_estoque?: boolean
           validade_orcamento_dias?: number
         }
         Relationships: [
@@ -2096,6 +2153,131 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      estoque_movimentos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          custo_unitario: number
+          data: string
+          deposito_id: string
+          empresa_id: string
+          etapa_id: string | null
+          id: string
+          material: string
+          material_obra_id: string | null
+          obra_id: string | null
+          observacoes: string | null
+          ordem_compra_id: string | null
+          origem: string
+          quantidade: number
+          responsavel_id: string | null
+          sentido: string
+          tipo: string
+          transferencia_id: string | null
+          unidade: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          custo_unitario?: number
+          data?: string
+          deposito_id: string
+          empresa_id?: string
+          etapa_id?: string | null
+          id?: string
+          material: string
+          material_obra_id?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          ordem_compra_id?: string | null
+          origem?: string
+          quantidade: number
+          responsavel_id?: string | null
+          sentido: string
+          tipo: string
+          transferencia_id?: string | null
+          unidade?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          custo_unitario?: number
+          data?: string
+          deposito_id?: string
+          empresa_id?: string
+          etapa_id?: string | null
+          id?: string
+          material?: string
+          material_obra_id?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          ordem_compra_id?: string | null
+          origem?: string
+          quantidade?: number
+          responsavel_id?: string | null
+          sentido?: string
+          tipo?: string
+          transferencia_id?: string | null
+          unidade?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_movimentos_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "depositos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_material_obra_id_fkey"
+            columns: ["material_obra_id"]
+            isOneToOne: false
+            referencedRelation: "materiais_obra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_ordem_compra_id_fkey"
+            columns: ["ordem_compra_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_compra"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exclusao_solicitacoes: {
         Row: {
@@ -5649,6 +5831,14 @@ export type Database = {
         Args: { _chamado: string; _descricao: string; _endereco: string }
         Returns: string
       }
+      estoque_custo_medio: {
+        Args: { _deposito_id: string; _material: string }
+        Returns: number
+      }
+      estoque_saldo_item: {
+        Args: { _deposito_id: string; _material: string }
+        Returns: number
+      }
       get_curva_abc: {
         Args: { _fim?: string; _inicio?: string; _obra_id?: string }
         Returns: {
@@ -5669,6 +5859,31 @@ export type Database = {
           realizado_acum: number
         }[]
       }
+      get_desempenho_obras: {
+        Args: { _obra_id?: string }
+        Returns: {
+          codigo_chamado: string
+          comprometido: number
+          contas_a_vencer: number
+          custo_orcado: number
+          custo_previsto_fim: number
+          custo_realizado: number
+          descricao: string
+          estouro_projetado: number
+          idc: number
+          idp: number
+          margem_projetada: number
+          medido_acumulado: number
+          obra_id: string
+          pct_executado: number
+          pct_previsto: number
+          receita_orcada: number
+          saldo_a_medir: number
+          tem_linha_base: boolean
+          valor_agregado: number
+          valor_planejado: number
+        }[]
+      }
       get_dre_obra: {
         Args: { _empresa_id: string; _obra_id?: string }
         Returns: {
@@ -5682,6 +5897,20 @@ export type Database = {
           receita_contratada: number
           receita_medida: number
           receita_recebida: number
+        }[]
+      }
+      get_estoque_saldos: {
+        Args: { _deposito_id?: string }
+        Returns: {
+          custo_medio: number
+          deposito_id: string
+          deposito_nome: string
+          entradas: number
+          material: string
+          saidas: number
+          saldo: number
+          unidade: string
+          valor_saldo: number
         }[]
       }
       get_financeiro_kpis: {
@@ -5861,6 +6090,24 @@ export type Database = {
           _numero_nf: string
           _observacoes?: string
           _ordem_id: string
+        }
+        Returns: string
+      }
+      registrar_movimento_estoque: {
+        Args: {
+          _custo_unitario?: number
+          _data?: string
+          _deposito_destino_id?: string
+          _deposito_id: string
+          _etapa_id?: string
+          _material: string
+          _obra_id?: string
+          _observacoes?: string
+          _quantidade: number
+          _responsavel_id?: string
+          _sentido?: string
+          _tipo: string
+          _unidade: string
         }
         Returns: string
       }

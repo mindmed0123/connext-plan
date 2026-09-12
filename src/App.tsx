@@ -39,6 +39,8 @@ import ContasPagar from "./pages/ContasPagar";
 import Bancos from "./pages/Bancos";
 import Compradores from "./pages/Compradores";
 import Compras from "./pages/Compras";
+import Estoque from "./pages/Estoque";
+import Desempenho from "./pages/Desempenho";
 import MinhasAprovacoes from "./pages/MinhasAprovacoes";
 import CompradorDetalhe from "./pages/CompradorDetalhe";
 import Contratos from "./pages/Contratos";
@@ -147,6 +149,8 @@ const App = () => (
               <Route path="/compradores" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><Compradores /></RequirePermission></RequireModulo>} />
               <Route path="/compradores/:id" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><CompradorDetalhe /></RequirePermission></RequireModulo>} />
               <Route path="/compras" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><Compras /></RequirePermission></RequireModulo>} />
+              <Route path="/estoque" element={<RequireModulo modulo="estoque"><RequirePermission modulo="financeiro"><Estoque /></RequirePermission></RequireModulo>} />
+              <Route path="/desempenho" element={<RequirePermission modulo="dashboard"><Desempenho /></RequirePermission>} />
               <Route path="/aprovacoes" element={<MinhasAprovacoes />} />
 
               <Route path="/campo" element={<Campo />} />
