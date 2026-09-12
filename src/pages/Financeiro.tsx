@@ -70,6 +70,7 @@ const emptyForm: LancamentoForm = {
   observacoes: "",
   obra_id: null,
   categoria_id: null,
+  centro_custo_id: null,
 };
 
 export default function Financeiro() {
