@@ -1287,32 +1287,62 @@ export type Database = {
       }
       diario_obra: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          atividades_executadas: string | null
+          clima_manha: string | null
+          clima_tarde: string | null
+          condicao_trabalho: string
           created_at: string
           data_envio: string
+          efetivo: Json
           empresa_id: string
+          equipamentos: Json
           id: string
           obra_id: string
-          observacoes: string
+          observacoes: string | null
+          ocorrencias: string | null
+          responsavel_id: string | null
           status: Database["public"]["Enums"]["diario_status"]
           updated_at: string
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          atividades_executadas?: string | null
+          clima_manha?: string | null
+          clima_tarde?: string | null
+          condicao_trabalho?: string
           created_at?: string
           data_envio?: string
+          efetivo?: Json
           empresa_id?: string
+          equipamentos?: Json
           id?: string
           obra_id: string
-          observacoes: string
+          observacoes?: string | null
+          ocorrencias?: string | null
+          responsavel_id?: string | null
           status?: Database["public"]["Enums"]["diario_status"]
           updated_at?: string
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          atividades_executadas?: string | null
+          clima_manha?: string | null
+          clima_tarde?: string | null
+          condicao_trabalho?: string
           created_at?: string
           data_envio?: string
+          efetivo?: Json
           empresa_id?: string
+          equipamentos?: Json
           id?: string
           obra_id?: string
-          observacoes?: string
+          observacoes?: string | null
+          ocorrencias?: string | null
+          responsavel_id?: string | null
           status?: Database["public"]["Enums"]["diario_status"]
           updated_at?: string
         }
@@ -1329,6 +1359,13 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diario_obra_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
             referencedColumns: ["id"]
           },
         ]
@@ -1934,6 +1971,7 @@ export type Database = {
       fotos_obra: {
         Row: {
           data_upload: string
+          diario_id: string | null
           empresa_id: string
           id: string
           imagem_url: string
@@ -1945,6 +1983,7 @@ export type Database = {
         }
         Insert: {
           data_upload?: string
+          diario_id?: string | null
           empresa_id?: string
           id?: string
           imagem_url: string
@@ -1956,6 +1995,7 @@ export type Database = {
         }
         Update: {
           data_upload?: string
+          diario_id?: string | null
           empresa_id?: string
           id?: string
           imagem_url?: string
@@ -1966,6 +2006,13 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fotos_obra_diario_id_fkey"
+            columns: ["diario_id"]
+            isOneToOne: false
+            referencedRelation: "diario_obra"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fotos_obra_empresa_id_fkey"
             columns: ["empresa_id"]
