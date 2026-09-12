@@ -308,6 +308,9 @@ export default function Financeiro() {
       if (!payload.categoria_id) payload.categoria_id = null;
       if (!payload.centro_custo_id) payload.centro_custo_id = null;
       if (!payload.forma_pagamento) payload.forma_pagamento = null;
+      if (!payload.obra_id) { payload.etapa_id = null; payload.orcamento_item_id = null; }
+      if (!payload.etapa_id) payload.etapa_id = null;
+      if (!payload.orcamento_item_id) payload.orcamento_item_id = null;
 
       if (editId) {
         const { error } = await supabase
@@ -388,6 +391,7 @@ export default function Financeiro() {
       documento_num: l.documento_num, forma_pagamento: l.forma_pagamento,
       observacoes: l.observacoes, obra_id: l.obra_id, categoria_id: l.categoria_id,
       centro_custo_id: l.centro_custo_id ?? null,
+      etapa_id: l.etapa_id ?? null, orcamento_item_id: l.orcamento_item_id ?? null,
     });
     setOpenLanc(true);
   };
