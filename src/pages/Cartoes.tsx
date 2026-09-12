@@ -74,6 +74,7 @@ export default function Cartoes() {
         let q = supabase.from("cartao_despesas")
           .select("*, cartoes_credito(apelido), obras(codigo_chamado), compradores(nome)")
           .order("data_compra", { ascending: false })
+          .order("id")
           .range(inicio, inicio + passo - 1);
         if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
         if (desde) q = q.gte("data_compra", desde);

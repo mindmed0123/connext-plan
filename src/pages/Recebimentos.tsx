@@ -120,6 +120,10 @@ export default function Recebimentos() {
     mutationFn: async () => {
       const valor = Number(pagForm.valor.replace(",", "."));
       if (!(valor > 0)) throw new Error("Informe um valor maior que zero");
+      if (valor > saldoAtual + 0.005)
+        throw new Error(
+          `O pagamento passa do saldo em aberto (${formatCurrency(saldoAtual)})`,
+        );
       const { error } = await supabase.from("recebimento_pagamentos").insert([
         {
           empresa_id: empresaId as string,
@@ -312,9 +316,11 @@ export default function Recebimentos() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button size="sm" variant="outline" onClick={() => abrirPagamentos(r)}>
-                        Registrar pagamento
-                      </Button>
+                      {r.status !== "recebido" && (
+                        <Button size="sm" variant="outline" onClick={() => abrirPagamentos(r)}>
+                          Registrar pagamento
+                        </Button>
+                      )}
                       <Button size="icon" variant="ghost" onClick={() => openEditar(r)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -436,7 +442,13 @@ export default function Recebimentos() {
             </Button>
             <Button
               onClick={() => registrarPagamento.mutate()}
-              disabled={!pagForm.valor || !pagForm.data || registrarPagamento.isPending}
+              disabled={
+                !pagForm.valor ||
+                !pagForm.data ||
+                saldoAtual <= 0 ||
+                Number(pagForm.valor.replace(",", ".")) > saldoAtual + 0.005 ||
+                registrarPagamento.isPending
+              }
             >
               Registrar pagamento
             </Button>

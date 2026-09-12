@@ -6,6 +6,8 @@
  * (sempre com `.order("id")` como desempate). Sem isso, acima de 1.000 linhas
  * o banco pode repetir ou pular registros entre as páginas.
  */
+import { toast } from "sonner";
+
 const PAGE_SIZE = 1000;
 
 export async function fetchAllRows<T = any>(
@@ -22,6 +24,9 @@ export async function fetchAllRows<T = any>(
   }
   console.warn(
     `[fetchAllRows] Limite de ${maxRows} linhas atingido — a lista pode estar incompleta.`,
+  );
+  toast.warning(
+    `Mostrando apenas as primeiras ${maxRows.toLocaleString("pt-BR")} linhas. Use filtros de período para ver o restante.`,
   );
   return all;
 }
