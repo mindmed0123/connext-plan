@@ -283,7 +283,7 @@ export async function gerarRelatorioFotograficoPDF(
 
   const perPage = cellsPerRow * rowsPerPage;
   let idx = 0;
-  let currentBaseY = gridStartY;
+  const currentBaseY = gridStartY;
 
   // Página 1: coloca até `perPage` fotos abaixo do cabeçalho/tabela
   const firstPageAvailH = pageH - currentBaseY - 14;
