@@ -43,7 +43,10 @@ export type ModuloChave =
   | "compras"
   | "estoque"
   | "portal"
-  | "equipes";
+  | "equipes"
+  | "orcamento_composicoes"
+  | "cronograma"
+  | "ia";
 
 export const MODULOS: { chave: ModuloChave; nome: string; descricao: string }[] = [
   { chave: "obras", nome: "Obras / chamados", descricao: "Cadastro e acompanhamento do trabalho em campo." },
