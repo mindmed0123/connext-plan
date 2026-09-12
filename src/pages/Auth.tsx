@@ -38,6 +38,7 @@ export default function Auth() {
   const [empresaNome, setEmpresaNome] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [aceite, setAceite] = useState(false);
 
   useEffect(() => {
     if (authReady && !loading && !roleLoading && user) {
@@ -57,6 +58,10 @@ export default function Auth() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!aceite) {
+      toast.error("É preciso aceitar os termos de uso e a política de privacidade.");
+      return;
+    }
     setBusy(true);
     try {
       const redirectUrl = `${window.location.origin}/dashboard`;
@@ -69,6 +74,21 @@ export default function Auth() {
         },
       });
       if (error) throw error;
+
+      // Guarda o aceite (data e versão) assim que houver sessão.
+      if (data.session) {
+        await supabase
+          .from("profiles")
+          .update({
+            aceite_termos_em: new Date().toISOString(),
+            aceite_termos_versao: VERSAO_TERMOS,
+            aceite_privacidade_em: new Date().toISOString(),
+            aceite_privacidade_versao: VERSAO_PRIVACIDADE,
+          })
+          .eq("user_id", data.session.user.id);
+      } else {
+        sessionStorage.setItem("pending_aceite", JSON.stringify({ termos: VERSAO_TERMOS, privacidade: VERSAO_PRIVACIDADE }));
+      }
 
       // Se a sessão veio de imediato (auto-confirm ativo), cria empresa + trial agora
       if (data.session) {
@@ -172,12 +192,21 @@ export default function Auth() {
                       onChange={(e) => setSignupPassword(e.target.value)}
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="aceite"
+                      checked={aceite}
+                      onCheckedChange={(v) => setAceite(v === true)}
+                    />
+                    <Label htmlFor="aceite" className="text-xs font-normal leading-relaxed text-muted-foreground">
+                      Li e aceito os{" "}
+                      <Link to="/termos" target="_blank" className="underline">termos de uso</Link> e a{" "}
+                      <Link to="/privacidade" target="_blank" className="underline">política de privacidade</Link>.
+                    </Label>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy || !aceite}>
                     {busy ? "Criando conta..." : "Criar conta e iniciar trial"}
                   </Button>
-                  <p className="pt-2 text-center text-xs text-muted-foreground">
-                    Ao se cadastrar, você concorda com nossos termos de uso.
-                  </p>
                 </form>
               </TabsContent>
             </CardContent>
