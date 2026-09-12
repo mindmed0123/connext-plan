@@ -1,4 +1,3 @@
-import type { ObraStatus } from "./obra-helpers";
 
 export type EtapaFinanceira =
   | "em_orcamento"
