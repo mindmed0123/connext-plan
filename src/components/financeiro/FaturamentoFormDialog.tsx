@@ -93,6 +93,21 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange, prefill }: { t
     setWithNf(false); setNfNumero(""); setNfData(getTodayDateInputValue()); setNfValor(""); setRetencoes(emptyRetencoes()); setPcId("");
   };
 
+  // Pré-preenchimento (ex.: "Gerar NF a partir da medição")
+  useEffect(() => {
+    if (!open || !prefill) return;
+    setVinculo("existente");
+    if (prefill.obraId) setObraId(prefill.obraId);
+    if (prefill.valor != null) {
+      const v = String(prefill.valor);
+      setValor(v);
+      setRetencoes((atual) => ({ ...atual, valor_bruto: v }));
+    }
+    setData(getTodayDateInputValue());
+  }, [open, prefill?.obraId, prefill?.valor, prefill?.medicaoId]);
+
+
+
   const save = useMutation({
     mutationFn: async () => {
       if (vinculo === "existente" && !obraId) throw new Error("Selecione uma obra");
