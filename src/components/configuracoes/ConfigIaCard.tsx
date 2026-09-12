@@ -28,7 +28,7 @@ const USOS = [
 export function ConfigIaCard() {
   const { empresaId } = useAuth();
   const { config } = useEmpresaConfig();
-  const salvar = useSalvarConfig();
+  const { salvar } = useSalvarConfig();
 
   const { data: consumo } = useQuery({
     queryKey: [empresaId, "ia-consumo-mes"],
@@ -58,7 +58,7 @@ export function ConfigIaCard() {
             </div>
             <Switch
               checked={Boolean((config as unknown as Record<string, boolean>)[u.campo])}
-              onCheckedChange={(v) => salvar.mutate({ [u.campo]: v } as never)}
+              onCheckedChange={(v) => void salvar({ [u.campo]: v } as never)}
             />
           </div>
         ))}
