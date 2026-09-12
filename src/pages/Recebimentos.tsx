@@ -442,7 +442,13 @@ export default function Recebimentos() {
             </Button>
             <Button
               onClick={() => registrarPagamento.mutate()}
-              disabled={!pagForm.valor || !pagForm.data || registrarPagamento.isPending}
+              disabled={
+                !pagForm.valor ||
+                !pagForm.data ||
+                saldoAtual <= 0 ||
+                Number(pagForm.valor.replace(",", ".")) > saldoAtual + 0.005 ||
+                registrarPagamento.isPending
+              }
             >
               Registrar pagamento
             </Button>
