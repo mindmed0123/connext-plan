@@ -265,7 +265,7 @@ export default function Financeiro() {
       }
     });
     return arr;
-  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, search, sortBy]);
+  }, [lancamentos, filtroTipo, filtroStatus, filtroObra, filtroCentro, search, sortBy]);
 
   const proximosVenc = useMemo(() => {
     const hoje = new Date();
