@@ -644,6 +644,36 @@ export default function Cartoes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Escopo da edição de uma compra parcelada */}
+      <Dialog open={escopoDialog} onOpenChange={setEscopoDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Esta compra está parcelada</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Escolha se a alteração vale só para esta parcela ou para todo o parcelamento
+              ({Number(editingDesp?.total_parcelas ?? 0)} parcelas).
+            </p>
+            <div>
+              <Label>Valor TOTAL da compra (todo o parcelamento)</Label>
+              <Input type="number" step="0.01" value={escopoTotal} onChange={(e) => setEscopoTotal(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Será dividido igualmente entre as parcelas. Só é usado na opção "Todo o parcelamento".
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" disabled={saveDesp.isPending}
+              onClick={() => { setEscopoDialog(false); saveDesp.mutate({ escopo: "parcela" }); }}>
+              Só esta parcela
+            </Button>
+            <Button disabled={saveDesp.isPending}
+              onClick={() => { setEscopoDialog(false); saveDesp.mutate({ escopo: "grupo", totalGrupo: parseFloat(escopoTotal) || 0 }); }}>
+              Todo o parcelamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
