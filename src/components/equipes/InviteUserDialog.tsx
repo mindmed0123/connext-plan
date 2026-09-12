@@ -5,19 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { usePerfis } from "@/hooks/usePerfis";
 import { toast } from "sonner";
 
 export function InviteUserDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [email, setEmail] = useState("");
   const [nome, setNome] = useState("");
   const [role, setRole] = useState("operacional");
+  const [perfilId, setPerfilId] = useState<string>("nenhum");
+  const { perfis } = usePerfis();
   const [busy, setBusy] = useState(false);
 
   const handleInvite = async () => {
     if (!email) return toast.error("Informe o e-mail");
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("invite-user", {
-      body: { email, nome, role },
+      body: { email, nome, role, perfil_id: perfilId === "nenhum" ? null : perfilId },
     });
     setBusy(false);
     if (error || (data)?.error) {
