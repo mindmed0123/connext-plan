@@ -466,7 +466,9 @@ DECLARE
                              'handle_new_user','handle_nova_empresa'];
 BEGIN
   SELECT array_agg(valor) INTO ids FROM iso_test.ctx WHERE chave LIKE '%_b';
-  ids := ids || COALESCE((SELECT array_agg(id) FROM iso_test.seeded WHERE empresa = iso_test.v('empresa_b')), '{}'::uuid[]);
+  ids := ids || COALESCE((SELECT array_agg(id) FROM iso_test.seeded
+                           WHERE empresa = iso_test.v('empresa_b')
+                             AND id <> '00000000-0000-0000-0000-000000000000'::uuid), '{}'::uuid[]);
 
   FOR fn IN
     SELECT p.oid, p.proname::text AS nome, pg_get_function_identity_arguments(p.oid) AS assinatura
