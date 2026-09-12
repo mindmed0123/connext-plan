@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { formatDateBR, getTodayDateInputValue } from "@/lib/date";
 import { emptyRetencoes, nfPayload, RetencoesNfFields, type RetencoesNf } from "@/components/financeiro/RetencoesNfFields";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
+import { calcularRetencoes } from "@/lib/fiscal";
 
 export function FaturamentoTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
@@ -19,30 +21,24 @@ export function FaturamentoTab({ obraId }: { obraId: string }) {
   const [nfRetencoes, setNfRetencoes] = useState<RetencoesNf>(emptyRetencoes());
   const [regrasNf, setRegrasNf] = useState<any>(null);
   const [rec, setRec] = useState({ valor: "", data_prevista: "" });
+  const { config } = useEmpresaConfig();
 
   useEffect(() => {
     void (async () => {
-      const [{ data: obra }, { data: empresa }] = await Promise.all([
-        (supabase.from("obras")).select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)").eq("id", obraId).single(),
-        supabase.from("empresas").select("cprb").limit(1).single(),
-      ]);
-      setRegrasNf({ ...(obra?.clientes ?? {}), cprb: Boolean(empresa?.cprb) });
+      const { data: obra } = await (supabase.from("obras"))
+        .select("clientes(aliquota_iss,retem_iss,retem_inss,retem_irrf,retem_csrf)")
+        .eq("id", obraId).single();
+      setRegrasNf({ ...(obra?.clientes ?? {}) });
     })();
   }, [obraId]);
 
   useEffect(() => {
     if (!regrasNf) return;
-    const bruto = Number(nf.valor || 0);
-    const aliquotaInss = regrasNf.cprb ? 3.5 : 11;
-    const baseInss = Math.max(0, bruto - Number(nfRetencoes.valor_deducoes_inss || 0));
-    setNfRetencoes((atual) => ({ ...atual, valor_bruto: nf.valor, base_inss: String(baseInss), aliquota_inss: String(aliquotaInss),
-      aliquota_iss: String(regrasNf.aliquota_iss ?? 0),
-      ret_inss: regrasNf.retem_inss ? String(Math.round(baseInss * aliquotaInss) / 100) : "0",
-      ret_iss: regrasNf.retem_iss ? String(Math.round(bruto * Number(regrasNf.aliquota_iss ?? 0)) / 100) : "0",
-      ret_irrf: regrasNf.retem_irrf ? String(Math.round(bruto * 1.5) / 100) : "0",
-      ret_pcc: regrasNf.retem_csrf ? String(Math.round(bruto * 4.65) / 100) : "0",
+    setNfRetencoes((atual) => ({
+      ...atual,
+      ...calcularRetencoes(config, regrasNf, nf.valor, atual.valor_deducoes_inss),
     }));
-  }, [nf.valor, regrasNf]);
+  }, [nf.valor, regrasNf, config]);
 
   const { data: rcs } = useQuery({
     queryKey: ["rcs", obraId],
