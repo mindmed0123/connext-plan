@@ -816,6 +816,226 @@ export type Database = {
           },
         ]
       }
+      contas_bancarias: {
+        Row: {
+          agencia: string | null
+          ativo: boolean
+          banco: string | null
+          conta: string | null
+          created_at: string
+          data_saldo_inicial: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          saldo_inicial: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          agencia?: string | null
+          ativo?: boolean
+          banco?: string | null
+          conta?: string | null
+          created_at?: string
+          data_saldo_inicial?: string | null
+          empresa_id?: string
+          id?: string
+          nome: string
+          saldo_inicial?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          agencia?: string | null
+          ativo?: boolean
+          banco?: string | null
+          conta?: string | null
+          created_at?: string
+          data_saldo_inicial?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          saldo_inicial?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_bancarias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_pagar: {
+        Row: {
+          categoria_id: string | null
+          created_at: string
+          created_by: string | null
+          data_emissao: string
+          descricao: string
+          empresa_id: string
+          etapa_id: string | null
+          fornecedor_id: string | null
+          id: string
+          numero_documento: string | null
+          obra_id: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          descricao: string
+          empresa_id?: string
+          etapa_id?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          numero_documento?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_emissao?: string
+          descricao?: string
+          empresa_id?: string
+          etapa_id?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          numero_documento?: string | null
+          obra_id?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_pagar_parcelas: {
+        Row: {
+          comprovante_url: string | null
+          conta_bancaria_id: string | null
+          conta_id: string
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          empresa_id: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          numero: number
+          status: string
+          updated_at: string
+          valor: number
+          valor_pago: number | null
+        }
+        Insert: {
+          comprovante_url?: string | null
+          conta_bancaria_id?: string | null
+          conta_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          empresa_id?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          numero?: number
+          status?: string
+          updated_at?: string
+          valor: number
+          valor_pago?: number | null
+        }
+        Update: {
+          comprovante_url?: string | null
+          conta_bancaria_id?: string | null
+          conta_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          empresa_id?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          numero?: number
+          status?: string
+          updated_at?: string
+          valor?: number
+          valor_pago?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_parcelas_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_parcelas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_parcelas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratacoes_terceirizado: {
         Row: {
           centro_custo_id: string | null
@@ -1591,6 +1811,126 @@ export type Database = {
           },
         ]
       }
+      extrato_bancario: {
+        Row: {
+          conciliado: boolean
+          conta_id: string
+          created_at: string
+          data: string
+          descricao: string
+          documento: string | null
+          empresa_id: string
+          hash_unico: string
+          id: string
+          lancamento_id: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          conciliado?: boolean
+          conta_id: string
+          created_at?: string
+          data: string
+          descricao: string
+          documento?: string | null
+          empresa_id?: string
+          hash_unico: string
+          id?: string
+          lancamento_id?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          conciliado?: boolean
+          conta_id?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          documento?: string | null
+          empresa_id?: string
+          hash_unico?: string
+          id?: string
+          lancamento_id?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extrato_bancario_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extrato_bancario_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extrato_bancario_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          cnpj_cpf: string | null
+          contato: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj_cpf?: string | null
+          contato?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj_cpf?: string | null
+          contato?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fotos_obra: {
         Row: {
           data_upload: string
@@ -1648,6 +1988,7 @@ export type Database = {
           centro_custo_id: string | null
           comprovante_path: string | null
           comprovante_url: string | null
+          conta_bancaria_id: string | null
           created_at: string
           created_by: string | null
           data_competencia: string
@@ -1677,6 +2018,7 @@ export type Database = {
           centro_custo_id?: string | null
           comprovante_path?: string | null
           comprovante_url?: string | null
+          conta_bancaria_id?: string | null
           created_at?: string
           created_by?: string | null
           data_competencia: string
@@ -1708,6 +2050,7 @@ export type Database = {
           centro_custo_id?: string | null
           comprovante_path?: string | null
           comprovante_url?: string | null
+          conta_bancaria_id?: string | null
           created_at?: string
           created_by?: string | null
           data_competencia?: string
@@ -1747,6 +2090,13 @@ export type Database = {
             columns: ["centro_custo_id"]
             isOneToOne: false
             referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
             referencedColumns: ["id"]
           },
           {
@@ -2806,6 +3156,7 @@ export type Database = {
         Row: {
           comprovante_path: string | null
           comprovante_url: string | null
+          conta_bancaria_id: string | null
           contratacao_id: string
           created_at: string
           data_pagamento: string | null
@@ -2823,6 +3174,7 @@ export type Database = {
         Insert: {
           comprovante_path?: string | null
           comprovante_url?: string | null
+          conta_bancaria_id?: string | null
           contratacao_id: string
           created_at?: string
           data_pagamento?: string | null
@@ -2842,6 +3194,7 @@ export type Database = {
         Update: {
           comprovante_path?: string | null
           comprovante_url?: string | null
+          conta_bancaria_id?: string | null
           contratacao_id?: string
           created_at?: string
           data_pagamento?: string | null
@@ -2859,6 +3212,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "parcelas_pagamento_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "parcelas_pagamento_contratacao_id_fkey"
             columns: ["contratacao_id"]
@@ -3383,6 +3743,7 @@ export type Database = {
       }
       recebimento_pagamentos: {
         Row: {
+          conta_bancaria_id: string | null
           created_at: string
           created_by: string | null
           data: string
@@ -3395,6 +3756,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          conta_bancaria_id?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
@@ -3409,6 +3771,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          conta_bancaria_id?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
@@ -3423,6 +3786,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "recebimento_pagamentos_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recebimento_pagamentos_empresa_id_fkey"
             columns: ["empresa_id"]
