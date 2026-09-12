@@ -15,6 +15,7 @@ interface Props {
 }
 
 export function DashboardFilters({ filters, setFilters, engenheiros, pessoas }: Props) {
+  const { statuses } = useObraConfig();
   const reset = () => setFilters({ regiao: "todas", engenheiro: "todos", status: "todas", responsavelId: "todos", terceirizadoId: "todos" });
   const responsaveis = pessoas.filter((p) => p.tipo !== "terceirizado");
   const terceirizados = pessoas.filter((p) => p.tipo === "terceirizado");
