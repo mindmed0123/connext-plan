@@ -16,6 +16,7 @@ import {
   CreditCard,
   Wrench,
   Settings,
+  Bell,
   ShoppingCart,
   FileSignature,
   Ruler,
@@ -186,6 +187,15 @@ export function AppSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.startsWith("/notificacoes")}>
+                      <NavLink to="/notificacoes">
+                        <Bell className="h-4 w-4" />
+                        {!collapsed && <span>Avisos</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={location.pathname.startsWith("/billing")}>
                       <NavLink to="/billing">

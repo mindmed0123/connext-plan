@@ -9,12 +9,14 @@ export interface TemplateEntry {
   previewData?: Record<string, any>
 }
 
+import { template as avisosSistema } from './avisos-sistema.tsx'
 import { template as paymentApproved } from './payment-approved.tsx'
 import { template as paymentFailed } from './payment-failed.tsx'
 import { template as subscriptionCanceled } from './subscription-canceled.tsx'
 import { template as trialReminder } from './trial-reminder.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'avisos-sistema': avisosSistema,
   'payment-approved': paymentApproved,
   'payment-failed': paymentFailed,
   'subscription-canceled': subscriptionCanceled,
