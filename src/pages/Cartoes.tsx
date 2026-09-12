@@ -13,10 +13,10 @@ import { Plus, CreditCard, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { Badge } from "@/components/ui/badge";
-import { formatDateBR, getTodayDateInputValue, parseDateString, toDateKey } from "@/lib/date";
+import { formatDateBR, getTodayDateInputValue, toDateKey } from "@/lib/date";
 import { arredondar2, dividirParcelas } from "@/lib/money";
 import { useDraftState } from "@/hooks/useDraftState";
-import { calcularFaturas, faturaDeCompra, somarMeses } from "@/lib/cartao-helpers";
+import { calcularFaturas, faturaDeCompra } from "@/lib/cartao-helpers";
 
 type Cartao = {
   id: string; apelido: string; banco: string | null; bandeira: string | null;
