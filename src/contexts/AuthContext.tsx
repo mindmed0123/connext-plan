@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { aplicarEscopoEmpresa, limparEscopoEmpresa } from "@/lib/tenant-cache";
 
 type AuthCtx = {
   user: User | null;
@@ -25,12 +27,15 @@ const Ctx = createContext<AuthCtx>({
 });
 
 async function fetchEmpresa(userId: string) {
-  const { data } = await supabase
+  // Mesma regra do banco (get_user_empresa_id): o vínculo mais antigo manda.
+  const { data: linhas } = await supabase
     .from("user_roles")
     .select("empresa_id, empresas(nome, ativo)")
     .eq("user_id", userId)
     .not("empresa_id", "is", null)
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const data = linhas?.[0];
   return {
     empresaId: (data?.empresa_id as string | null) ?? null,
     empresaNome: ((data?.empresas)?.nome as string | null) ?? null,
@@ -49,6 +54,7 @@ async function isSuperAdmin(userId: string) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const qc = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setEmpresaId(null);
         setEmpresaNome(null);
+        limparEscopoEmpresa(qc);
         setLoading(false);
       }
     });
@@ -154,12 +161,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
+  // Cada usuário/empresa tem o seu próprio cache. Ao trocar de conta ou de
+  // empresa, tudo o que estava guardado no navegador é descartado.
+  useEffect(() => {
+    if (!user?.id) return;
+    aplicarEscopoEmpresa(qc, `${user.id}:${empresaId ?? "sem-empresa"}`);
+  }, [qc, user?.id, empresaId]);
+
   const refreshEmpresa = async () => {
     if (user?.id) await loadEmpresa(user.id);
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    limparEscopoEmpresa(qc);
   };
 
   return (
