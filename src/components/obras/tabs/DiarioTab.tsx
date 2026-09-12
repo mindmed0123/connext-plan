@@ -40,10 +40,7 @@ const trintaDiasAtras = () => {
 export function DiarioTab({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
   const { empresaId } = useAuth();
-  const { config, empresa } = useEmpresaConfig() as {
-    config: { cor_primaria?: string; texto_rodape?: string | null };
-    empresa?: Record<string, unknown>;
-  };
+  const { config } = useEmpresaConfig();
   const [aberto, setAberto] = useState(false);
   const [de, setDe] = useState(trintaDiasAtras());
   const [ate, setAte] = useState(hoje());
@@ -127,7 +124,12 @@ export function DiarioTab({ obraId }: { obraId: string }) {
             })),
         }));
 
-      const emp = (empresa ?? {}) as Record<string, string | null | undefined>;
+      const { data: empresaRow } = await supabase
+        .from("empresas")
+        .select("nome, logo_url, cnpj, endereco, cidade, uf, telefone, email")
+        .eq("id", empresaId!)
+        .maybeSingle();
+      const emp = (empresaRow ?? {}) as Record<string, string | null | undefined>;
       await gerarRelatorioDiarioPDF(
         {
           nome: emp.nome ?? "Empresa",
