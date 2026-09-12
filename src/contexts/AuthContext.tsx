@@ -161,12 +161,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
+  // Cada usuário/empresa tem o seu próprio cache. Ao trocar de conta ou de
+  // empresa, tudo o que estava guardado no navegador é descartado.
+  useEffect(() => {
+    if (!user?.id) return;
+    aplicarEscopoEmpresa(qc, `${user.id}:${empresaId ?? "sem-empresa"}`);
+  }, [qc, user?.id, empresaId]);
+
   const refreshEmpresa = async () => {
     if (user?.id) await loadEmpresa(user.id);
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    limparEscopoEmpresa(qc);
   };
 
   return (
