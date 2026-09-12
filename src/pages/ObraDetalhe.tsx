@@ -267,6 +267,7 @@ export default function ObraDetalhe() {
           <div className="overflow-x-auto pb-1">
             <TabsList className="inline-flex h-auto w-auto gap-1 p-1">
               <TabsTrigger value="dre" className={tabCls}>DRE / Balanço</TabsTrigger>
+              <TabsTrigger value="orcado-realizado" className={tabCls}>Orçado × Realizado</TabsTrigger>
               <TabsTrigger value="vistoria" className={tabCls}>Vistoria</TabsTrigger>
               <TabsTrigger value="orcamento" className={tabCls}>Orçamento</TabsTrigger>
               <TabsTrigger value="execucao" className={tabCls}>Execução</TabsTrigger>
