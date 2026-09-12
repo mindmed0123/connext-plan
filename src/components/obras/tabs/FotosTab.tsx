@@ -398,6 +398,17 @@ export function FotosTab({ obraId }: { obraId: string }) {
                 {TIPO_LABEL[f.tipo as keyof typeof TIPO_LABEL]}
               </span>
               <Button
+                size="sm"
+                variant={f.visivel_cliente ? "default" : "secondary"}
+                className="absolute bottom-1 left-1 h-7 px-2 text-[10px]"
+                onClick={(e) => {
+                  e.preventDefault();
+                  alternarVisibilidade.mutate({ id: f.id, visivel: !f.visivel_cliente });
+                }}
+              >
+                {f.visivel_cliente ? "Visível ao cliente" : "Liberar ao cliente"}
+              </Button>
+              <Button
                 size="icon"
                 variant="destructive"
                 className="absolute right-1 top-1 h-7 w-7 opacity-0 transition group-hover:opacity-100"
@@ -409,6 +420,7 @@ export function FotosTab({ obraId }: { obraId: string }) {
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
+
             </div>
           ))}
         </div>
