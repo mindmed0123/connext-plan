@@ -53,6 +53,7 @@ type LancamentoForm = {
   observacoes?: string | null;
   obra_id?: string | null;
   categoria_id?: string | null;
+  centro_custo_id?: string | null;
 };
 
 const emptyForm: LancamentoForm = {
