@@ -130,7 +130,7 @@ export default function Obras() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Chamado</TableHead>
+              <TableHead>{rotulos.codigo_obra}</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Região</TableHead>
               <TableHead>Engenheiro</TableHead>

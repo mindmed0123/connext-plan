@@ -24,6 +24,7 @@ import {
 
 export default function Orcamentos() {
   const { empresaId } = useAuth();
+  const { rotulos } = useObraConfig();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [busca, setBusca] = useState("");
