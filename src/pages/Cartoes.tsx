@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -604,7 +605,7 @@ export default function Cartoes() {
             </div>
             <div>
               <Label>Obra (origem)</Label>
-              <Select value={despForm.obra_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, obra_id: v === "none" ? "" : v })}>
+              <Select value={despForm.obra_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, obra_id: v === "none" ? "" : v, etapa_id: null, orcamento_item_id: null })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Sem obra —</SelectItem>
@@ -612,6 +613,16 @@ export default function Cartoes() {
                 </SelectContent>
               </Select>
             </div>
+            {despForm.obra_id && (
+              <div className="col-span-2">
+                <EtapaItemSelect
+                  obraId={despForm.obra_id}
+                  etapaId={despForm.etapa_id}
+                  itemId={despForm.orcamento_item_id}
+                  onChange={(v) => setDespForm((f) => ({ ...f, ...v }))}
+                />
+              </div>
+            )}
             <div className="col-span-2">
               <Label>Comprador</Label>
               <Select value={despForm.comprador_id || "none"} onValueChange={(v) => setDespForm({ ...despForm, comprador_id: v === "none" ? "" : v })}>
