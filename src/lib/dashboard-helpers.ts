@@ -23,15 +23,6 @@ export const ETAPA_FINANCEIRA_LABEL: Record<EtapaFinanceira, string> = {
   recebido: "Recebido",
 };
 
-export const STATUS_EM_ORCAMENTO: ObraStatus[] = ["em_aprovacao"];
-export const STATUS_EM_EXECUCAO: ObraStatus[] = ["em_execucao"];
-export const STATUS_FINALIZADAS_AGUARD: ObraStatus[] = [
-  "finalizado",
-  "aguardando_rc",
-  "aguardando_pedido_compra",
-  "aguardando_nf",
-  "aguardando_pagamento",
-];
 
 /** Converte string em Date; datas puras 'YYYY-MM-DD' viram meio-dia local (evita cair no dia anterior). */
 function toLocalDate(value: string | Date): Date {
