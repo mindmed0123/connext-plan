@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   HardHat,
   Columns3,
+  Camera,
   ClipboardList,
   FileText,
   Hammer,
