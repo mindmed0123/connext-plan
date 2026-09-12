@@ -21,7 +21,9 @@ const TITULO: Record<Tipo, string> = {
   nf: "Nova nota fiscal",
 };
 
-export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo; open: boolean; onOpenChange: (v: boolean) => void }) {
+export type NfPrefill = { obraId?: string; valor?: number; medicaoId?: string };
+
+export function FaturamentoFormDialog({ tipo, open, onOpenChange, prefill }: { tipo: Tipo; open: boolean; onOpenChange: (v: boolean) => void; prefill?: NfPrefill }) {
   const qc = useQueryClient();
   const [vinculo, setVinculo] = useState<"existente" | "avulso">("existente");
   const [obraId, setObraId] = useState<string>("");
