@@ -1009,6 +1009,44 @@ export type Database = {
           },
         ]
       }
+      documento_contadores: {
+        Row: {
+          ano: number
+          created_at: string
+          empresa_id: string
+          id: string
+          tipo: string
+          ultimo_numero: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          tipo: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          tipo?: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documento_contadores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1095,6 +1133,113 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      empresa_config: {
+        Row: {
+          aliquota_inss_cprb: number
+          aliquota_inss_padrao: number
+          aliquota_irrf_padrao: number
+          aliquota_iss_padrao: number
+          aliquota_pcc_padrao: number
+          bdi_ac: number
+          bdi_df: number
+          bdi_i: number
+          bdi_l: number
+          bdi_r: number
+          bdi_s: number
+          cor_primaria: string
+          cprb: boolean
+          created_at: string
+          email_remetente_endereco: string | null
+          email_remetente_nome: string | null
+          empresa_id: string
+          mascara_contrato: string
+          mascara_medicao: string
+          mascara_nf: string
+          mascara_orcamento: string
+          prazo_pagamento_padrao: number
+          regime_tributario:
+            | Database["public"]["Enums"]["regime_tributario"]
+            | null
+          texto_condicoes: string | null
+          texto_observacoes: string | null
+          texto_rodape: string | null
+          updated_at: string
+          validade_orcamento_dias: number
+        }
+        Insert: {
+          aliquota_inss_cprb?: number
+          aliquota_inss_padrao?: number
+          aliquota_irrf_padrao?: number
+          aliquota_iss_padrao?: number
+          aliquota_pcc_padrao?: number
+          bdi_ac?: number
+          bdi_df?: number
+          bdi_i?: number
+          bdi_l?: number
+          bdi_r?: number
+          bdi_s?: number
+          cor_primaria?: string
+          cprb?: boolean
+          created_at?: string
+          email_remetente_endereco?: string | null
+          email_remetente_nome?: string | null
+          empresa_id?: string
+          mascara_contrato?: string
+          mascara_medicao?: string
+          mascara_nf?: string
+          mascara_orcamento?: string
+          prazo_pagamento_padrao?: number
+          regime_tributario?:
+            | Database["public"]["Enums"]["regime_tributario"]
+            | null
+          texto_condicoes?: string | null
+          texto_observacoes?: string | null
+          texto_rodape?: string | null
+          updated_at?: string
+          validade_orcamento_dias?: number
+        }
+        Update: {
+          aliquota_inss_cprb?: number
+          aliquota_inss_padrao?: number
+          aliquota_irrf_padrao?: number
+          aliquota_iss_padrao?: number
+          aliquota_pcc_padrao?: number
+          bdi_ac?: number
+          bdi_df?: number
+          bdi_i?: number
+          bdi_l?: number
+          bdi_r?: number
+          bdi_s?: number
+          cor_primaria?: string
+          cprb?: boolean
+          created_at?: string
+          email_remetente_endereco?: string | null
+          email_remetente_nome?: string | null
+          empresa_id?: string
+          mascara_contrato?: string
+          mascara_medicao?: string
+          mascara_nf?: string
+          mascara_orcamento?: string
+          prazo_pagamento_padrao?: number
+          regime_tributario?:
+            | Database["public"]["Enums"]["regime_tributario"]
+            | null
+          texto_condicoes?: string | null
+          texto_observacoes?: string | null
+          texto_rodape?: string | null
+          updated_at?: string
+          validade_orcamento_dias?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_config_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       empresa_dashboard_config: {
         Row: {
@@ -3661,6 +3806,10 @@ export type Database = {
           _vencimento: string
         }
         Returns: number
+      }
+      proximo_numero_documento: {
+        Args: { _data?: string; _empresa_id: string; _tipo: string }
+        Returns: string
       }
       reabrir_fatura_cartao: {
         Args: { _cartao_id: string; _vencimento: string }
