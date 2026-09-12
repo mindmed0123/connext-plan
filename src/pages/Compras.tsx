@@ -27,6 +27,7 @@ const itemVazio: ItemForm = { descricao: "", unidade: "un", quantidade: "1", obs
 
 const STATUS_SOL: Record<string, { texto: string; variante: "default" | "secondary" | "outline" | "destructive" }> = {
   rascunho: { texto: "Rascunho", variante: "outline" },
+  aguardando_aprovacao: { texto: "Aguardando aprovação", variante: "outline" },
   aberta: { texto: "Aberta", variante: "default" },
   cotando: { texto: "Em cotação", variante: "secondary" },
   aprovada: { texto: "Aprovada", variante: "default" },
@@ -35,6 +36,7 @@ const STATUS_SOL: Record<string, { texto: string; variante: "default" | "seconda
 };
 
 const STATUS_OC: Record<string, { texto: string; variante: "default" | "secondary" | "outline" | "destructive" }> = {
+  aguardando_aprovacao: { texto: "Aguardando aprovação", variante: "outline" },
   emitida: { texto: "Emitida", variante: "default" },
   parcial: { texto: "Recebida em parte", variante: "secondary" },
   recebida: { texto: "Recebida", variante: "secondary" },
@@ -125,6 +127,17 @@ export default function Compras() {
         })),
       );
       if (e2) throw e2;
+
+      // Alçada de aprovação (se houver faixa configurada para solicitação)
+      const { data: pendentes } = await supabase.rpc("solicitar_aprovacao", {
+        _documento: "solicitacao",
+        _registro_id: sol.id,
+        _valor: 0,
+        _descricao: "Solicitação de compra",
+      });
+      if ((pendentes ?? 0) > 0) {
+        await supabase.from("solicitacoes_compra").update({ status: "aguardando_aprovacao" }).eq("id", sol.id);
+      }
     },
     onSuccess: () => {
       toast.success("Solicitação de compra criada");
