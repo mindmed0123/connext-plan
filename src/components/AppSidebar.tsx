@@ -80,6 +80,7 @@ const financeiroAdmin: NavItem[] = [
   { title: "Insumos", url: "/insumos", icon: Package, modulo: "orcamentos", mod: "orcamento_composicoes" },
   { title: "Composições", url: "/composicoes", icon: Layers, modulo: "orcamentos", mod: "orcamento_composicoes" },
   { title: "Cronograma", url: "/cronograma", icon: CalendarRange, modulo: "etapas", mod: "cronograma" },
+  { title: "Inteligência artificial", url: "/ia", icon: Sparkles, modulo: "dashboard", mod: "ia" },
   { title: "Desempenho", url: "/desempenho", icon: TrendingUp, modulo: "dashboard" },
   { title: "Compradores", url: "/compradores", icon: ShoppingCart, modulo: "financeiro", mod: "compras" },
 ];

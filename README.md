@@ -28,6 +28,9 @@ Produção: https://gestaodeobra.online
 | **Portal do cliente** | Link por obra (token próprio, fora dos buscadores) para o cliente acompanhar avanço, fotos e documentos sem precisar de login. |
 | **Notificações** | Preferências por usuário e canal, resumo diário de vencimentos e prazos, envio por e-mail com registro do que foi enviado. |
 | **RDO / aplicativo de campo** | Diário de obra, fotos e apontamentos direto do canteiro, em tela de celular instalável (PWA). |
+| **Insumos e composições** | Base de custos própria ou importada por planilha (SINAPI e similares), histórico de preço por data, composições com subcomposições em até 5 níveis, proteção contra referência circular e recálculo por data de referência. |
+| **Cronograma (Gantt)** | Barras por etapa com arrastar e redimensionar, dependências (só começa depois / começa junto) com folga, caminho crítico, curva S e exportação da imagem do cronograma. |
+| **Inteligência artificial** | Três usos ligados separadamente: estimativa de orçamento por m², leitura de cotação em PDF ou foto e relatório do período a partir do diário. Todo resultado é rascunho marcado como gerado por IA, com registro de consumo por empresa. |
 | **Privacidade e LGPD** | Aceite de termos e política, exportação completa dos dados da empresa em CSV e pedido de exclusão da conta. |
 | **Configurações** | Dados da empresa, regime tributário, saldo inicial de caixa, rótulos e assinatura do plano. |
 
