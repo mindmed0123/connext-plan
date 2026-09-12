@@ -97,6 +97,18 @@ export function DreTab({ obraId }: { obraId: string }) {
     },
   });
 
+  const { data: medicoes = [] } = useQuery({
+    queryKey: ["obra-dre-medicoes", obraId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("medicoes")
+        .select("valor_medido, contratos_clientes(retencao_contratual_pct, retencao_devolucao_prevista)")
+        .eq("obra_id", obraId)
+        .eq("status", "aprovada");
+      return data ?? [];
+    },
+  });
+
   const excluirManual = useMutation({
     mutationFn: async (l: Lancamento) => {
       const { data, error } = await supabase
@@ -133,6 +145,13 @@ export function DreTab({ obraId }: { obraId: string }) {
   const saldo = Number(r.saldo || 0);
   const margemPct = receitaOrcada > 0 ? (saldo / receitaOrcada) * 100 : 0;
 
+  const receitaMedida = (medicoes as any[]).reduce((s, m) => s + Number(m.valor_medido || 0), 0);
+  const caucaoRetida = (medicoes as any[]).reduce(
+    (s, m) => s + (Number(m.valor_medido || 0) * Number(m.contratos_clientes?.retencao_contratual_pct ?? 0)) / 100, 0);
+  const devolucaoCaucao = (medicoes as any[])
+    .map((m) => m.contratos_clientes?.retencao_devolucao_prevista).filter(Boolean)[0] as string | undefined;
+  const aFaturar = Math.max(0, receitaMedida - receitaFaturada);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -151,6 +170,9 @@ export function DreTab({ obraId }: { obraId: string }) {
           <div className="divide-y text-sm">
             {[
               ["(+) Receita orçada", receitaOrcada, "text-success"],
+              ["(+) Receita medida (medições aprovadas)", receitaMedida, "text-success"],
+              ["(=) A faturar (medido − faturado)", aFaturar, "text-muted-foreground"],
+              ["(•) Caução retida a receber", caucaoRetida, "text-muted-foreground"],
               ["(+) Receita bruta faturada", receitaFaturada, "text-muted-foreground"],
               ["(-) Retenções", retencoes, "text-destructive"],
               ["(=) Receita líquida", receitaFaturada - retencoes, "text-success"],
@@ -175,7 +197,14 @@ export function DreTab({ obraId }: { obraId: string }) {
               </span>
             </div>
           </div>
+          {caucaoRetida > 0 && (
+            <p className="border-t px-4 py-2 text-[11px] text-muted-foreground">
+              A caução retida é valor a receber no futuro
+              {devolucaoCaucao ? `, previsto para ${formatDateBR(devolucaoCaucao)}` : ""} — não entra como perda.
+            </p>
+          )}
         </div>
+
 
         <div className="grid content-start gap-3 sm:grid-cols-2">
           <Kpi label="Materiais" value={custoMateriais} tone="despesa" />

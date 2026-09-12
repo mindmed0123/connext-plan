@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { ORIGEM_LABEL, getRegiaoLabel, formatCurrency } from "@/lib/obra-helpers";
 import { useObraConfig } from "@/hooks/useObraConfig";
 import { StatusPipeline } from "@/components/obras/StatusPipeline";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,7 @@ import { EquipeTab } from "@/components/obras/tabs/EquipeTab";
 import { ContratacoesTab } from "@/components/obras/tabs/ContratacoesTab";
 import { MateriaisTab } from "@/components/obras/tabs/MateriaisTab";
 import { AdendosTab } from "@/components/obras/tabs/AdendosTab";
+import { MedicoesTab } from "@/components/obras/tabs/MedicoesTab";
 import { DreTab } from "@/components/obras/tabs/DreTab";
 import { useUserRole } from "@/hooks/useUserRole";
 import { formatDateBR } from "@/lib/date";
@@ -46,6 +47,23 @@ export default function ObraDetalhe() {
       return data ?? [];
     },
   });
+
+  const { data: contratoObra } = useQuery({
+    queryKey: ["obra-contrato-cliente", obraId],
+    enabled: !!obraId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("contratos_clientes")
+        .select("id, numero_contrato, valor_global, status, retencao_contratual_pct")
+        .eq("obra_id", obraId!)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+
 
   const { data: obra, isLoading } = useQuery({
     queryKey: ["obra", obraId],
@@ -219,6 +237,18 @@ export default function ObraDetalhe() {
           <div><span className="text-muted-foreground">Região: </span>{getRegiaoLabel(obra)}</div>
           <div><span className="text-muted-foreground">Engenheiro: </span>{obra.engenheiro_responsavel || "—"}</div>
           <div><span className="text-muted-foreground">Recebido: </span>{formatDateBR(obra.data_recebimento)}</div>
+          <div>
+            <span className="text-muted-foreground">Contrato: </span>
+            {contratoObra ? (
+              <button className="underline underline-offset-2" onClick={() => navigate("/contratos")}>
+                {contratoObra.numero_contrato ?? "s/nº"} · {formatCurrency(Number(contratoObra.valor_global ?? 0))}
+              </button>
+            ) : (
+              <button className="underline underline-offset-2 text-muted-foreground" onClick={() => navigate("/contratos")}>
+                sem contrato — cadastrar
+              </button>
+            )}
+          </div>
           <div className="sm:col-span-2 lg:col-span-4">
             <span className="text-muted-foreground">Endereço: </span>{obra.endereco || "—"}
           </div>
@@ -243,6 +273,7 @@ export default function ObraDetalhe() {
               <TabsTrigger value="fotos" className={tabCls}>Fotos</TabsTrigger>
               <TabsTrigger value="contratacoes" className={tabCls}>Pagamentos</TabsTrigger>
               <TabsTrigger value="materiais" className={tabCls}>Materiais</TabsTrigger>
+              <TabsTrigger value="medicoes" className={tabCls}>Medições</TabsTrigger>
               <TabsTrigger value="faturamento" className={tabCls}>Faturamento</TabsTrigger>
               <TabsTrigger value="adendos" className={tabCls}>Contrato / Adendos</TabsTrigger>
               <TabsTrigger value="timeline" className={tabCls}>Histórico</TabsTrigger>
@@ -256,6 +287,7 @@ export default function ObraDetalhe() {
           <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
           <TabsContent value="contratacoes" className="mt-4"><ContratacoesTab obraId={obra.id} /></TabsContent>
           <TabsContent value="materiais" className="mt-4"><MateriaisTab obraId={obra.id} /></TabsContent>
+          <TabsContent value="medicoes" className="mt-4"><MedicoesTab obraId={obra.id} /></TabsContent>
           <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
           <TabsContent value="adendos" className="mt-4"><AdendosTab obraId={obra.id} /></TabsContent>
           <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>

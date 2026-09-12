@@ -18,6 +18,8 @@ export const APP_MODULOS = [
   "servicos",
   "execucoes",
   "etapas",
+  "contratos",
+  "medicoes",
 ] as const;
 export type AppModulo = (typeof APP_MODULOS)[number];
 
@@ -34,6 +36,8 @@ export const MODULO_LABEL: Record<AppModulo, string> = {
   servicos: "Serviços",
   execucoes: "Execuções",
   etapas: "Etapas",
+  contratos: "Contratos de cliente",
+  medicoes: "Medições",
 };
 
 export type AppAcao = "view" | "create" | "edit" | "delete";
