@@ -24,6 +24,7 @@ import { EquipeTab } from "@/components/obras/tabs/EquipeTab";
 import { ContratacoesTab } from "@/components/obras/tabs/ContratacoesTab";
 import { MateriaisTab } from "@/components/obras/tabs/MateriaisTab";
 import { AdendosTab } from "@/components/obras/tabs/AdendosTab";
+import { MedicoesTab } from "@/components/obras/tabs/MedicoesTab";
 import { DreTab } from "@/components/obras/tabs/DreTab";
 import { useUserRole } from "@/hooks/useUserRole";
 import { formatDateBR } from "@/lib/date";
@@ -243,6 +244,7 @@ export default function ObraDetalhe() {
               <TabsTrigger value="fotos" className={tabCls}>Fotos</TabsTrigger>
               <TabsTrigger value="contratacoes" className={tabCls}>Pagamentos</TabsTrigger>
               <TabsTrigger value="materiais" className={tabCls}>Materiais</TabsTrigger>
+              <TabsTrigger value="medicoes" className={tabCls}>Medições</TabsTrigger>
               <TabsTrigger value="faturamento" className={tabCls}>Faturamento</TabsTrigger>
               <TabsTrigger value="adendos" className={tabCls}>Contrato / Adendos</TabsTrigger>
               <TabsTrigger value="timeline" className={tabCls}>Histórico</TabsTrigger>
@@ -256,6 +258,7 @@ export default function ObraDetalhe() {
           <TabsContent value="fotos" className="mt-4"><FotosTab obraId={obra.id} /></TabsContent>
           <TabsContent value="contratacoes" className="mt-4"><ContratacoesTab obraId={obra.id} /></TabsContent>
           <TabsContent value="materiais" className="mt-4"><MateriaisTab obraId={obra.id} /></TabsContent>
+          <TabsContent value="medicoes" className="mt-4"><MedicoesTab obraId={obra.id} /></TabsContent>
           <TabsContent value="faturamento" className="mt-4"><FaturamentoTab obraId={obra.id} /></TabsContent>
           <TabsContent value="adendos" className="mt-4"><AdendosTab obraId={obra.id} /></TabsContent>
           <TabsContent value="timeline" className="mt-4"><TimelineTab obraId={obra.id} /></TabsContent>
