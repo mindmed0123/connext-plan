@@ -41,44 +41,46 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppModulo, usePermissions } from "@/hooks/usePermissions";
+import { useModulos } from "@/hooks/useModulos";
+import { ModuloChave } from "@/lib/modulos";
 
-type NavItem = { title: string; url: string; icon: any; modulo: AppModulo };
+type NavItem = { title: string; url: string; icon: any; modulo: AppModulo; mod?: ModuloChave };
 
 const operacionalAdmin: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, modulo: "dashboard" },
-  { title: "Obras", url: "/obras", icon: HardHat, modulo: "obras" },
-  { title: "Etapas", url: "/etapas", icon: Columns3, modulo: "etapas" },
-  { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario" },
+  { title: "Obras", url: "/obras", icon: HardHat, modulo: "obras", mod: "obras" },
+  { title: "Etapas", url: "/etapas", icon: Columns3, modulo: "etapas", mod: "etapas" },
+  { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario", mod: "diario" },
 ];
 
 const modulosAdmin: NavItem[] = [
-  { title: "Vistorias", url: "/vistorias", icon: ClipboardList, modulo: "vistorias" },
-  { title: "Orçamentos", url: "/orcamentos", icon: FileText, modulo: "orcamentos" },
-  { title: "Serviços", url: "/servicos", icon: Wrench, modulo: "servicos" },
-  { title: "Execuções", url: "/execucoes", icon: Hammer, modulo: "execucoes" },
+  { title: "Vistorias", url: "/vistorias", icon: ClipboardList, modulo: "vistorias", mod: "vistorias" },
+  { title: "Orçamentos", url: "/orcamentos", icon: FileText, modulo: "orcamentos", mod: "orcamentos" },
+  { title: "Serviços", url: "/servicos", icon: Wrench, modulo: "servicos", mod: "servicos" },
+  { title: "Execuções", url: "/execucoes", icon: Hammer, modulo: "execucoes", mod: "execucoes" },
 ];
 
 const financeiroAdmin: NavItem[] = [
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, modulo: "financeiro" },
-  { title: "Contratos", url: "/contratos", icon: FileSignature, modulo: "contratos" },
-  { title: "Medições", url: "/medicoes", icon: Ruler, modulo: "medicoes" },
-  { title: "Faturamento", url: "/faturamento", icon: Receipt, modulo: "faturamento" },
-  { title: "Recebimentos", url: "/recebimentos", icon: Wallet, modulo: "financeiro" },
-  { title: "Contas a pagar", url: "/contas-pagar", icon: Truck, modulo: "financeiro" },
-  { title: "Bancos", url: "/bancos", icon: Landmark, modulo: "financeiro" },
-  { title: "Cartões", url: "/cartoes", icon: CreditCard, modulo: "financeiro" },
-  { title: "Compradores", url: "/compradores", icon: ShoppingCart, modulo: "financeiro" },
+  { title: "Contratos", url: "/contratos", icon: FileSignature, modulo: "contratos", mod: "contratos" },
+  { title: "Medições", url: "/medicoes", icon: Ruler, modulo: "medicoes", mod: "medicoes" },
+  { title: "Faturamento", url: "/faturamento", icon: Receipt, modulo: "faturamento", mod: "faturamento" },
+  { title: "Recebimentos", url: "/recebimentos", icon: Wallet, modulo: "financeiro", mod: "recebimentos" },
+  { title: "Contas a pagar", url: "/contas-pagar", icon: Truck, modulo: "financeiro", mod: "contas_pagar" },
+  { title: "Bancos", url: "/bancos", icon: Landmark, modulo: "financeiro", mod: "bancos" },
+  { title: "Cartões", url: "/cartoes", icon: CreditCard, modulo: "financeiro", mod: "cartoes" },
+  { title: "Compradores", url: "/compradores", icon: ShoppingCart, modulo: "financeiro", mod: "compras" },
 ];
 
 const gestaoAdmin: NavItem[] = [
-  { title: "Equipes", url: "/equipes", icon: Users, modulo: "equipes" },
+  { title: "Equipes", url: "/equipes", icon: Users, modulo: "equipes", mod: "equipes" },
 ];
 
 // Operacional / terceirizado: apenas obras vinculadas
 const operacionalRestrito: NavItem[] = [
-  { title: "Minhas obras", url: "/obras", icon: HardHat, modulo: "obras" },
-  { title: "Canteiro", url: "/campo", icon: Camera, modulo: "obras" },
-  { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario" },
+  { title: "Minhas obras", url: "/obras", icon: HardHat, modulo: "obras", mod: "obras" },
+  { title: "Canteiro", url: "/campo", icon: Camera, modulo: "obras", mod: "obras" },
+  { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario", mod: "diario" },
 ];
 
 export function AppSidebar() {
@@ -88,13 +90,16 @@ export function AppSidebar() {
   const { signOut, user, empresaNome } = useAuth();
   const { isAdmin, isSuperAdmin, isLoading } = useUserRole();
   const { can, isLoading: permLoading } = usePermissions();
+  const { moduloAtivo, isLoading: modLoading } = useModulos();
 
   // admin/gestor veem tudo na própria empresa. Super admin vê somente o painel do sistema.
+  // Módulo desligado some do menu, para ninguém abrir tela vazia.
+  const ligado = (i: NavItem) => (i.mod ? moduloAtivo(i.mod) : true);
   const filtra = (items: NavItem[]) =>
-    isAdmin ? items : items.filter((i) => can(i.modulo, "view"));
+    (isAdmin ? items : items.filter((i) => can(i.modulo, "view"))).filter(ligado);
 
   const renderItems = (items: NavItem[]) =>
-    items.map((item) => {
+    items.filter(ligado).map((item) => {
       const active = item.url === "/" ? location.pathname === "/" : location.pathname.startsWith(item.url);
       return (
         <SidebarMenuItem key={item.title}>
@@ -129,7 +134,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {isLoading || permLoading ? null : isSuperAdmin ? (
+        {isLoading || permLoading || modLoading ? null : isSuperAdmin ? (
           <SidebarGroup>
             <SidebarGroupLabel>Sistema</SidebarGroupLabel>
             <SidebarGroupContent>

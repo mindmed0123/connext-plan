@@ -11,6 +11,7 @@ import Notificacoes from "./pages/Notificacoes";
 import { ErroApp } from "@/components/ErroApp";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequirePermission } from "@/components/RequirePermission";
+import { RequireModulo } from "@/components/RequireModulo";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
@@ -123,30 +124,30 @@ const App = () => (
               }
             >
               <Route path="/dashboard" element={<RequirePermission modulo="dashboard"><Dashboard /></RequirePermission>} />
-              <Route path="/obras" element={<RequirePermission modulo="obras"><Obras /></RequirePermission>} />
-              <Route path="/obras/:id" element={<RequirePermission modulo="obras"><ObraDetalhe /></RequirePermission>} />
-              <Route path="/etapas" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
-              <Route path="/kanban" element={<RequirePermission modulo="etapas"><Etapas /></RequirePermission>} />
-              <Route path="/vistorias" element={<RequirePermission modulo="vistorias"><Vistorias /></RequirePermission>} />
-              <Route path="/orcamentos" element={<RequirePermission modulo="orcamentos"><Orcamentos /></RequirePermission>} />
-              <Route path="/servicos" element={<RequirePermission modulo="servicos"><Servicos /></RequirePermission>} />
-              <Route path="/execucoes" element={<RequirePermission modulo="execucoes"><Execucoes /></RequirePermission>} />
+              <Route path="/obras" element={<RequireModulo modulo="obras"><RequirePermission modulo="obras"><Obras /></RequirePermission></RequireModulo>} />
+              <Route path="/obras/:id" element={<RequireModulo modulo="obras"><RequirePermission modulo="obras"><ObraDetalhe /></RequirePermission></RequireModulo>} />
+              <Route path="/etapas" element={<RequireModulo modulo="etapas"><RequirePermission modulo="etapas"><Etapas /></RequirePermission></RequireModulo>} />
+              <Route path="/kanban" element={<RequireModulo modulo="etapas"><RequirePermission modulo="etapas"><Etapas /></RequirePermission></RequireModulo>} />
+              <Route path="/vistorias" element={<RequireModulo modulo="vistorias"><RequirePermission modulo="vistorias"><Vistorias /></RequirePermission></RequireModulo>} />
+              <Route path="/orcamentos" element={<RequireModulo modulo="orcamentos"><RequirePermission modulo="orcamentos"><Orcamentos /></RequirePermission></RequireModulo>} />
+              <Route path="/servicos" element={<RequireModulo modulo="servicos"><RequirePermission modulo="servicos"><Servicos /></RequirePermission></RequireModulo>} />
+              <Route path="/execucoes" element={<RequireModulo modulo="execucoes"><RequirePermission modulo="execucoes"><Execucoes /></RequirePermission></RequireModulo>} />
               <Route path="/financeiro" element={<RequirePermission modulo="financeiro"><Financeiro /></RequirePermission>} />
-              <Route path="/faturamento" element={<RequirePermission modulo="faturamento"><Faturamento /></RequirePermission>} />
-              <Route path="/recebimentos" element={<RequirePermission modulo="financeiro"><Recebimentos /></RequirePermission>} />
-              <Route path="/contratos" element={<RequirePermission modulo="contratos"><Contratos /></RequirePermission>} />
-              <Route path="/medicoes" element={<RequirePermission modulo="medicoes"><Medicoes /></RequirePermission>} />
-              <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
-              <Route path="/equipes/pessoa/:id" element={<RequirePermission modulo="equipes"><PessoaDetalhe /></RequirePermission>} />
-              <Route path="/contas-pagar" element={<RequirePermission modulo="financeiro"><ContasPagar /></RequirePermission>} />
-              <Route path="/bancos" element={<RequirePermission modulo="financeiro"><Bancos /></RequirePermission>} />
-              <Route path="/cartoes" element={<RequirePermission modulo="financeiro"><Cartoes /></RequirePermission>} />
-              <Route path="/compradores" element={<RequirePermission modulo="financeiro"><Compradores /></RequirePermission>} />
-              <Route path="/compradores/:id" element={<RequirePermission modulo="financeiro"><CompradorDetalhe /></RequirePermission>} />
+              <Route path="/faturamento" element={<RequireModulo modulo="faturamento"><RequirePermission modulo="faturamento"><Faturamento /></RequirePermission></RequireModulo>} />
+              <Route path="/recebimentos" element={<RequireModulo modulo="recebimentos"><RequirePermission modulo="financeiro"><Recebimentos /></RequirePermission></RequireModulo>} />
+              <Route path="/contratos" element={<RequireModulo modulo="contratos"><RequirePermission modulo="contratos"><Contratos /></RequirePermission></RequireModulo>} />
+              <Route path="/medicoes" element={<RequireModulo modulo="medicoes"><RequirePermission modulo="medicoes"><Medicoes /></RequirePermission></RequireModulo>} />
+              <Route path="/equipes" element={<RequireModulo modulo="equipes"><RequirePermission modulo="equipes"><Equipes /></RequirePermission></RequireModulo>} />
+              <Route path="/equipes/pessoa/:id" element={<RequireModulo modulo="equipes"><RequirePermission modulo="equipes"><PessoaDetalhe /></RequirePermission></RequireModulo>} />
+              <Route path="/contas-pagar" element={<RequireModulo modulo="contas_pagar"><RequirePermission modulo="financeiro"><ContasPagar /></RequirePermission></RequireModulo>} />
+              <Route path="/bancos" element={<RequireModulo modulo="bancos"><RequirePermission modulo="financeiro"><Bancos /></RequirePermission></RequireModulo>} />
+              <Route path="/cartoes" element={<RequireModulo modulo="cartoes"><RequirePermission modulo="financeiro"><Cartoes /></RequirePermission></RequireModulo>} />
+              <Route path="/compradores" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><Compradores /></RequirePermission></RequireModulo>} />
+              <Route path="/compradores/:id" element={<RequireModulo modulo="compras"><RequirePermission modulo="financeiro"><CompradorDetalhe /></RequirePermission></RequireModulo>} />
 
               <Route path="/campo" element={<Campo />} />
-              <Route path="/campo/rdo" element={<RequirePermission modulo="diario"><CampoRdo /></RequirePermission>} />
-              <Route path="/campo/foto" element={<RequirePermission modulo="obras"><CampoFoto /></RequirePermission>} />
+              <Route path="/campo/rdo" element={<RequireModulo modulo="diario"><RequirePermission modulo="diario"><CampoRdo /></RequirePermission></RequireModulo>} />
+              <Route path="/campo/foto" element={<RequireModulo modulo="obras"><RequirePermission modulo="obras"><CampoFoto /></RequirePermission></RequireModulo>} />
 
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />

@@ -25,11 +25,14 @@ import {
   SkipForward,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { PERFIS, PerfilOperacao } from "@/lib/modulos";
+import { useModulos } from "@/hooks/useModulos";
 
-type StepKey = "welcome" | "profile" | "obra" | "servico" | "equipe" | "done";
+type StepKey = "welcome" | "operacao" | "profile" | "obra" | "servico" | "equipe" | "done";
 
 const STEPS: { key: StepKey; title: string; icon: any }[] = [
   { key: "welcome", title: "Boas-vindas", icon: Sparkles },
+  { key: "operacao", title: "Tipo de operação", icon: Building2 },
   { key: "profile", title: "Seu perfil", icon: Building2 },
   { key: "obra", title: "Primeira obra", icon: HardHat },
   { key: "servico", title: "Serviço", icon: Wrench },
@@ -43,6 +46,8 @@ export default function Onboarding() {
   const { user, empresaId, empresaNome, refreshEmpresa } = useAuth();
   const [stepIdx, setStepIdx] = useState(0);
   const [busy, setBusy] = useState(false);
+  const { perfil, aplicarPerfil } = useModulos();
+  const [perfilSel, setPerfilSel] = useState<PerfilOperacao | null>(null);
 
   // form state
   const [nome, setNome] = useState("");
@@ -104,6 +109,23 @@ export default function Onboarding() {
 
   const next = () => setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
   const prev = () => setStepIdx((i) => Math.max(i - 1, 0));
+
+  async function saveOperacao() {
+    const escolhido = perfilSel ?? perfil;
+    if (!escolhido) {
+      toast.error("Escolha como a sua empresa trabalha");
+      return;
+    }
+    setBusy(true);
+    try {
+      await aplicarPerfil(escolhido);
+      next();
+    } catch (e: any) {
+      toast.error(e.message ?? "Não foi possível salvar o tipo de operação");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function saveProfile() {
     if (!user?.id) return;
@@ -348,6 +370,37 @@ export default function Onboarding() {
               </Button>
             </div>
           )}
+
+          {step.key === "operacao" && (
+            <div>
+              <h2 className="mb-1 text-2xl font-bold">Como a sua empresa trabalha?</h2>
+              <p className="mb-6 text-sm text-muted-foreground">
+                Isso define os nomes usados no sistema e quais telas aparecem no menu. Dá para mudar depois em
+                Configurações, sem perder nada.
+              </p>
+              <div className="space-y-3">
+                {PERFIS.map((p) => {
+                  const marcado = (perfilSel ?? perfil) === p.valor;
+                  return (
+                    <button
+                      key={p.valor}
+                      type="button"
+                      onClick={() => setPerfilSel(p.valor)}
+                      className={`w-full rounded-lg border p-4 text-left transition ${
+                        marcado ? "border-primary bg-primary/5" : "hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold">{p.titulo}</span>
+                      <span className="block text-sm text-muted-foreground">{p.descricao}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <Footer onPrev={prev} onNext={saveOperacao} busy={busy} nextLabel="Continuar" />
+            </div>
+          )}
+
+
 
           {step.key === "profile" && (
             <div>
