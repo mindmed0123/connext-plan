@@ -1,3 +1,4 @@
+import { identificarUsuario } from "@/lib/monitoring";
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
