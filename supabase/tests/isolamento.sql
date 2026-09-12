@@ -92,11 +92,13 @@ GRANT EXECUTE ON FUNCTION iso_test.expect_vazio_ou_erro(text, text, text) TO aut
 -- leitura: nenhuma linha da empresa B e pelo menos uma da empresa A
 CREATE FUNCTION iso_test.check_leitura(_tabela text)
 RETURNS void LANGUAGE plpgsql AS $fn$
-DECLARE n_b bigint; n_a bigint;
+DECLARE n_b bigint; n_a bigint; col text;
 BEGIN
+  -- a tabela empresas identifica o tenant pela propria chave primaria
+  col := CASE WHEN _tabela = 'empresas' THEN 'id' ELSE 'empresa_id' END;
   BEGIN
-    EXECUTE format('SELECT count(*) FROM public.%I WHERE empresa_id = %L', _tabela, iso_test.v('empresa_b')) INTO n_b;
-    EXECUTE format('SELECT count(*) FROM public.%I WHERE empresa_id = %L', _tabela, iso_test.v('empresa_a')) INTO n_a;
+    EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_b')) INTO n_b;
+    EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_a')) INTO n_a;
     IF n_b > 0 THEN
       PERFORM iso_test.reg('a) leitura', _tabela, false, 'VAZOU: ' || n_b || ' linha(s) da empresa B');
     ELSIF n_a = 0 THEN
