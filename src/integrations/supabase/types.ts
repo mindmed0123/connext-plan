@@ -1518,6 +1518,7 @@ export type Database = {
           mascara_medicao: string
           mascara_nf: string
           mascara_orcamento: string
+          perfil_operacao: Database["public"]["Enums"]["perfil_operacao"] | null
           prazo_pagamento_padrao: number
           regime_tributario:
             | Database["public"]["Enums"]["regime_tributario"]
@@ -1550,6 +1551,9 @@ export type Database = {
           mascara_medicao?: string
           mascara_nf?: string
           mascara_orcamento?: string
+          perfil_operacao?:
+            | Database["public"]["Enums"]["perfil_operacao"]
+            | null
           prazo_pagamento_padrao?: number
           regime_tributario?:
             | Database["public"]["Enums"]["regime_tributario"]
@@ -1582,6 +1586,9 @@ export type Database = {
           mascara_medicao?: string
           mascara_nf?: string
           mascara_orcamento?: string
+          perfil_operacao?:
+            | Database["public"]["Enums"]["perfil_operacao"]
+            | null
           prazo_pagamento_padrao?: number
           regime_tributario?:
             | Database["public"]["Enums"]["regime_tributario"]
@@ -1623,6 +1630,41 @@ export type Database = {
             foreignKeyName: "empresa_dashboard_config_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresa_modulos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          empresa_id: string
+          id: string
+          modulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          modulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          modulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_modulos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -3184,6 +3226,7 @@ export type Database = {
           empresa_id: string
           endereco: string | null
           engenheiro_responsavel: string | null
+          exemplo: boolean
           id: string
           origem: string
           regiao: Database["public"]["Enums"]["obra_regiao"] | null
@@ -3207,6 +3250,7 @@ export type Database = {
           empresa_id?: string
           endereco?: string | null
           engenheiro_responsavel?: string | null
+          exemplo?: boolean
           id?: string
           origem: string
           regiao?: Database["public"]["Enums"]["obra_regiao"] | null
@@ -3230,6 +3274,7 @@ export type Database = {
           empresa_id?: string
           endereco?: string | null
           engenheiro_responsavel?: string | null
+          exemplo?: boolean
           id?: string
           origem?: string
           regiao?: Database["public"]["Enums"]["obra_regiao"] | null
@@ -4641,6 +4686,10 @@ export type Database = {
         Args: { _perfil_id: string; _pessoa_id?: string }
         Returns: number
       }
+      aplicar_preset_perfil: {
+        Args: { _perfil: Database["public"]["Enums"]["perfil_operacao"] }
+        Returns: undefined
+      }
       aprovar_orcamento: { Args: { _id: string }; Returns: undefined }
       calc_fatura_fechamento: {
         Args: { _data_compra: string; _dia_fech: number; _offset?: number }
@@ -4719,6 +4768,7 @@ export type Database = {
           empresa_id: string
           endereco: string | null
           engenheiro_responsavel: string | null
+          exemplo: boolean
           id: string
           origem: string
           regiao: Database["public"]["Enums"]["obra_regiao"] | null
@@ -5080,6 +5130,7 @@ export type Database = {
         | "cancelado"
       parcela_status: "pendente" | "pago"
       pc_status: "aguardando" | "recebido"
+      perfil_operacao: "prestadora_servico" | "obra_propria" | "manutencao"
       pessoa_status: "ativo" | "inativo"
       pessoa_tipo: "terceirizado" | "administrativo" | "operacional"
       rc_status: "aguardando" | "recebido"
@@ -5315,6 +5366,7 @@ export const Constants = {
       ],
       parcela_status: ["pendente", "pago"],
       pc_status: ["aguardando", "recebido"],
+      perfil_operacao: ["prestadora_servico", "obra_propria", "manutencao"],
       pessoa_status: ["ativo", "inativo"],
       pessoa_tipo: ["terceirizado", "administrativo", "operacional"],
       rc_status: ["aguardando", "recebido"],
