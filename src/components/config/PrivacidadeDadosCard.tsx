@@ -60,16 +60,49 @@ export function PrivacidadeDadosCard() {
   async function exportar() {
     if (!empresaId) return;
     setExportando(true);
+    setResultado(null);
     try {
       const zip = new JSZip();
+      const linhasResultado: LinhaExport[] = [];
       for (const tabela of TABELAS) {
-        const { data, error } = await supabase.from(tabela).select("*").eq("empresa_id", empresaId);
-        if (error) continue;
-        zip.file(`${tabela}.csv`, paraCsv((data ?? []) as Record<string, unknown>[]));
+        try {
+          // Pagina até acabar: sem isso o banco devolve no máximo 1.000 linhas.
+          const linhas = await fetchAllRows<Record<string, unknown>>((de, ate) =>
+            supabase
+              .from(tabela)
+              .select("*")
+              .eq("empresa_id", empresaId)
+              .order("id")
+              .range(de, ate),
+          );
+          zip.file(`${tabela}.csv`, paraCsv(linhas));
+          linhasResultado.push({ tabela, total: linhas.length });
+        } catch (e) {
+          linhasResultado.push({
+            tabela,
+            total: 0,
+            erro: e instanceof Error ? e.message : "falha ao ler",
+          });
+        }
       }
+      setResultado(linhasResultado);
+      const falhas = linhasResultado.filter((l) => l.erro);
       zip.file(
         "LEIA-ME.txt",
-        `Exportação de dados de ${empresaNome ?? "sua empresa"}\nGerada em ${new Date().toLocaleString("pt-BR")}\nArquivos CSV separados por ponto e vírgula.`,
+        [
+          `Exportação de dados de ${empresaNome ?? "sua empresa"}`,
+          `Gerada em ${new Date().toLocaleString("pt-BR")}`,
+          "Arquivos CSV separados por ponto e vírgula.",
+          "",
+          "Linhas exportadas por arquivo:",
+          ...linhasResultado.map((l) =>
+            l.erro ? `- ${l.tabela}: FALHOU (${l.erro})` : `- ${l.tabela}: ${l.total}`,
+          ),
+          "",
+          falhas.length
+            ? `ATENÇÃO: ${falhas.length} arquivo(s) não puderam ser lidos. A cópia está incompleta.`
+            : "Todos os arquivos foram lidos por completo.",
+        ].join("\n"),
       );
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
