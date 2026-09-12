@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/obra-helpers";
+import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useCentrosCusto } from "@/hooks/usePlanoContas";
 import { format, addDays, isBefore, parseISO } from "date-fns";
 import {
@@ -96,14 +97,17 @@ export default function Financeiro() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"venc_asc" | "venc_desc" | "valor_desc" | "valor_asc" | "criado_desc" | "criado_asc">("venc_asc");
   const anoAtual = new Date().getFullYear();
+  const [filtroConta, setFiltroConta] = useState("all");
+  const { contas: contasBancarias } = useContasBancarias();
 
   // ── Queries ────────────────────────────────────────────────────────────
   const { data: fluxo = [] } = useQuery({
-    queryKey: ["fluxo-caixa-mensal", empresaId],
+    queryKey: ["fluxo-caixa-mensal", empresaId, filtroConta],
     enabled: !!empresaId,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_fluxo_caixa_mensal", {
         _empresa_id: empresaId!, _meses_atras: 5, _meses_frente: 3,
+        _conta_id: filtroConta === "all" ? null : filtroConta,
       });
       if (error) throw error;
       return (data ?? []);
@@ -529,6 +533,16 @@ export default function Financeiro() {
 
         {/* Fluxo de caixa */}
         <TabsContent value="fluxo" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Conta bancária:</span>
+            <Select value={filtroConta} onValueChange={setFiltroConta}>
+              <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as contas</SelectItem>
+                {contasBancarias.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-base">Previsto vs realizado</CardTitle></CardHeader>
             <CardContent>

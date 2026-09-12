@@ -29,6 +29,8 @@ import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Configuracoes from "./pages/Configuracoes";
 import Cartoes from "./pages/Cartoes";
+import ContasPagar from "./pages/ContasPagar";
+import Bancos from "./pages/Bancos";
 import Compradores from "./pages/Compradores";
 import CompradorDetalhe from "./pages/CompradorDetalhe";
 import Contratos from "./pages/Contratos";
@@ -113,6 +115,8 @@ const App = () => (
               <Route path="/medicoes" element={<RequirePermission modulo="medicoes"><Medicoes /></RequirePermission>} />
               <Route path="/equipes" element={<RequirePermission modulo="equipes"><Equipes /></RequirePermission>} />
               <Route path="/equipes/pessoa/:id" element={<RequirePermission modulo="equipes"><PessoaDetalhe /></RequirePermission>} />
+              <Route path="/contas-pagar" element={<RequirePermission modulo="financeiro"><ContasPagar /></RequirePermission>} />
+              <Route path="/bancos" element={<RequirePermission modulo="financeiro"><Bancos /></RequirePermission>} />
               <Route path="/cartoes" element={<RequirePermission modulo="financeiro"><Cartoes /></RequirePermission>} />
               <Route path="/compradores" element={<RequirePermission modulo="financeiro"><Compradores /></RequirePermission>} />
               <Route path="/compradores/:id" element={<RequirePermission modulo="financeiro"><CompradorDetalhe /></RequirePermission>} />
