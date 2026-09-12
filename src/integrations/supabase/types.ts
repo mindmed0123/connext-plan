@@ -4616,6 +4616,18 @@ export type Database = {
           usuarios_ativos: number
         }[]
       }
+      admin_exclusoes_pendentes: {
+        Args: never
+        Returns: {
+          created_at: string
+          empresa_id: string
+          empresa_nome: string
+          id: string
+          motivo: string
+          prazo_em: string
+          solicitado_por_email: string
+        }[]
+      }
       admin_list_empresas_contatos: {
         Args: never
         Returns: {
