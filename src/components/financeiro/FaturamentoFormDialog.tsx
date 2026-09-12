@@ -151,6 +151,7 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange, prefill }: { t
           numero_nf: numero.trim(),
           data_emissao: data,
           pedido_compra_id: (vinculo === "existente" && pcId) ? pcId : null,
+          medicao_id: prefill?.medicaoId ?? null,
           ...nfPayload({ ...retencoes, valor_bruto: retencoes.valor_bruto || valor }),
         }]);
         if (error) throw error;
