@@ -93,7 +93,7 @@ export function OrcamentoDetailSheet({
       cep: e.cep ?? null,
       telefone: e.telefone ?? null,
       logo_url: e.logo_url ?? null,
-    });
+    }, rotulos.codigo_obra);
     toast.success("PDF gerado!");
   };
 
