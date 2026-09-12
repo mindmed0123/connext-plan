@@ -37,7 +37,7 @@ export function GruposConfigCard() {
   const invalidate = () => qc.invalidateQueries({ queryKey: [empresaId, "categoria-grupos"] });
 
   const salvar = async (id: string, campos: Record<string, unknown>) => {
-    const { error } = await supabase.from("categoria_grupos").update(campos).eq("id", id);
+    const { error } = await supabase.from("categoria_grupos").update(campos as never).eq("id", id);
     if (error) return toast.error(error.message);
     invalidate();
   };
@@ -129,7 +129,7 @@ export function CategoriasConfigCard() {
   };
 
   const salvar = async (id: string, campos: Record<string, unknown>) => {
-    const { error } = await supabase.from("categorias_financeiras").update(campos).eq("id", id);
+    const { error } = await supabase.from("categorias_financeiras").update(campos as never).eq("id", id);
     if (error) return toast.error(error.message);
     invalidate();
   };
@@ -234,7 +234,7 @@ export function CentrosCustoConfigCard() {
   const invalidate = () => qc.invalidateQueries({ queryKey: [empresaId, "centros-custo"] });
 
   const salvar = async (id: string, campos: Record<string, unknown>) => {
-    const { error } = await supabase.from("centros_custo").update(campos).eq("id", id);
+    const { error } = await supabase.from("centros_custo").update(campos as never).eq("id", id);
     if (error) return toast.error(error.message);
     invalidate();
   };
@@ -296,7 +296,7 @@ export function ListasConfigCard() {
   const invalidate = () => qc.invalidateQueries({ queryKey: [empresaId, "listas-opcoes"] });
 
   const salvar = async (id: string, campos: Record<string, unknown>) => {
-    const { error } = await supabase.from("listas_opcoes").update(campos).eq("id", id);
+    const { error } = await supabase.from("listas_opcoes").update(campos as never).eq("id", id);
     if (error) return toast.error(error.message);
     invalidate();
   };
