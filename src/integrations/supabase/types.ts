@@ -3126,6 +3126,10 @@ export type Database = {
       }
       is_admin_or_super: { Args: { _uid: string }; Returns: boolean }
       is_super_admin: { Args: { _uid: string }; Returns: boolean }
+      mesmo_tenant: {
+        Args: { _empresa: string; _id: string; _tabela: unknown }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
