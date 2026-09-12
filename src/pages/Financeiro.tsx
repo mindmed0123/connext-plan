@@ -1,3 +1,4 @@
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 import type { Database } from "@/integrations/supabase/types";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
