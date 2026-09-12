@@ -205,6 +205,7 @@ export type Database = {
           data_compra: string
           descricao: string
           empresa_id: string
+          etapa_id: string | null
           fatura_paga: boolean
           fatura_paga_em: string | null
           fatura_vencimento: string | null
@@ -212,6 +213,7 @@ export type Database = {
           id: string
           obra_id: string | null
           observacoes: string | null
+          orcamento_item_id: string | null
           parcela_num: number | null
           parcelas: number
           total_parcelas: number | null
@@ -230,6 +232,7 @@ export type Database = {
           data_compra?: string
           descricao: string
           empresa_id?: string
+          etapa_id?: string | null
           fatura_paga?: boolean
           fatura_paga_em?: string | null
           fatura_vencimento?: string | null
@@ -237,6 +240,7 @@ export type Database = {
           id?: string
           obra_id?: string | null
           observacoes?: string | null
+          orcamento_item_id?: string | null
           parcela_num?: number | null
           parcelas?: number
           total_parcelas?: number | null
@@ -255,6 +259,7 @@ export type Database = {
           data_compra?: string
           descricao?: string
           empresa_id?: string
+          etapa_id?: string | null
           fatura_paga?: boolean
           fatura_paga_em?: string | null
           fatura_vencimento?: string | null
@@ -262,6 +267,7 @@ export type Database = {
           id?: string
           obra_id?: string | null
           observacoes?: string | null
+          orcamento_item_id?: string | null
           parcela_num?: number | null
           parcelas?: number
           total_parcelas?: number | null
@@ -298,10 +304,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cartao_despesas_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cartao_despesas_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cartao_despesas_orcamento_item_id_fkey"
+            columns: ["orcamento_item_id"]
+            isOneToOne: false
+            referencedRelation: "orcamento_itens"
             referencedColumns: ["id"]
           },
         ]
@@ -802,12 +822,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           empresa_id: string
+          etapa_id: string | null
           forma_pagamento_prevista:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
           id: string
           obra_id: string
           observacoes: string | null
+          orcamento_item_id: string | null
           quantidade_parcelas: number
           status_financeiro: Database["public"]["Enums"]["contratacao_status"]
           terceirizado_id: string
@@ -819,12 +841,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           empresa_id?: string
+          etapa_id?: string | null
           forma_pagamento_prevista?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
           id?: string
           obra_id: string
           observacoes?: string | null
+          orcamento_item_id?: string | null
           quantidade_parcelas?: number
           status_financeiro?: Database["public"]["Enums"]["contratacao_status"]
           terceirizado_id: string
@@ -836,12 +860,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           empresa_id?: string
+          etapa_id?: string | null
           forma_pagamento_prevista?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
           id?: string
           obra_id?: string
           observacoes?: string | null
+          orcamento_item_id?: string | null
           quantidade_parcelas?: number
           status_financeiro?: Database["public"]["Enums"]["contratacao_status"]
           terceirizado_id?: string
@@ -864,10 +890,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contratacoes_terceirizado_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contratacoes_terceirizado_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacoes_terceirizado_orcamento_item_id_fkey"
+            columns: ["orcamento_item_id"]
+            isOneToOne: false
+            referencedRelation: "orcamento_itens"
             referencedColumns: ["id"]
           },
           {
@@ -960,6 +1000,64 @@ export type Database = {
           },
           {
             foreignKeyName: "contratos_clientes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cronograma_etapas: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          etapa_id: string | null
+          id: string
+          mes: string
+          obra_id: string
+          percentual_previsto: number
+          updated_at: string
+          valor_previsto: number
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string
+          etapa_id?: string | null
+          id?: string
+          mes: string
+          obra_id: string
+          percentual_previsto?: number
+          updated_at?: string
+          valor_previsto?: number
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          etapa_id?: string | null
+          id?: string
+          mes?: string
+          obra_id?: string
+          percentual_previsto?: number
+          updated_at?: string
+          valor_previsto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cronograma_etapas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cronograma_etapas_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cronograma_etapas_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -1558,12 +1656,14 @@ export type Database = {
           descricao: string
           documento_num: string | null
           empresa_id: string
+          etapa_id: string | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           fornecedor_nome: string | null
           id: string
           impacto_caixa: boolean
           obra_id: string | null
           observacoes: string | null
+          orcamento_item_id: string | null
           origem: string | null
           origem_id: string | null
           pessoa_id: string | null
@@ -1585,6 +1685,7 @@ export type Database = {
           descricao: string
           documento_num?: string | null
           empresa_id: string
+          etapa_id?: string | null
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -1593,6 +1694,7 @@ export type Database = {
           impacto_caixa?: boolean
           obra_id?: string | null
           observacoes?: string | null
+          orcamento_item_id?: string | null
           origem?: string | null
           origem_id?: string | null
           pessoa_id?: string | null
@@ -1614,6 +1716,7 @@ export type Database = {
           descricao?: string
           documento_num?: string | null
           empresa_id?: string
+          etapa_id?: string | null
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -1622,6 +1725,7 @@ export type Database = {
           impacto_caixa?: boolean
           obra_id?: string | null
           observacoes?: string | null
+          orcamento_item_id?: string | null
           origem?: string | null
           origem_id?: string | null
           pessoa_id?: string | null
@@ -1653,10 +1757,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lancamentos_financeiros_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lancamentos_financeiros_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_orcamento_item_id_fkey"
+            columns: ["orcamento_item_id"]
+            isOneToOne: false
+            referencedRelation: "orcamento_itens"
             referencedColumns: ["id"]
           },
           {
@@ -1723,12 +1841,14 @@ export type Database = {
           data_compra: string
           descricao: string
           empresa_id: string
+          etapa_id: string | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           fornecedor: string | null
           id: string
           numero_nf: string | null
           obra_id: string
           observacoes: string | null
+          orcamento_item_id: string | null
           quantidade: number
           unidade: string | null
           updated_at: string
@@ -1745,6 +1865,7 @@ export type Database = {
           data_compra?: string
           descricao: string
           empresa_id?: string
+          etapa_id?: string | null
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -1753,6 +1874,7 @@ export type Database = {
           numero_nf?: string | null
           obra_id: string
           observacoes?: string | null
+          orcamento_item_id?: string | null
           quantidade?: number
           unidade?: string | null
           updated_at?: string
@@ -1769,6 +1891,7 @@ export type Database = {
           data_compra?: string
           descricao?: string
           empresa_id?: string
+          etapa_id?: string | null
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -1777,6 +1900,7 @@ export type Database = {
           numero_nf?: string | null
           obra_id?: string
           observacoes?: string | null
+          orcamento_item_id?: string | null
           quantidade?: number
           unidade?: string | null
           updated_at?: string
@@ -1806,10 +1930,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "materiais_obra_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "materiais_obra_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materiais_obra_orcamento_item_id_fkey"
+            columns: ["orcamento_item_id"]
+            isOneToOne: false
+            referencedRelation: "orcamento_itens"
             referencedColumns: ["id"]
           },
         ]
@@ -2077,6 +2215,51 @@ export type Database = {
           },
         ]
       }
+      obra_etapas: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          obra_id: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome: string
+          obra_id: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_etapas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_etapas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_responsaveis: {
         Row: {
           created_at: string
@@ -2323,6 +2506,7 @@ export type Database = {
           descricao: string
           descricao_detalhada: string | null
           empresa_id: string
+          etapa_id: string | null
           id: string
           orcamento_id: string
           ordem: number
@@ -2341,6 +2525,7 @@ export type Database = {
           descricao: string
           descricao_detalhada?: string | null
           empresa_id: string
+          etapa_id?: string | null
           id?: string
           orcamento_id: string
           ordem?: number
@@ -2359,6 +2544,7 @@ export type Database = {
           descricao?: string
           descricao_detalhada?: string | null
           empresa_id?: string
+          etapa_id?: string | null
           id?: string
           orcamento_id?: string
           ordem?: number
@@ -2375,6 +2561,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_itens_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "obra_etapas"
             referencedColumns: ["id"]
           },
           {
@@ -3713,6 +3906,26 @@ export type Database = {
         Args: { _chamado: string; _descricao: string; _endereco: string }
         Returns: string
       }
+      get_curva_abc: {
+        Args: { _fim?: string; _inicio?: string; _obra_id?: string }
+        Returns: {
+          classe: string
+          descricao: string
+          pct: number
+          pct_acumulado: number
+          valor: number
+        }[]
+      }
+      get_curva_s: {
+        Args: { _obra_id: string }
+        Returns: {
+          mes: string
+          previsto: number
+          previsto_acum: number
+          realizado: number
+          realizado_acum: number
+        }[]
+      }
       get_dre_obra: {
         Args: { _empresa_id: string; _obra_id?: string }
         Returns: {
@@ -3773,6 +3986,34 @@ export type Database = {
           receita_orcada: number
           receita_recebida: number
           saldo: number
+        }[]
+      }
+      get_obras_avanco: {
+        Args: never
+        Returns: {
+          codigo_chamado: string
+          descricao: string
+          obra_id: string
+          pct_financeiro_realizado: number
+          pct_fisico_previsto: number
+          previsto_ate_hoje: number
+          previsto_total: number
+          realizado: number
+        }[]
+      }
+      get_orcado_realizado: {
+        Args: { _fim?: string; _inicio?: string; _obra_id: string }
+        Returns: {
+          comprometido: number
+          etapa_id: string
+          etapa_nome: string
+          item_descricao: string
+          item_id: string
+          pct_consumido: number
+          quantidade_orcada: number
+          realizado: number
+          saldo: number
+          valor_orcado: number
         }[]
       }
       get_retencoes_mensais: {
