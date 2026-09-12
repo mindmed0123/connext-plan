@@ -82,7 +82,7 @@ export function useDashboardData(filters: DashboardFilters) {
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
-          supabase.from("materiais_obra").select("id,obra_id,valor_total,data_compra").range(f, t),
+          supabase.from("materiais_obra").select("id,obra_id,valor_total,data_compra").order("id").range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
           supabase
@@ -99,16 +99,16 @@ export function useDashboardData(filters: DashboardFilters) {
             .range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
-          supabase.from("obra_responsaveis").select("obra_id,pessoa_id,papel").range(f, t),
+          supabase.from("obra_responsaveis").select("obra_id,pessoa_id,papel").order("id").range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
-          supabase.from("pessoas").select("id,nome,tipo,status").range(f, t),
+          supabase.from("pessoas").select("id,nome,tipo,status").order("id").range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
-          supabase.from("obra_timeline").select("obra_id,evento,created_at").range(f, t),
+          supabase.from("obra_timeline").select("obra_id,evento,created_at").order("id").range(f, t),
         ),
         fetchAllRows<any>((f, t) =>
-          supabase.from("fotos_obra").select("obra_id,data_upload").range(f, t),
+          supabase.from("fotos_obra").select("obra_id,data_upload").order("id").range(f, t),
         ),
         supabase.rpc("get_obra_financeiro_resumo", { _obra_id: null }),
       ]);
