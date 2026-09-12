@@ -92,11 +92,13 @@ GRANT EXECUTE ON FUNCTION iso_test.expect_vazio_ou_erro(text, text, text) TO aut
 -- leitura: nenhuma linha da empresa B e pelo menos uma da empresa A
 CREATE FUNCTION iso_test.check_leitura(_tabela text)
 RETURNS void LANGUAGE plpgsql AS $fn$
-DECLARE n_b bigint; n_a bigint;
+DECLARE n_b bigint; n_a bigint; col text;
 BEGIN
+  -- a tabela empresas identifica o tenant pela propria chave primaria
+  col := CASE WHEN _tabela = 'empresas' THEN 'id' ELSE 'empresa_id' END;
   BEGIN
-    EXECUTE format('SELECT count(*) FROM public.%I WHERE empresa_id = %L', _tabela, iso_test.v('empresa_b')) INTO n_b;
-    EXECUTE format('SELECT count(*) FROM public.%I WHERE empresa_id = %L', _tabela, iso_test.v('empresa_a')) INTO n_a;
+    EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_b')) INTO n_b;
+    EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_a')) INTO n_a;
     IF n_b > 0 THEN
       PERFORM iso_test.reg('a) leitura', _tabela, false, 'VAZOU: ' || n_b || ' linha(s) da empresa B');
     ELSIF n_a = 0 THEN
@@ -318,9 +320,14 @@ SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_obra_financeiro_resumo(obra 
   $q$SELECT * FROM public.get_obra_financeiro_resumo(%L) WHERE receita_faturada <> 0 OR custo_total <> 0$q$,
   iso_test.v('obra_b')));
 
+-- os KPIs devem bater exatamente com o que a empresa A enxerga no proprio razao:
+-- qualquer valor da empresa B somado faria a comparacao divergir.
 SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_financeiro_kpis (nao ve valores de B)',
-  $q$SELECT * FROM public.get_financeiro_kpis(current_date - 365, current_date + 365)
-     WHERE receita_realizada > 0 OR despesa_realizada > 0 OR receita_prevista > 0 OR despesa_prevista > 0$q$);
+  $q$SELECT * FROM public.get_financeiro_kpis(NULL, NULL) k
+     WHERE k.receita_realizada <> COALESCE((SELECT SUM(lf.valor) FROM public.lancamentos_financeiros lf
+            WHERE lf.tipo = 'receita' AND lf.status = 'realizado' AND lf.impacto_caixa), 0)
+        OR k.despesa_realizada <> COALESCE((SELECT SUM(lf.valor) FROM public.lancamentos_financeiros lf
+            WHERE lf.tipo = 'despesa' AND lf.status = 'realizado' AND lf.impacto_caixa), 0)$q$);
 
 SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_fluxo_caixa_mensal(empresa B)', format(
   $q$SELECT * FROM public.get_fluxo_caixa_mensal(%L, 6, 6)

@@ -36,9 +36,9 @@ export function toDateKey(d: Date) {
 export function parseDateString(dateStr?: string | null): Date | null {
   if (!dateStr) return null;
 
-  const dmy = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  const dmy = dateStr.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   if (dmy) {
-    let [, d, m, y] = dmy;
+    const [, d, m, y] = dmy;
     let yearNum = parseInt(y, 10);
     if (yearNum < 100) yearNum += 2000;
     const dayNum = parseInt(d, 10);
