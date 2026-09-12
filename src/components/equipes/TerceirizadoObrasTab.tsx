@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { OBRA_STATUS_LABEL } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { formatDateBR } from "@/lib/date";
 
 const formatBRL = (n: number) =>
@@ -164,7 +164,7 @@ export function TerceirizadoObrasTab({ pessoaId }: { pessoaId: string }) {
                   <span>
                     Status obra:{" "}
                     <strong className="text-foreground">
-                      {OBRA_STATUS_LABEL[c.obra.status as keyof typeof OBRA_STATUS_LABEL]}
+                      {statusLabel(c.obra.status)}
                     </strong>
                   </span>
                 )}

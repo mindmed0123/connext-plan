@@ -15,7 +15,7 @@ import {
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
-import { OBRA_STATUS_LABEL } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { ObraPapel, PessoaTipo, PAPEL_PARA_TIPO } from "@/lib/pessoas-helpers";
 import { toast } from "sonner";
 import {
@@ -123,7 +123,7 @@ export function PessoaObrasVinculadasTab({
             </div>
             <div className="flex flex-col items-end gap-1">
               <Badge variant="outline" className="text-[10px]">
-                {OBRA_STATUS_LABEL[v.obra?.status as keyof typeof OBRA_STATUS_LABEL]}
+                {statusLabel(v.obra?.status)}
               </Badge>
               <Button
                 size="icon"
