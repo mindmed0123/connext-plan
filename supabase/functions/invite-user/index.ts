@@ -7,6 +7,7 @@ const InviteSchema = z.object({
   nome: z.string().trim().max(150).optional(),
   role: z.enum(["admin", "gestor", "financeiro", "engenheiro", "operacional"]),
   empresa_id: z.string().uuid().optional(),
+  perfil_id: z.string().uuid().nullable().optional(),
 });
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
 
     const parsed = InviteSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return json({ error: "Confira o e-mail e a função informados." }, 400);
-    const { email, role, nome } = parsed.data;
+    const { email, role, nome, perfil_id } = parsed.data;
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -131,8 +132,21 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (lookupError) return json({ error: "Convite enviado, mas o cadastro do funcionário não pôde ser consultado." }, 500);
 
+    // perfil sempre revalidado contra a empresa derivada do JWT
+    let perfilValido: string | null = null;
+    if (perfil_id) {
+      const { data: perfil } = await admin
+        .from("perfis_permissao")
+        .select("id")
+        .eq("id", perfil_id)
+        .eq("empresa_id", empresaId)
+        .maybeSingle();
+      if (!perfil) return json({ error: "Perfil de permissão inválido para esta empresa." }, 400);
+      perfilValido = perfil.id;
+    }
+
     const personResult = existing
-      ? await admin.from("pessoas").update({ user_id: newUserId }).eq("id", existing.id)
+      ? await admin.from("pessoas").update({ user_id: newUserId, perfil_id: perfilValido }).eq("id", existing.id).select("id").maybeSingle()
       : await admin.from("pessoas").insert({
           nome: nome || email,
           email,
@@ -140,8 +154,24 @@ Deno.serve(async (req) => {
           user_id: newUserId,
           empresa_id: empresaId,
           status: "ativo",
-        });
+          perfil_id: perfilValido,
+        }).select("id").maybeSingle();
     if (personResult.error) return json({ error: "Convite enviado, mas o cadastro do funcionário não pôde ser vinculado." }, 500);
+
+    const pessoaId = personResult.data?.id ?? existing?.id ?? null;
+    if (perfilValido && pessoaId) {
+      const { data: itens } = await admin
+        .from("perfil_permissao_itens")
+        .select("modulo, can_view, can_create, can_edit, can_delete")
+        .eq("perfil_id", perfilValido)
+        .eq("empresa_id", empresaId);
+      if (itens?.length) {
+        await admin.from("pessoa_permissoes").upsert(
+          itens.map((i) => ({ ...i, pessoa_id: pessoaId, empresa_id: empresaId })),
+          { onConflict: "pessoa_id,modulo" },
+        );
+      }
+    }
 
     return json({ ok: true, user_id: newUserId });
   } catch (error) {
