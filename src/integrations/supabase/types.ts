@@ -1980,6 +1980,7 @@ export type Database = {
           storage_path: string | null
           tipo: Database["public"]["Enums"]["foto_tipo"]
           uploaded_by: string | null
+          visivel_cliente: boolean
         }
         Insert: {
           data_upload?: string
@@ -1992,6 +1993,7 @@ export type Database = {
           storage_path?: string | null
           tipo: Database["public"]["Enums"]["foto_tipo"]
           uploaded_by?: string | null
+          visivel_cliente?: boolean
         }
         Update: {
           data_upload?: string
@@ -2004,6 +2006,7 @@ export type Database = {
           storage_path?: string | null
           tipo?: Database["public"]["Enums"]["foto_tipo"]
           uploaded_by?: string | null
+          visivel_cliente?: boolean
         }
         Relationships: [
           {
@@ -2612,6 +2615,63 @@ export type Database = {
           },
         ]
       }
+      obra_documentos: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          obra_id: string
+          tipo: string | null
+          updated_at: string
+          visivel_cliente: boolean
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome: string
+          obra_id: string
+          tipo?: string | null
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+          tipo?: string | null
+          updated_at?: string
+          visivel_cliente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_documentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_documentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_etapas: {
         Row: {
           created_at: string
@@ -2650,6 +2710,112 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_etapas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_portal_acessos: {
+        Row: {
+          acessado_em: string
+          empresa_id: string
+          id: string
+          ip: string | null
+          obra_id: string
+          token_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          acessado_em?: string
+          empresa_id?: string
+          id?: string
+          ip?: string | null
+          obra_id: string
+          token_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          acessado_em?: string
+          empresa_id?: string
+          id?: string
+          ip?: string | null
+          obra_id?: string
+          token_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_portal_acessos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_portal_acessos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_portal_acessos_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "obra_portal_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_portal_tokens: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          criado_por: string | null
+          empresa_id: string
+          expira_em: string | null
+          id: string
+          obra_id: string
+          token: string
+          ultimo_acesso: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          empresa_id?: string
+          expira_em?: string | null
+          id?: string
+          obra_id: string
+          token: string
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          empresa_id?: string
+          expira_em?: string | null
+          id?: string
+          obra_id?: string
+          token?: string
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_portal_tokens_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_portal_tokens_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -4433,6 +4599,10 @@ export type Database = {
           saldo: number
           valor_orcado: number
         }[]
+      }
+      get_portal_obra: {
+        Args: { _ip?: string; _token: string; _user_agent?: string }
+        Returns: Json
       }
       get_retencoes_mensais: {
         Args: { _fim: string; _inicio: string }
