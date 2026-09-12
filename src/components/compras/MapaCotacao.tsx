@@ -154,6 +154,20 @@ export function MapaCotacao({ solicitacaoId, onClose }: Props) {
         const { error: e2 } = await supabase.from("ordem_compra_itens").insert(linhas);
         if (e2) throw e2;
         await supabase.from("cotacoes").update({ status: "escolhida" }).eq("id", cid);
+
+        // Alçada de aprovação (se houver faixa configurada para ordem de compra)
+        const valorOC =
+          linhas.reduce((s, l) => s + Number(l.quantidade) * Number(l.preco_unitario), 0) +
+          Number(cot.frete ?? 0);
+        const { data: pendentes } = await supabase.rpc("solicitar_aprovacao", {
+          _documento: "ordem_compra",
+          _registro_id: oc.id,
+          _valor: valorOC,
+          _descricao: `Ordem de compra ${oc.numero ?? ""}`,
+        });
+        if ((pendentes ?? 0) > 0) {
+          await supabase.from("ordens_compra").update({ status: "aguardando_aprovacao" }).eq("id", oc.id);
+        }
         numeros.push(oc.numero ?? "");
       }
       await supabase.from("solicitacoes_compra").update({ status: "aprovada" }).eq("id", solicitacao.id);

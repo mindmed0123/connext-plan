@@ -14,7 +14,8 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown, ChevronDown, Send, Save } from "lucide-react";
+import { Plus, X, Search, Loader2, ArrowRight, ArrowLeft, Check, ChevronsUpDown, ChevronDown, Send, Save, Upload } from "lucide-react";
+import { ImportarItensDialog, type ItemImportado } from "@/components/orcamentos/ImportarItensDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/obra-helpers";
@@ -34,6 +35,8 @@ type ItemForm = {
   preco_unitario: number;
   desconto_pct: number;
   aliquota_iss?: number;
+  /** BDI próprio da linha; nulo = usa o BDI do orçamento */
+  bdi_pct?: number | null;
 };
 
 const subtotal = (i: ItemForm) => subtotalItem(i);
@@ -80,6 +83,22 @@ export function OrcamentoFormDialog({
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
   const [detalheAberto, setDetalheAberto] = useState<Record<number, boolean>>({});
+  const [importarAberto, setImportarAberto] = useState(false);
+
+  const aplicarImportacao = (novos: ItemImportado[]) => {
+    setItens((arr) => [
+      ...arr,
+      ...novos.map((n) => ({
+        descricao: n.descricao,
+        unidade: n.unidade || "un",
+        quantidade: Number(n.quantidade) || 0,
+        preco_unitario: Number(n.preco_unitario) || 0,
+        desconto_pct: 0,
+        aliquota_iss: 0,
+        bdi_pct: null,
+      })),
+    ]);
+  };
 
   // Proposta comercial (campos extras Omie-like)
   const [objeto, setObjeto] = useState("");
@@ -223,6 +242,7 @@ export function OrcamentoFormDialog({
         quantidade: Number(i.quantidade), preco_unitario: Number(i.preco_unitario),
         desconto_pct: Number(i.desconto_pct),
         aliquota_iss: Number(i.aliquota_iss ?? 0),
+        bdi_pct: i.bdi_pct == null ? null : Number(i.bdi_pct),
       })));
     })();
   }, [open, orcamentoId, config]);
@@ -335,7 +355,7 @@ export function OrcamentoFormDialog({
 
       // Salva orçamento + itens numa única transação no banco (os totais são
       // calculados pelo próprio banco, nunca pelo front)
-      const { error } = await supabase.rpc("salvar_orcamento", {
+      const { data: salvoId, error } = await supabase.rpc("salvar_orcamento", {
         _orcamento: { ...payload, id: orcamentoId ?? null },
         _itens: itens.map((it, idx) => ({
           servico_id: it.servico_id || null,
@@ -348,10 +368,24 @@ export function OrcamentoFormDialog({
           preco_unitario: Number(it.preco_unitario) || 0,
           desconto_pct: Number(it.desconto_pct) || 0,
           aliquota_iss: Number(it.aliquota_iss) || 0,
+          bdi_pct: it.bdi_pct == null || it.bdi_pct === ("" as unknown as number) ? null : Number(it.bdi_pct),
           ordem: idx,
         })),
       });
       if (error) throw error;
+
+      // Alçada de aprovação ao enviar o orçamento
+      if (novoStatus === "enviado" && salvoId) {
+        const { data: pendentes } = await supabase.rpc("solicitar_aprovacao", {
+          _documento: "orcamento",
+          _registro_id: salvoId as string,
+          _valor: total,
+          _descricao: `Orçamento ${numero ?? ""} — ${clienteNome}`.trim(),
+        });
+        if ((pendentes ?? 0) > 0) {
+          toast.info("Orçamento enviado para aprovação interna");
+        }
+      }
     },
     onSuccess: (_d, status) => {
       toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
@@ -578,6 +612,9 @@ export function OrcamentoFormDialog({
             <section className="space-y-3 rounded-lg border bg-muted/20 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Itens do orçamento ({itens.length})</h3>
+                <Button type="button" size="sm" variant="outline" onClick={() => setImportarAberto(true)}>
+                  <Upload className="mr-1 h-4 w-4" /> Importar planilha
+                </Button>
               </div>
 
               {itens.length === 0 ? (
@@ -589,7 +626,7 @@ export function OrcamentoFormDialog({
                   {itens.map((item, idx) => (
                     <div key={idx} className="rounded-md border bg-background p-3 space-y-2">
                       <div className="grid grid-cols-12 gap-2 items-end">
-                        <div className="col-span-12 md:col-span-5">
+                        <div className="col-span-12 md:col-span-4">
                           <Label className="text-xs">Descrição</Label>
                           <Input value={item.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} />
                         </div>
@@ -600,7 +637,7 @@ export function OrcamentoFormDialog({
                             onChange={(e) => updateItem(idx, { quantidade: parseFloat(e.target.value) || 0 })} />
                         </div>
                         <div className="col-span-4 md:col-span-2">
-                          <Label className="text-xs">Preço un. (R$)</Label>
+                          <Label className="text-xs">Custo un. (R$)</Label>
                           <Input type="number" step="0.01" value={item.preco_unitario}
                             onChange={(e) => updateItem(idx, { preco_unitario: Number(e.target.value) })} />
                         </div>
@@ -609,7 +646,13 @@ export function OrcamentoFormDialog({
                           <Input type="number" step="1" min={0} max={100} value={item.desconto_pct}
                             onChange={(e) => updateItem(idx, { desconto_pct: Number(e.target.value) })} />
                         </div>
-                        <div className="col-span-10 md:col-span-1">
+                        <div className="col-span-4 md:col-span-1">
+                          <Label className="text-xs" title="Vazio = usa o BDI do orçamento">BDI%</Label>
+                          <Input type="number" step="0.01" min={0} placeholder="geral"
+                            value={item.bdi_pct ?? ""}
+                            onChange={(e) => updateItem(idx, { bdi_pct: e.target.value === "" ? null : Number(e.target.value) })} />
+                        </div>
+                        <div className="col-span-6 md:col-span-1">
                           <Label className="text-xs">Subtotal</Label>
                           <div className="h-10 flex items-center px-2 rounded-md border bg-muted/50 text-sm font-semibold">
                             {formatCurrency(subtotal(item))}
@@ -621,6 +664,14 @@ export function OrcamentoFormDialog({
                           </Button>
                         </div>
                       </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Custo {formatCurrency(subtotal(item))} · BDI{" "}
+                        {(item.bdi_pct ?? calcularBdiPct(bdi)).toFixed(2)}%
+                        {item.bdi_pct == null && " (do orçamento)"} · Preço de venda{" "}
+                        <strong>
+                          {formatCurrency(subtotal(item) * (1 + (item.bdi_pct ?? calcularBdiPct(bdi)) / 100))}
+                        </strong>
+                      </p>
                       <div>
                         <button
                           type="button"
@@ -762,6 +813,11 @@ export function OrcamentoFormDialog({
             </div>
           </div>
         )}
+        <ImportarItensDialog
+          open={importarAberto}
+          onOpenChange={setImportarAberto}
+          onConfirmar={aplicarImportacao}
+        />
       </DialogContent>
     </Dialog>
   );

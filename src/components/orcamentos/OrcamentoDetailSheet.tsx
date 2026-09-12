@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { format, addDays, parseISO } from "date-fns";
-import { FileDown, Pencil, Check, X, MessageSquare } from "lucide-react";
+import { FileDown, Pencil, Check, X, MessageSquare, FileText } from "lucide-react";
 import { gerarOrcamentoPDF } from "@/lib/orcamento-pdf";
+import { GerarPropostaDialog } from "@/components/orcamentos/GerarPropostaDialog";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ORC_STATUS_BADGE } from "./orc-helpers";
 import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
@@ -29,6 +31,7 @@ export function OrcamentoDetailSheet({
   const { config } = useEmpresaConfig();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [propostaAberta, setPropostaAberta] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["orc-detail", orcamentoId],
@@ -197,6 +200,9 @@ export function OrcamentoDetailSheet({
 
             <div className="flex flex-wrap gap-2 pt-3 border-t">
               <Button variant="outline" onClick={handlePDF}><FileDown className="h-4 w-4" /> Gerar PDF</Button>
+              <Button variant="outline" onClick={() => setPropostaAberta(true)}>
+                <FileText className="h-4 w-4" /> Gerar proposta
+              </Button>
               {orc.status !== "aprovado" ? (
                 <Button variant="outline" onClick={() => onEdit(orc.id)}><Pencil className="h-4 w-4" /> Editar</Button>
               ) : (
@@ -222,6 +228,11 @@ export function OrcamentoDetailSheet({
             </div>
           </div>
         )}
+        <GerarPropostaDialog
+          orcamentoId={orcamentoId}
+          open={propostaAberta}
+          onOpenChange={setPropostaAberta}
+        />
       </SheetContent>
     </Sheet>
   );

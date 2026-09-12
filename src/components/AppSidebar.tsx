@@ -48,6 +48,7 @@ type NavItem = { title: string; url: string; icon: any; modulo: AppModulo; mod?:
 
 const operacionalAdmin: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, modulo: "dashboard" },
+  { title: "Minhas aprovações", url: "/aprovacoes", icon: ClipboardList, modulo: "dashboard" },
   { title: "Obras", url: "/obras", icon: HardHat, modulo: "obras", mod: "obras" },
   { title: "Etapas", url: "/etapas", icon: Columns3, modulo: "etapas", mod: "etapas" },
   { title: "Diário de obra", url: "/campo/rdo", icon: ClipboardList, modulo: "diario", mod: "diario" },
