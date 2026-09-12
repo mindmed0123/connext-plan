@@ -12,6 +12,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { PRAZO_EXCLUSAO_DIAS } from "@/lib/legal";
+import { fetchAllRows } from "@/lib/fetch-all";
+
+type LinhaExport = { tabela: string; total: number; erro?: string };
 
 // Tabelas exportadas no ZIP. A RLS já limita tudo à empresa do usuário.
 const TABELAS = [
@@ -37,6 +40,7 @@ export function PrivacidadeDadosCard() {
   const { empresaId, empresaNome, user } = useAuth();
   const qc = useQueryClient();
   const [exportando, setExportando] = useState(false);
+  const [resultado, setResultado] = useState<LinhaExport[] | null>(null);
   const [confirmacao, setConfirmacao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
