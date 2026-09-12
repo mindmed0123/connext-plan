@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import { EtapaItemSelect } from "@/components/obras/EtapaItemSelect";
 type FormaPagamento = Database["public"]["Enums"]["forma_pagamento"];
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -279,6 +280,13 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
             <Label className="text-xs">Observações</Label>
             <Textarea rows={2} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           </div>
+
+          <EtapaItemSelect
+            obraId={obraId}
+            etapaId={form.etapa_id}
+            itemId={form.orcamento_item_id}
+            onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+          />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
