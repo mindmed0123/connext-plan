@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEmpresaRotulos } from "@/hooks/useEmpresaRotulos";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ const LARGURA_DIA = 14;
 
 export default function Cronograma() {
   const { empresaId } = useAuth();
-  const rotulos = useEmpresaRotulos();
+  const { rotulos } = useObraConfig();
   const qc = useQueryClient();
   const [obraId, setObraId] = useState("");
   const [novaDep, setNovaDep] = useState({ etapa_id: "", depende_de_etapa_id: "", tipo: "FI", folga_dias: "0" });
