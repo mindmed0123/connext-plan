@@ -71,7 +71,12 @@ BEGIN
       ('pessoa_documentos','pessoa_id','pessoas'),
       ('comprador_contratos','comprador_id','compradores'),
       ('servicos','categoria_id','categorias_servico'),
-      ('cartao_despesas','comprador_id','compradores')
+      ('cartao_despesas','comprador_id','compradores'),
+      ('lancamentos_financeiros','conta_bancaria_id','contas_bancarias'),
+      ('notas_fiscais','medicao_id','medicoes'),
+      ('parcelas_pagamento','conta_bancaria_id','contas_bancarias'),
+      ('recebimento_pagamentos','conta_bancaria_id','contas_bancarias'),
+      ('extrato_bancario','lancamento_id','lancamentos_financeiros')
     ) AS v(tabela, coluna, pai)
   LOOP
     IF NOT EXISTS (

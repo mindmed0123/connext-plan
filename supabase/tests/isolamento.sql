@@ -1,13 +1,23 @@
 -- =====================================================================
 -- Prova automatica de isolamento multiempresa (multi-tenant)
 --
--- Cria duas empresas de teste (A e B) com um usuario cada, popula os
--- dados de negocio das duas e, autenticado como o usuario de A, verifica:
---   (a) leitura: nenhuma linha de B aparece;
---   (b) escrita com FK apontando para registros de B: tudo falha;
---   (c) RPCs chamadas com ids/empresa_id de B: falham ou voltam vazio;
---   (d) storage: arquivo de B nao pode ser lido nem gravado.
+-- Os casos NAO sao uma lista fixa: sao gerados por introspeccao do
+-- catalogo do Postgres. Cria duas empresas de teste (A e B), popula as
+-- duas (massa manual das tabelas centrais + massa generica para todas
+-- as demais tabelas com empresa_id) e, autenticado como o usuario de A:
 --
+--   (a) leitura   : para TODA tabela public com empresa_id, nenhuma
+--                   linha da empresa B pode aparecer;
+--   (b) escrita   : insert com empresa_id de B, update e delete de
+--                   linhas de B precisam ser bloqueados;
+--   (c) FK cruzada: para TODA chave estrangeira que aponta para outra
+--                   tabela com empresa_id, insert com empresa_id de A
+--                   e a FK apontando para um registro de B;
+--   (d) RPC       : TODA funcao do schema public e chamada com ids da
+--                   empresa B; falha se a resposta contiver dado de B;
+--   (e) storage   : arquivo de B nao pode ser lido, gravado nem apagado.
+--
+-- Cada chamada de RPC roda em subtransacao que SEMPRE e desfeita.
 -- Ao final apaga as duas empresas de teste, imprime uma linha por caso
 -- (PASSOU/FALHOU) e encerra com erro se algum caso falhar.
 --
@@ -40,11 +50,14 @@ GRANT USAGE, SELECT ON SEQUENCE iso_test.resultados_id_seq TO authenticated;
 CREATE TABLE iso_test.ctx (chave text primary key, valor uuid not null);
 GRANT SELECT ON iso_test.ctx TO authenticated;
 
+-- registro da massa gerada: qual id existe em qual tabela/empresa
+CREATE TABLE iso_test.seeded (tabela text not null, empresa uuid not null, id uuid not null);
+GRANT SELECT ON iso_test.seeded TO authenticated;
+
 CREATE FUNCTION iso_test.v(_chave text) RETURNS uuid
 LANGUAGE sql STABLE AS 'select valor from iso_test.ctx where chave = $1';
 GRANT EXECUTE ON FUNCTION iso_test.v(text) TO authenticated;
 
--- registra um caso
 CREATE FUNCTION iso_test.reg(_grupo text, _nome text, _passou boolean, _detalhe text default null)
 RETURNS void LANGUAGE sql AS $fn$
   INSERT INTO iso_test.resultados(grupo, nome, passou, detalhe)
@@ -71,7 +84,6 @@ BEGIN
 END $fn$;
 GRANT EXECUTE ON FUNCTION iso_test.expect_bloqueado(text, text, text) TO authenticated;
 
--- espera que o SELECT falhe OU volte vazio (usado nas RPCs)
 CREATE FUNCTION iso_test.expect_vazio_ou_erro(_grupo text, _nome text, _sql text)
 RETURNS void LANGUAGE plpgsql AS $fn$
 DECLARE n bigint;
@@ -89,39 +101,150 @@ BEGIN
 END $fn$;
 GRANT EXECUTE ON FUNCTION iso_test.expect_vazio_ou_erro(text, text, text) TO authenticated;
 
--- leitura: nenhuma linha da empresa B e pelo menos uma da empresa A
+-- leitura: nenhuma linha da empresa B
 CREATE FUNCTION iso_test.check_leitura(_tabela text)
 RETURNS void LANGUAGE plpgsql AS $fn$
-DECLARE n_b bigint; n_a bigint; col text;
+DECLARE n_b bigint; n_a bigint; col text; existe_b bigint;
 BEGIN
-  -- a tabela empresas identifica o tenant pela propria chave primaria
   col := CASE WHEN _tabela = 'empresas' THEN 'id' ELSE 'empresa_id' END;
-  BEGIN
-    EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_b')) INTO n_b;
-    EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_a')) INTO n_a;
-    IF n_b > 0 THEN
-      PERFORM iso_test.reg('a) leitura', _tabela, false, 'VAZOU: ' || n_b || ' linha(s) da empresa B');
-    ELSIF n_a = 0 THEN
-      PERFORM iso_test.reg('a) leitura', _tabela, false, 'teste invalido: nenhuma linha da empresa A visivel');
-    ELSE
-      PERFORM iso_test.reg('a) leitura', _tabela, true, n_a || ' linha(s) de A, 0 de B');
-    END IF;
-  EXCEPTION
-    WHEN insufficient_privilege THEN
-      PERFORM iso_test.reg('a) leitura', _tabela, true, 'sem acesso a tabela (permission denied)');
-    WHEN OTHERS THEN
-      PERFORM iso_test.reg('a) leitura', _tabela, false, 'erro inesperado: ' || SQLERRM);
-  END;
-
+  EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_b')) INTO n_b;
+  EXECUTE format('SELECT count(*) FROM public.%I WHERE %I = %L', _tabela, col, iso_test.v('empresa_a')) INTO n_a;
+  SELECT count(*) INTO existe_b FROM iso_test.seeded WHERE tabela = _tabela AND empresa = iso_test.v('empresa_b');
+  IF n_b > 0 THEN
+    PERFORM iso_test.reg('a) leitura', _tabela, false, 'VAZOU: ' || n_b || ' linha(s) da empresa B');
+  ELSE
+    PERFORM iso_test.reg('a) leitura', _tabela, true,
+      n_a || ' linha(s) de A, 0 de B' || CASE WHEN existe_b = 0 THEN ' (sem massa de B)' ELSE '' END);
+  END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    PERFORM iso_test.reg('a) leitura', _tabela, true, 'sem acesso a tabela (permission denied)');
+  WHEN OTHERS THEN
+    PERFORM iso_test.reg('a) leitura', _tabela, false, 'erro inesperado: ' || SQLERRM);
 END $fn$;
 GRANT EXECUTE ON FUNCTION iso_test.check_leitura(text) TO authenticated;
 
 -- ---------------------------------------------------------------------
--- 1. Massa de teste (executada como postgres, sem RLS)
+-- 0.1 Catalogo: tabelas com empresa_id e FKs entre tabelas de negocio
+-- ---------------------------------------------------------------------
+CREATE VIEW iso_test.tabelas AS
+SELECT c.relname::text AS tabela
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'public' AND c.relkind = 'r'
+   AND EXISTS (SELECT 1 FROM pg_attribute a
+                WHERE a.attrelid = c.oid AND a.attname = 'empresa_id' AND a.attnum > 0 AND NOT a.attisdropped);
+GRANT SELECT ON iso_test.tabelas TO authenticated;
+
+-- FKs de coluna unica; guarda tambem o schema/coluna do pai
+CREATE VIEW iso_test.fks AS
+SELECT c.relname::text  AS tabela,
+       a.attname::text  AS coluna,
+       pn.nspname::text AS pai_schema,
+       p.relname::text  AS pai,
+       pa.attname::text AS pai_coluna,
+       EXISTS (SELECT 1 FROM pg_attribute x
+                WHERE x.attrelid = p.oid AND x.attname = 'empresa_id' AND x.attnum > 0 AND NOT x.attisdropped) AS pai_tem_empresa
+  FROM pg_constraint k
+  JOIN pg_class c      ON c.oid = k.conrelid
+  JOIN pg_namespace n  ON n.oid = c.relnamespace
+  JOIN pg_class p      ON p.oid = k.confrelid
+  JOIN pg_namespace pn ON pn.oid = p.relnamespace
+  JOIN pg_attribute a  ON a.attrelid = c.oid  AND a.attnum = k.conkey[1]
+  JOIN pg_attribute pa ON pa.attrelid = p.oid AND pa.attnum = k.confkey[1]
+ WHERE k.contype = 'f' AND n.nspname = 'public'
+   AND array_length(k.conkey, 1) = 1;
+GRANT SELECT ON iso_test.fks TO authenticated;
+
+-- expressao SQL de valor para uma coluna (NULL = tipo desconhecido)
+CREATE FUNCTION iso_test.val(_tabela text, _coluna text, _empresa uuid)
+RETURNS text LANGUAGE plpgsql STABLE AS $fn$
+DECLARE fk record; tipo text; udt text; rotulo text;
+BEGIN
+  IF _coluna = 'empresa_id' THEN RETURN quote_literal(_empresa) || '::uuid'; END IF;
+
+  SELECT * INTO fk FROM iso_test.fks f
+   WHERE f.tabela = _tabela AND f.coluna = _coluna LIMIT 1;
+
+  IF FOUND THEN
+    IF fk.pai_schema = 'auth' AND fk.pai = 'users' THEN
+      RETURN format('(SELECT valor FROM iso_test.ctx WHERE chave = %L)',
+                    CASE WHEN _empresa = iso_test.v('empresa_a') THEN 'user_a' ELSE 'user_b' END);
+    ELSIF fk.pai_tem_empresa THEN
+      RETURN format('(SELECT p.%I FROM %I.%I p WHERE p.empresa_id = %L ORDER BY p.%I LIMIT 1)',
+                    fk.pai_coluna, fk.pai_schema, fk.pai, _empresa, fk.pai_coluna);
+    ELSE
+      RETURN format('(SELECT p.%I FROM %I.%I p ORDER BY p.%I LIMIT 1)',
+                    fk.pai_coluna, fk.pai_schema, fk.pai, fk.pai_coluna);
+    END IF;
+  END IF;
+
+  IF _coluna = 'id' THEN RETURN 'gen_random_uuid()'; END IF;
+
+  SELECT data_type, udt_name INTO tipo, udt
+    FROM information_schema.columns
+   WHERE table_schema = 'public' AND table_name = _tabela AND column_name = _coluna;
+
+  IF tipo IS NULL THEN RETURN NULL; END IF;
+
+  RETURN CASE
+    WHEN tipo IN ('text','character varying','character') THEN quote_literal('ISO-' || left(md5(random()::text), 8))
+    WHEN tipo = 'uuid' THEN 'gen_random_uuid()'
+    WHEN tipo IN ('integer','bigint','smallint','numeric','double precision','real') THEN '1'
+    WHEN tipo = 'boolean' THEN 'false'
+    WHEN tipo = 'date' THEN 'current_date'
+    WHEN tipo LIKE 'timestamp%' THEN 'now()'
+    WHEN tipo = 'time without time zone' THEN quote_literal('08:00')
+    WHEN tipo IN ('json','jsonb') THEN quote_literal('{}') || '::' || tipo
+    WHEN tipo = 'ARRAY' THEN quote_literal('{}') || '::' || udt
+    WHEN tipo = 'USER-DEFINED' THEN (
+      SELECT quote_literal(e.enumlabel) || '::public.' || quote_ident(udt)
+        FROM pg_type t JOIN pg_enum e ON e.enumtypid = t.oid
+       WHERE t.typname = udt ORDER BY e.enumsortorder LIMIT 1)
+    ELSE NULL
+  END;
+END $fn$;
+GRANT EXECUTE ON FUNCTION iso_test.val(text, text, uuid) TO authenticated;
+
+-- monta um INSERT generico (colunas obrigatorias + id + empresa_id + override)
+CREATE FUNCTION iso_test.insert_sql(_tabela text, _empresa uuid,
+                                    _col_override text DEFAULT NULL, _val_override text DEFAULT NULL)
+RETURNS text LANGUAGE plpgsql STABLE AS $fn$
+DECLARE r record; cols text[] := '{}'; vals text[] := '{}'; e text;
+BEGIN
+  FOR r IN
+    SELECT column_name
+      FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = _tabela
+       AND is_generated = 'NEVER' AND is_identity = 'NO'
+       AND ( column_name IN ('id','empresa_id')
+          OR column_name = _col_override
+          OR (is_nullable = 'NO' AND column_default IS NULL) )
+     ORDER BY ordinal_position
+  LOOP
+    IF r.column_name = _col_override THEN
+      e := _val_override;
+    ELSE
+      e := iso_test.val(_tabela, r.column_name, _empresa);
+    END IF;
+    IF e IS NULL THEN RETURN NULL; END IF;   -- tipo desconhecido: pula a tabela
+    cols := cols || quote_ident(r.column_name);
+    vals := vals || e;
+  END LOOP;
+
+  IF array_length(cols, 1) IS NULL THEN RETURN NULL; END IF;
+
+  RETURN format('INSERT INTO public.%I (%s) VALUES (%s)',
+                _tabela, array_to_string(cols, ', '), array_to_string(vals, ', '));
+END $fn$;
+GRANT EXECUTE ON FUNCTION iso_test.insert_sql(text, uuid, text, text) TO authenticated;
+
+-- ---------------------------------------------------------------------
+-- 1. Massa de teste (como postgres, sem RLS e sem triggers)
 -- ---------------------------------------------------------------------
 BEGIN;
 
-SET LOCAL session_replication_role = replica; -- nao dispara triggers no seed
+SET LOCAL session_replication_role = replica;
 
 INSERT INTO iso_test.ctx(chave, valor) VALUES
   ('empresa_a', gen_random_uuid()), ('empresa_b', gen_random_uuid()),
@@ -229,6 +352,55 @@ WHERE EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'obras-contratos');
 COMMIT;
 
 -- ---------------------------------------------------------------------
+-- 1.1 Massa GENERICA: uma linha em cada tabela com empresa_id, nas duas
+--     empresas. Varias passadas, porque uma tabela pode depender de
+--     outra que ainda nao foi populada.
+-- ---------------------------------------------------------------------
+BEGIN;
+SET LOCAL session_replication_role = replica;
+
+DO $seed$
+DECLARE
+  passada int; emp uuid; s text; t record; sql text; novo uuid; faltando int; tem_id boolean;
+BEGIN
+  FOR passada IN 1..6 LOOP
+    faltando := 0;
+    FOREACH s IN ARRAY array['a','b'] LOOP
+      emp := iso_test.v('empresa_' || s);
+      FOR t IN SELECT tabela FROM iso_test.tabelas ORDER BY tabela LOOP
+        -- ja tem linha dessa empresa? nada a fazer
+        EXECUTE format('SELECT 1 FROM public.%I WHERE empresa_id = %L LIMIT 1', t.tabela, emp);
+        IF FOUND THEN CONTINUE; END IF;
+
+        sql := iso_test.insert_sql(t.tabela, emp);
+        IF sql IS NULL THEN faltando := faltando + 1; CONTINUE; END IF;
+
+        SELECT EXISTS (SELECT 1 FROM information_schema.columns c
+                        WHERE c.table_schema = 'public' AND c.table_name = t.tabela
+                          AND c.column_name = 'id' AND c.udt_name = 'uuid')
+          INTO tem_id;
+
+        BEGIN
+          IF tem_id THEN
+            EXECUTE sql || ' RETURNING id' INTO novo;
+          ELSE
+            EXECUTE sql;
+            novo := NULL;
+          END IF;
+          INSERT INTO iso_test.seeded(tabela, empresa, id)
+          VALUES (t.tabela, emp, coalesce(novo, '00000000-0000-0000-0000-000000000000'::uuid));
+        EXCEPTION WHEN OTHERS THEN
+          faltando := faltando + 1;
+        END;
+      END LOOP;
+    END LOOP;
+    EXIT WHEN faltando = 0;
+  END LOOP;
+END $seed$;
+
+COMMIT;
+
+-- ---------------------------------------------------------------------
 -- 2. Testes autenticado como o usuario da empresa A
 -- ---------------------------------------------------------------------
 BEGIN;
@@ -238,161 +410,163 @@ SELECT set_config('request.jwt.claims',
                          'email', 'iso-a@teste-isolamento.local')::text, true);
 SET LOCAL ROLE authenticated;
 
--- (a) LEITURA -----------------------------------------------------------
-SELECT iso_test.check_leitura(t) FROM unnest(array[
-  'empresas','obras','orcamentos','orcamento_itens','contratacoes_terceirizado','parcelas_pagamento',
-  'cartoes_credito','cartao_despesas','notas_fiscais','recebimentos','recebimento_pagamentos',
-  'lancamentos_financeiros','materiais_obra','pessoas','clientes','compradores','assinaturas','user_roles'
-]) t;
+-- (a) LEITURA: toda tabela com empresa_id ------------------------------
+SELECT iso_test.check_leitura(tabela) FROM iso_test.tabelas ORDER BY tabela;
+SELECT iso_test.check_leitura('empresas');
 
--- (b) ESCRITA COM FK DE OUTRA EMPRESA ------------------------------------
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert orcamento com obra_id de B', format(
-  $q$INSERT INTO public.orcamentos (empresa_id, obra_id, valor_orcamento, data_orcamento)
-     VALUES (%L, %L, 1, current_date)$q$, iso_test.v('empresa_a'), iso_test.v('obra_b')));
+-- (b) ESCRITA CRUZADA: insert com empresa de B, update e delete de B ---
+DO $esc$
+DECLARE t record; b uuid := iso_test.v('empresa_b'); sql text;
+BEGIN
+  FOR t IN SELECT tabela FROM iso_test.tabelas ORDER BY tabela LOOP
+    sql := iso_test.insert_sql(t.tabela, b);
+    IF sql IS NOT NULL THEN
+      PERFORM iso_test.expect_bloqueado('b) escrita', 'insert em ' || t.tabela || ' com empresa_id de B', sql);
+    END IF;
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert orcamento_itens em orcamento de B', format(
-  $q$INSERT INTO public.orcamento_itens (empresa_id, orcamento_id, descricao, unidade, quantidade, preco_unitario, ordem)
-     VALUES (%L, %L, 'invasor', 'un', 1, 999, 99)$q$, iso_test.v('empresa_a'), iso_test.v('orc_b')));
+    PERFORM iso_test.expect_bloqueado('b) escrita', 'update de linhas de B em ' || t.tabela,
+      format('UPDATE public.%I SET empresa_id = empresa_id WHERE empresa_id = %L', t.tabela, b));
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert parcela em contratacao de B', format(
-  $q$INSERT INTO public.parcelas_pagamento (empresa_id, contratacao_id, numero_parcela, valor)
-     VALUES (%L, %L, 99, 999)$q$, iso_test.v('empresa_a'), iso_test.v('contr_b')));
+    PERFORM iso_test.expect_bloqueado('b) escrita', 'delete de linhas de B em ' || t.tabela,
+      format('DELETE FROM public.%I WHERE empresa_id = %L', t.tabela, b));
+  END LOOP;
+END $esc$;
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert despesa em cartao de B', format(
-  $q$INSERT INTO public.cartao_despesas (empresa_id, cartao_id, descricao, valor, data_compra, parcelas)
-     VALUES (%L, %L, 'invasor', 999, current_date, 1)$q$, iso_test.v('empresa_a'), iso_test.v('cartao_b')));
+-- (c) FK CRUZADA: cada FK para tabela de negocio, apontando para B -----
+DO $fkx$
+DECLARE f record; a uuid := iso_test.v('empresa_a'); b uuid := iso_test.v('empresa_b');
+        alvo uuid; sql text;
+BEGIN
+  FOR f IN
+    SELECT * FROM iso_test.fks
+     WHERE pai_tem_empresa
+       AND tabela IN (SELECT tabela FROM iso_test.tabelas)
+     ORDER BY tabela, coluna
+  LOOP
+    EXECUTE format('SELECT p.%I FROM %I.%I p WHERE p.empresa_id = %L ORDER BY p.%I LIMIT 1',
+                   f.pai_coluna, f.pai_schema, f.pai, b, f.pai_coluna) INTO alvo;
+    IF alvo IS NULL THEN CONTINUE; END IF;  -- sem massa de B nesse pai
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert contratacao com obra/pessoa de B', format(
-  $q$INSERT INTO public.contratacoes_terceirizado (empresa_id, obra_id, terceirizado_id, valor_total, quantidade_parcelas)
-     VALUES (%L, %L, %L, 999, 1)$q$, iso_test.v('empresa_a'), iso_test.v('obra_b'), iso_test.v('pessoa_b')));
+    sql := iso_test.insert_sql(f.tabela, a, f.coluna, quote_literal(alvo) || '::uuid');
+    IF sql IS NULL THEN CONTINUE; END IF;
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert obra com cliente_id de B', format(
-  $q$INSERT INTO public.obras (empresa_id, codigo_chamado, origem, data_recebimento, cliente_id)
-     VALUES (%L, 'ISO-INVASOR', 'iso', current_date, %L)$q$, iso_test.v('empresa_a'), iso_test.v('cliente_b')));
+    PERFORM iso_test.expect_bloqueado('c) FK cruzada',
+      f.tabela || '.' || f.coluna || ' -> ' || f.pai || ' de B', sql);
+  END LOOP;
+END $fkx$;
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert NF em obra de B', format(
-  $q$INSERT INTO public.notas_fiscais (empresa_id, obra_id, numero_nf, data_emissao, valor, valor_bruto)
-     VALUES (%L, %L, 'NF-INVASOR', current_date, 999, 999)$q$, iso_test.v('empresa_a'), iso_test.v('obra_b')));
+-- (d) RPCs: toda funcao do schema public chamada com ids de B ----------
+-- cada chamada roda em subtransacao que e SEMPRE desfeita (RAISE forcado)
+DO $rpc$
+DECLARE
+  fn record; args text; a_arg record; expr text; res text; nome text;
+  ids uuid[]; vazou boolean; i uuid; msg text;
+  bloqueadas text[] := array['disparar_rotina','email_queue_dispatch','email_queue_wake',
+                             'enqueue_email','read_email_batch','delete_email','move_to_dlq',
+                             'handle_new_user','handle_nova_empresa'];
+BEGIN
+  SELECT array_agg(valor) INTO ids FROM iso_test.ctx WHERE chave LIKE '%_b';
+  ids := ids || COALESCE((SELECT array_agg(id) FROM iso_test.seeded
+                           WHERE empresa = iso_test.v('empresa_b')
+                             AND id <> '00000000-0000-0000-0000-000000000000'::uuid), '{}'::uuid[]);
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert pagamento em recebimento de B', format(
-  $q$INSERT INTO public.recebimento_pagamentos (empresa_id, recebimento_id, valor, data)
-     VALUES (%L, %L, 999, current_date)$q$, iso_test.v('empresa_a'), iso_test.v('rec_b')));
+  FOR fn IN
+    SELECT p.oid, p.proname::text AS nome, pg_get_function_identity_arguments(p.oid) AS assinatura
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public' AND p.prokind = 'f'
+       AND p.prorettype <> 'trigger'::regtype
+       AND NOT (p.proname = ANY (bloqueadas))
+     ORDER BY p.proname, p.oid
+  LOOP
+    args := '';
+    expr := NULL;
+    FOR a_arg IN
+      SELECT t.typname::text AS tipo, t.oid AS toid, ord
+        FROM unnest(coalesce(
+               (SELECT p.proargtypes::oid[] FROM pg_proc p WHERE p.oid = fn.oid), '{}'::oid[])
+             ) WITH ORDINALITY AS u(toid, ord)
+        JOIN pg_type t ON t.oid = u.toid
+       ORDER BY ord
+    LOOP
+      expr := CASE
+        WHEN a_arg.tipo = 'uuid'    THEN quote_literal(ids[1 + (a_arg.ord % greatest(array_length(ids,1),1))]) || '::uuid'
+        WHEN a_arg.tipo IN ('text','varchar','bpchar') THEN quote_literal('ISO')
+        WHEN a_arg.tipo IN ('int2','int4','int8','numeric','float4','float8') THEN '1'
+        WHEN a_arg.tipo = 'bool'    THEN 'false'
+        WHEN a_arg.tipo = 'date'    THEN 'current_date'
+        WHEN a_arg.tipo LIKE 'timestamp%' THEN 'now()'
+        WHEN a_arg.tipo IN ('json','jsonb') THEN quote_literal('{}') || '::' || a_arg.tipo
+        WHEN a_arg.tipo = 'regclass' THEN quote_literal('public.obras') || '::regclass'
+        WHEN EXISTS (SELECT 1 FROM pg_enum e WHERE e.enumtypid = a_arg.toid)
+          THEN (SELECT quote_literal(e.enumlabel) || '::public.' || quote_ident(a_arg.tipo)
+                  FROM pg_enum e WHERE e.enumtypid = a_arg.toid ORDER BY e.enumsortorder LIMIT 1)
+        ELSE NULL END;
+      IF expr IS NULL THEN args := NULL; EXIT; END IF;
+      args := CASE WHEN args = '' THEN expr ELSE args || ', ' || expr END;
+    END LOOP;
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert lancamento em obra de B', format(
-  $q$INSERT INTO public.lancamentos_financeiros (empresa_id, obra_id, tipo, status, descricao, valor, data_competencia)
-     VALUES (%L, %L, 'despesa', 'realizado', 'invasor', 999, current_date)$q$,
-  iso_test.v('empresa_a'), iso_test.v('obra_b')));
+    IF args IS NULL THEN CONTINUE; END IF;  -- tipo de argumento nao suportado
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'insert com empresa_id de B', format(
-  $q$INSERT INTO public.obras (empresa_id, codigo_chamado, origem, data_recebimento)
-     VALUES (%L, 'ISO-INVASOR-2', 'iso', current_date)$q$, iso_test.v('empresa_b')));
+    nome := fn.nome || '(' || coalesce(fn.assinatura, '') || ') com ids de B';
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'update obra de B', format(
-  $q$UPDATE public.obras SET descricao_servico = 'invadido' WHERE id = %L$q$, iso_test.v('obra_b')));
+    BEGIN
+      EXECUTE format('SELECT coalesce(string_agg(x::text, %L), %L) FROM (SELECT public.%I(%s) AS x) x',
+                     '|', '', fn.nome, coalesce(args, '')) INTO res;
+      -- desfaz qualquer efeito colateral da chamada
+      RAISE EXCEPTION 'ISO_OK:%', left(coalesce(res, ''), 4000);
+    EXCEPTION WHEN OTHERS THEN
+      msg := SQLERRM;
+      IF msg LIKE 'ISO_OK:%' THEN
+        res := substr(msg, 8);
+        vazou := false;
+        FOREACH i IN ARRAY ids LOOP
+          IF position(i::text in res) > 0 THEN vazou := true; EXIT; END IF;
+        END LOOP;
+        PERFORM iso_test.reg('d) rpc', nome, NOT vazou,
+          CASE WHEN vazou THEN 'VAZOU dado de B: ' || left(res, 150) ELSE 'sem dado de B' END);
+      ELSE
+        PERFORM iso_test.reg('d) rpc', nome, true, 'bloqueado: ' || left(msg, 150));
+      END IF;
+    END;
+  END LOOP;
+END $rpc$;
 
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'update orcamento de B', format(
-  $q$UPDATE public.orcamentos SET valor_total = 1 WHERE id = %L$q$, iso_test.v('orc_b')));
-
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'update pessoa de B', format(
-  $q$UPDATE public.pessoas SET nome = 'invadido' WHERE id = %L$q$, iso_test.v('pessoa_b')));
-
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'update cartao de B', format(
-  $q$UPDATE public.cartoes_credito SET limite = 1 WHERE id = %L$q$, iso_test.v('cartao_b')));
-
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'update recebimento de B', format(
-  $q$UPDATE public.recebimentos SET valor = 1 WHERE id = %L$q$, iso_test.v('rec_b')));
-
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'delete obra de B', format(
-  $q$DELETE FROM public.obras WHERE id = %L$q$, iso_test.v('obra_b')));
-
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'delete lancamentos de B', format(
-  $q$DELETE FROM public.lancamentos_financeiros WHERE empresa_id = %L$q$, iso_test.v('empresa_b')));
-
-SELECT iso_test.expect_bloqueado('b) escrita FK', 'virar super_admin (user_roles)',
-  $q$INSERT INTO public.user_roles (user_id, role, empresa_id)
-     SELECT iso_test.v('user_a'), 'super_admin'::app_role, iso_test.v('empresa_a')$q$);
-
--- (c) RPCs COM IDS/EMPRESA DE B ------------------------------------------
-SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_dre_obra(obra de B)', format(
-  $q$SELECT * FROM public.get_dre_obra(%L, %L)$q$, iso_test.v('empresa_b'), iso_test.v('obra_b')));
-
-SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_obra_financeiro_resumo(obra de B)', format(
-  $q$SELECT * FROM public.get_obra_financeiro_resumo(%L) WHERE receita_faturada <> 0 OR custo_total <> 0$q$,
-  iso_test.v('obra_b')));
-
--- os KPIs devem bater exatamente com o que a empresa A enxerga no proprio razao:
--- qualquer valor da empresa B somado faria a comparacao divergir.
-SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_financeiro_kpis (nao ve valores de B)',
-  $q$SELECT * FROM public.get_financeiro_kpis(NULL, NULL) k
-     WHERE k.receita_realizada <> COALESCE((SELECT SUM(lf.valor) FROM public.lancamentos_financeiros lf
-            WHERE lf.tipo = 'receita' AND lf.status = 'realizado' AND lf.impacto_caixa), 0)
-        OR k.despesa_realizada <> COALESCE((SELECT SUM(lf.valor) FROM public.lancamentos_financeiros lf
-            WHERE lf.tipo = 'despesa' AND lf.status = 'realizado' AND lf.impacto_caixa), 0)$q$);
-
-SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'get_fluxo_caixa_mensal(empresa B)', format(
-  $q$SELECT * FROM public.get_fluxo_caixa_mensal(%L, 6, 6)
-     WHERE receitas_real <> 0 OR despesas_real <> 0 OR receitas_prev <> 0 OR despesas_prev <> 0$q$,
-  iso_test.v('empresa_b')));
-
-SELECT iso_test.expect_vazio_ou_erro('c) rpc', 'verificar_razao (nao ve obras de B)', format(
-  $q$SELECT * FROM public.verificar_razao() WHERE obra_id = %L$q$, iso_test.v('obra_b')));
-
-SELECT iso_test.expect_bloqueado('c) rpc', 'salvar_orcamento(empresa B)', format(
-  $q$SELECT public.salvar_orcamento(jsonb_build_object('empresa_id', %L::text, 'obra_id', %L::text), '[]'::jsonb)$q$,
-  iso_test.v('empresa_b'), iso_test.v('obra_b')));
-
-SELECT iso_test.expect_bloqueado('c) rpc', 'aprovar_orcamento(orcamento de B)', format(
-  $q$SELECT public.aprovar_orcamento(%L)$q$, iso_test.v('orc_b')));
-
-SELECT iso_test.expect_bloqueado('c) rpc', 'confirmar_recebimento(recebimento de B)', format(
-  $q$SELECT public.confirmar_recebimento(%L, 500, current_date)$q$, iso_test.v('rec_b')));
-
-SELECT iso_test.expect_bloqueado('c) rpc', 'pagar_fatura_cartao(cartao de B)', format(
-  $q$SELECT public.pagar_fatura_cartao(%L, (date_trunc('month', current_date)::date + 9), current_date)$q$,
-  iso_test.v('cartao_b')));
-
-SELECT iso_test.expect_bloqueado('c) rpc', 'reabrir_fatura_cartao(cartao de B)', format(
-  $q$SELECT public.reabrir_fatura_cartao(%L, (date_trunc('month', current_date)::date + 9))$q$,
-  iso_test.v('cartao_b')));
-
-SELECT iso_test.expect_bloqueado('c) rpc', 'seed_categorias_financeiras(empresa B)', format(
-  $q$SELECT public.seed_categorias_financeiras(%L)$q$, iso_test.v('empresa_b')));
-
--- (a verificacao de que a fatura de B continua em aberto roda apos RESET ROLE)
-
-
--- (d) STORAGE -------------------------------------------------------------
-SELECT iso_test.expect_vazio_ou_erro('d) storage', 'listar/baixar arquivo de B', format(
+-- (e) STORAGE ----------------------------------------------------------
+SELECT iso_test.expect_vazio_ou_erro('e) storage', 'listar/baixar arquivo de B', format(
   $q$SELECT id FROM storage.objects WHERE bucket_id = 'obras-contratos' AND name LIKE %L$q$,
   iso_test.v('empresa_b')::text || '/%'));
 
-SELECT iso_test.expect_bloqueado('d) storage', 'gravar arquivo na pasta de B', format(
+SELECT iso_test.expect_bloqueado('e) storage', 'gravar arquivo na pasta de B', format(
   $q$INSERT INTO storage.objects (bucket_id, name, owner) VALUES ('obras-contratos', %L, %L)$q$,
   iso_test.v('empresa_b')::text || '/invasor.pdf', iso_test.v('user_a')));
 
-SELECT iso_test.expect_bloqueado('d) storage', 'apagar arquivo de B', format(
+SELECT iso_test.expect_bloqueado('e) storage', 'apagar arquivo de B', format(
   $q$DELETE FROM storage.objects WHERE bucket_id = 'obras-contratos' AND name LIKE %L$q$,
   iso_test.v('empresa_b')::text || '/%'));
 
+-- escalonamento de privilegio
+SELECT iso_test.expect_bloqueado('b) escrita', 'virar super_admin (user_roles)',
+  $q$INSERT INTO public.user_roles (user_id, role, empresa_id)
+     SELECT iso_test.v('user_a'), 'super_admin'::app_role, iso_test.v('empresa_a')$q$);
+
 RESET ROLE;
 
--- confirma que nenhuma RPC de B foi executada de fato (fatura de B segue em aberto)
+-- confirma que nenhuma RPC de B teve efeito (fatura de B segue em aberto)
 DO $chk$
 DECLARE n bigint;
 BEGIN
   SELECT count(*) INTO n FROM public.cartao_despesas
    WHERE empresa_id = iso_test.v('empresa_b') AND fatura_paga;
-  PERFORM iso_test.reg('c) rpc', 'fatura de B continua em aberto', n = 0, 'faturas pagas: ' || n);
+  PERFORM iso_test.reg('d) rpc', 'fatura de B continua em aberto', n = 0, 'faturas pagas: ' || n);
 END $chk$;
 
 COMMIT;
-
 
 -- ---------------------------------------------------------------------
 -- 3. Limpeza: apaga as duas empresas de teste
 -- ---------------------------------------------------------------------
 BEGIN;
-SET LOCAL session_replication_role = replica;  -- ignora triggers de bloqueio e FKs
+SET LOCAL session_replication_role = replica;
 
 DO $cleanup$
 DECLARE r record; a uuid := iso_test.v('empresa_a'); b uuid := iso_test.v('empresa_b');
@@ -417,7 +591,7 @@ DO $chk$
 DECLARE n bigint;
 BEGIN
   SELECT count(*) INTO n FROM public.empresas WHERE id IN (iso_test.v('empresa_a'), iso_test.v('empresa_b'));
-  PERFORM iso_test.reg('e) limpeza', 'empresas de teste removidas', n = 0, 'restaram: ' || n);
+  PERFORM iso_test.reg('f) limpeza', 'empresas de teste removidas', n = 0, 'restaram: ' || n);
 END $chk$;
 
 COMMIT;
@@ -432,12 +606,15 @@ SELECT grupo,
   FROM iso_test.resultados
  ORDER BY id;
 
+SELECT grupo, count(*) AS casos, count(*) FILTER (WHERE NOT passou) AS falhas
+  FROM iso_test.resultados GROUP BY grupo ORDER BY grupo;
+
 DO $final$
 DECLARE n_fail bigint; n_tot bigint;
 BEGIN
   SELECT count(*) FILTER (WHERE NOT passou), count(*) INTO n_fail, n_tot FROM iso_test.resultados;
   RAISE NOTICE 'Isolamento multiempresa: % de % casos passaram', n_tot - n_fail, n_tot;
-  IF n_tot = 0 THEN RAISE EXCEPTION 'Nenhum caso executado'; END IF;
+  IF n_tot < 200 THEN RAISE EXCEPTION 'Cobertura suspeita: apenas % casos gerados', n_tot; END IF;
   IF n_fail > 0 THEN RAISE EXCEPTION '% caso(s) de isolamento FALHARAM', n_fail; END IF;
 END $final$;
 
