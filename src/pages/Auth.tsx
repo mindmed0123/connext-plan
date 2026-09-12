@@ -28,6 +28,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const motivo = searchParams.get("motivo");
   const tabParam = searchParams.get("tab") === "signup" ? "signup" : "login";
+  const planoParam = searchParams.get("plano");
   const { user, loading, authReady } = useAuth();
   const { role, isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
