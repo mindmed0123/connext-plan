@@ -12,13 +12,9 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  OBRA_STATUS_LIST,
-  OBRA_STATUS_LABEL,
-  OBRA_STATUS_COLOR,
-  REGIAO_LABEL,
-  type ObraStatus,
-} from "@/lib/obra-helpers";
+import { getRegiaoLabel, type ObraStatus } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { GripVertical } from "lucide-react";
@@ -27,7 +23,8 @@ type Obra = {
   id: string;
   codigo_chamado: string;
   descricao_servico: string;
-  regiao: keyof typeof REGIAO_LABEL;
+  regiao: string | null;
+  regiao_label?: string | null;
   engenheiro_responsavel: string;
   status: ObraStatus;
 };
@@ -45,7 +42,7 @@ function ObraCard({ obra, dragging = false }: { obra: Obra; dragging?: boolean }
           <div className="text-xs font-semibold">{obra.codigo_chamado}</div>
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{obra.descricao_servico}</p>
           <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>{REGIAO_LABEL[obra.regiao]}</span>
+            <span>{getRegiaoLabel(obra)}</span>
             <span className="truncate">{obra.engenheiro_responsavel}</span>
           </div>
         </div>
@@ -75,21 +72,24 @@ function DraggableCard({ obra, onClick }: { obra: Obra; onClick: () => void }) {
 
 function Column({
   status,
+  nome,
+  color,
   items,
   onCardClick,
 }: {
   status: ObraStatus;
+  nome: string;
+  color: string;
   items: Obra[];
   onCardClick: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
-  const color = OBRA_STATUS_COLOR[status];
   return (
     <div className="w-72 shrink-0">
       <div className="mb-2 flex items-center justify-between rounded-md border bg-card px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: `hsl(var(--${color}))` }} />
-          <span className="text-xs font-semibold">{OBRA_STATUS_LABEL[status]}</span>
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+          <span className="text-xs font-semibold">{nome}</span>
         </div>
         <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">{items.length}</span>
       </div>
@@ -116,14 +116,16 @@ export default function Etapas() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const { empresaId } = useAuth();
+  const { statuses, statusLabel, rotulos } = useObraConfig();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const { data: obras } = useQuery<Obra[]>({
-    queryKey: ["etapas"],
+    queryKey: [empresaId, "etapas"],
     queryFn: async () => {
       const { data, error } = await (supabase.from("obras"))
-        .select("id, codigo_chamado, descricao_servico, regiao, engenheiro_responsavel, status")
+        .select("id, codigo_chamado, descricao_servico, regiao, regiao_label, engenheiro_responsavel, status")
         .eq("arquivada", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -135,8 +137,8 @@ export default function Etapas() {
   useEffect(() => {
     const ch = supabase
       .channel("etapas-obras")
-      .on("postgres_changes", { event: "*", schema: "public", table: "obras" }, () => {
-        qc.invalidateQueries({ queryKey: ["etapas"] });
+      .on("postgres_changes", { event: "*", schema: "public", table: "obras", filter: `empresa_id=eq.${empresaId}` }, () => {
+        qc.invalidateQueries({ queryKey: [empresaId, "etapas"] });
         qc.invalidateQueries({ queryKey: ["obras"] });
         qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       })
@@ -144,7 +146,7 @@ export default function Etapas() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [qc]);
+  }, [qc, empresaId]);
 
   const move = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: ObraStatus }) => {
@@ -155,19 +157,19 @@ export default function Etapas() {
         obra_id: id,
         user_id: u.user?.id,
         evento: "Status alterado",
-        detalhes: `Movido para: ${OBRA_STATUS_LABEL[status]}`,
+        detalhes: `Movido para: ${statusLabel(status)}`,
       }]);
     },
     onMutate: async ({ id, status }) => {
-      await qc.cancelQueries({ queryKey: ["etapas"] });
-      const prev = qc.getQueryData<Obra[]>(["etapas"]);
-      qc.setQueryData<Obra[]>(["etapas"], (old) =>
+      await qc.cancelQueries({ queryKey: [empresaId, "etapas"] });
+      const prev = qc.getQueryData<Obra[]>([empresaId, "etapas"]);
+      qc.setQueryData<Obra[]>([empresaId, "etapas"], (old) =>
         (old ?? []).map((o) => (o.id === id ? { ...o, status } : o))
       );
       return { prev };
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.prev) qc.setQueryData(["etapas"], ctx.prev);
+      if (ctx?.prev) qc.setQueryData([empresaId, "etapas"], ctx.prev);
       toast.error("Não foi possível mover a obra");
     },
     onSuccess: () => {
@@ -178,15 +180,13 @@ export default function Etapas() {
   });
 
   const grouped = useMemo(() => {
-    const g: Record<ObraStatus, Obra[]> = OBRA_STATUS_LIST.reduce(
-      (acc, s) => ({ ...acc, [s]: [] }),
-      {} as Record<ObraStatus, Obra[]>
-    );
+    const g: Record<string, Obra[]> = {};
+    for (const s of statuses) g[s.chave] = [];
     (obras ?? []).forEach((o) => {
       if (g[o.status]) g[o.status].push(o);
     });
     return g;
-  }, [obras]);
+  }, [obras, statuses]);
 
   const activeObra = obras?.find((o) => o.id === activeId) ?? null;
 
@@ -205,20 +205,22 @@ export default function Etapas() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Etapas das obras</h1>
+        <h1 className="text-2xl font-semibold">Etapas — {rotulos.obra_plural}</h1>
         <p className="text-sm text-muted-foreground">
-          Arraste qualquer obra entre etapas — atualização em tempo real
+          Arraste entre etapas — atualização em tempo real
         </p>
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="overflow-x-auto pb-4">
           <div className="flex gap-3 min-w-max">
-            {OBRA_STATUS_LIST.map((status) => (
+            {statuses.map((cfg) => (
               <Column
-                key={status}
-                status={status}
-                items={grouped[status]}
+                key={cfg.chave}
+                status={cfg.chave}
+                nome={cfg.nome}
+                color={cfg.cor}
+                items={grouped[cfg.chave] ?? []}
                 onCardClick={(id) => navigate("/obras/" + id)}
               />
             ))}
