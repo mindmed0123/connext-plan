@@ -3,12 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/fetch-all";
 import { toDateKey } from "@/lib/date";
 import type { ObraStatus } from "@/lib/obra-helpers";
-import { REGIAO_LABEL } from "@/lib/obra-helpers";
-import {
-  STATUS_EM_ORCAMENTO,
-  STATUS_EM_EXECUCAO,
-  STATUS_FINALIZADAS_AGUARD,
-} from "@/lib/dashboard-helpers";
+import { getRegiaoLabel } from "@/lib/obra-helpers";
 
 export interface DashboardFilters {
   from?: string;
@@ -150,7 +145,7 @@ export function useDashboardData(filters: DashboardFilters) {
       const obrasFiltered = obras.filter((o) => {
         if (!inRange(o.created_at)) return false;
         if (filters.regiao && filters.regiao !== "todas") {
-          const label = (o).regiao_label ?? (REGIAO_LABEL)[o.regiao] ?? o.regiao;
+          const label = getRegiaoLabel(o);
           if (label !== filters.regiao) return false;
         }
         if (
@@ -230,16 +225,11 @@ export function useDashboardData(filters: DashboardFilters) {
         valorAdendosFiltrados;
 
 
-      const valorEmOrcamento = sumValueByObras((s) =>
-        STATUS_EM_ORCAMENTO.includes(s),
-      );
-      const valorEmExecucao = sumValueByObras((s) => STATUS_EM_EXECUCAO.includes(s));
-      const valorFinalizadasAguard = sumValueByObras((s) =>
-        STATUS_FINALIZADAS_AGUARD.includes(s),
-      );
-      const qtdFinalizadasAguard = countByObras((s) =>
-        STATUS_FINALIZADAS_AGUARD.includes(s),
-      );
+      const catDe = (s: string) => statusCategoria.get(s) ?? null;
+      const valorEmOrcamento = sumValueByObras((s) => catDe(s) === "nao_iniciada");
+      const valorEmExecucao = sumValueByObras((s) => catDe(s) === "em_execucao");
+      const valorFinalizadasAguard = sumValueByObras((s) => catDe(s) === "concluida");
+      const qtdFinalizadasAguard = countByObras((s) => catDe(s) === "concluida");
 
       // Totais financeiros vindos do banco (fonte única, sem duplicidade)
       const resumoFiltrado = resumoFin.filter((r) => obraIds.has(r.obra_id));
