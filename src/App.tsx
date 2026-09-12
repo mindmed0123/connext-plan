@@ -37,6 +37,9 @@ import Contratos from "./pages/Contratos";
 import Medicoes from "./pages/Medicoes";
 import PessoaDetalhe from "./pages/PessoaDetalhe";
 import AcessosSuporte from "./pages/AcessosSuporte";
+import Campo from "./pages/Campo";
+import CampoRdo from "./pages/CampoRdo";
+import CampoFoto from "./pages/CampoFoto";
 
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
@@ -120,6 +123,10 @@ const App = () => (
               <Route path="/cartoes" element={<RequirePermission modulo="financeiro"><Cartoes /></RequirePermission>} />
               <Route path="/compradores" element={<RequirePermission modulo="financeiro"><Compradores /></RequirePermission>} />
               <Route path="/compradores/:id" element={<RequirePermission modulo="financeiro"><CompradorDetalhe /></RequirePermission>} />
+
+              <Route path="/campo" element={<Campo />} />
+              <Route path="/campo/rdo" element={<RequirePermission modulo="diario"><CampoRdo /></RequirePermission>} />
+              <Route path="/campo/foto" element={<RequirePermission modulo="obras"><CampoFoto /></RequirePermission>} />
 
               <Route path="/admin" element={<Admin />} />
               <Route path="/billing" element={<Billing />} />
