@@ -32,6 +32,8 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
     quantidade_parcelas: "1",
     forma_pagamento_prevista: "" as string,
     observacoes: "",
+    etapa_id: null as string | null,
+    orcamento_item_id: null as string | null,
   });
   const [parcelasInput, setParcelasInput] = useState<ParcelaInput[]>([{ valor: "", data_prevista: "" }]);
 
