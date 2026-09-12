@@ -371,6 +371,37 @@ export default function Onboarding() {
             </div>
           )}
 
+          {step.key === "operacao" && (
+            <div>
+              <h2 className="mb-1 text-2xl font-bold">Como a sua empresa trabalha?</h2>
+              <p className="mb-6 text-sm text-muted-foreground">
+                Isso define os nomes usados no sistema e quais telas aparecem no menu. Dá para mudar depois em
+                Configurações, sem perder nada.
+              </p>
+              <div className="space-y-3">
+                {PERFIS.map((p) => {
+                  const marcado = (perfilSel ?? perfil) === p.valor;
+                  return (
+                    <button
+                      key={p.valor}
+                      type="button"
+                      onClick={() => setPerfilSel(p.valor)}
+                      className={`w-full rounded-lg border p-4 text-left transition ${
+                        marcado ? "border-primary bg-primary/5" : "hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold">{p.titulo}</span>
+                      <span className="block text-sm text-muted-foreground">{p.descricao}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <Footer onPrev={prev} onNext={saveOperacao} busy={busy} nextLabel="Continuar" />
+            </div>
+          )}
+
+
+
           {step.key === "profile" && (
             <div>
               <h2 className="mb-1 text-2xl font-bold">Seus dados</h2>
