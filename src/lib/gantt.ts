@@ -1,176 +1,179 @@
-/**
- * Cálculo de cronograma (Gantt): datas propagadas pelas dependências,
- * folga por etapa e caminho crítico. Funções puras, espelhando o que o
- * usuário vê na tela — sem acesso a banco.
- */
-
-export type TipoDependencia = "FI" | "II";
-
-export interface EtapaGantt {
+export interface TarefaGantt {
   id: string;
   nome: string;
-  data_inicio: string; // yyyy-mm-dd
-  duracao_dias: number;
-  percentual_realizado?: number;
-  valor_previsto?: number;
+  inicio: string; // yyyy-mm-dd
+  fim: string; // yyyy-mm-dd
+  percentual_previsto: number;
+  percentual_realizado: number;
+  valor_previsto: number;
 }
 
 export interface DependenciaGantt {
-  etapa_id: string;
-  depende_de_etapa_id: string;
-  tipo: TipoDependencia;
+  etapa_id: string; // sucessora
+  depende_de_etapa_id: string; // predecessora
+  tipo: "FI" | "II";
   folga_dias: number;
 }
 
-export interface EtapaCalculada extends EtapaGantt {
-  inicio: number; // dia (offset em dias a partir da data base)
-  fim: number;
-  inicioTarde: number;
-  fimTarde: number;
-  folga: number;
-  critica: boolean;
-  dataInicio: string;
-  dataFim: string;
+export const DIA_MS = 86_400_000;
+
+export function paraData(iso: string): Date {
+  const [a, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(a, (m ?? 1) - 1, d ?? 1));
 }
 
-const DIA = 86_400_000;
-
-export function diaParaData(base: Date, offset: number): string {
-  return new Date(base.getTime() + offset * DIA).toISOString().slice(0, 10);
+export function paraIso(d: Date): string {
+  return d.toISOString().slice(0, 10);
 }
 
-export function dataParaDia(base: Date, iso: string): number {
-  return Math.round((new Date(`${iso}T00:00:00Z`).getTime() - base.getTime()) / DIA);
+export function somarDias(iso: string, dias: number): string {
+  return paraIso(new Date(paraData(iso).getTime() + dias * DIA_MS));
 }
 
-/** Ordena as etapas respeitando as dependências. Aborta em caso de ciclo. */
-export function ordenarTopologico(
-  etapas: EtapaGantt[],
-  deps: DependenciaGantt[],
-): string[] {
-  const grau = new Map<string, number>(etapas.map((e) => [e.id, 0]));
-  const saida = new Map<string, string[]>(etapas.map((e) => [e.id, []]));
-  for (const d of deps) {
-    if (!grau.has(d.etapa_id) || !grau.has(d.depende_de_etapa_id)) continue;
-    grau.set(d.etapa_id, (grau.get(d.etapa_id) ?? 0) + 1);
-    saida.get(d.depende_de_etapa_id)!.push(d.etapa_id);
+export function diffDias(a: string, b: string): number {
+  return Math.round((paraData(b).getTime() - paraData(a).getTime()) / DIA_MS);
+}
+
+/** Detecta se ligar `de -> para` fecharia um ciclo nas dependências existentes. */
+export function criaCiclo(deps: DependenciaGantt[], predecessora: string, sucessora: string): boolean {
+  if (predecessora === sucessora) return true;
+  const adj = new Map<string, string[]>();
+  for (const d of [...deps, { depende_de_etapa_id: predecessora, etapa_id: sucessora } as DependenciaGantt]) {
+    const lista = adj.get(d.depende_de_etapa_id) ?? [];
+    lista.push(d.etapa_id);
+    adj.set(d.depende_de_etapa_id, lista);
   }
-  const fila = etapas.filter((e) => (grau.get(e.id) ?? 0) === 0).map((e) => e.id);
-  const ordem: string[] = [];
-  while (fila.length) {
-    const id = fila.shift()!;
-    ordem.push(id);
-    for (const prox of saida.get(id) ?? []) {
-      grau.set(prox, (grau.get(prox) ?? 0) - 1);
-      if (grau.get(prox) === 0) fila.push(prox);
-    }
-  }
-  if (ordem.length !== etapas.length) {
-    throw new Error("Dependência circular entre etapas do cronograma");
-  }
-  return ordem;
+  const visitando = new Set<string>();
+  const pronto = new Set<string>();
+  const visita = (no: string): boolean => {
+    if (visitando.has(no)) return true;
+    if (pronto.has(no)) return false;
+    visitando.add(no);
+    for (const p of adj.get(no) ?? []) if (visita(p)) return true;
+    visitando.delete(no);
+    pronto.add(no);
+    return false;
+  };
+  return visita(predecessora);
 }
 
-/**
- * Calcula início/fim de cada etapa propagando as dependências, e marca o
- * caminho crítico (etapas com folga zero).
- */
-export function calcularGantt(
-  etapas: EtapaGantt[],
-  deps: DependenciaGantt[],
-): { etapas: EtapaCalculada[]; base: Date; duracaoTotal: number } {
-  if (etapas.length === 0) return { etapas: [], base: new Date(), duracaoTotal: 0 };
+export interface ResultadoCpm {
+  folga: Record<string, number>;
+  critica: Set<string>;
+  inicioProjeto: string;
+  fimProjeto: string;
+}
 
-  const baseIso = etapas
-    .map((e) => e.data_inicio)
-    .sort()[0];
-  const base = new Date(`${baseIso}T00:00:00Z`);
-
-  const ordem = ordenarTopologico(etapas, deps);
-  const porId = new Map(etapas.map((e) => [e.id, e]));
-  const entrada = new Map<string, DependenciaGantt[]>();
-  const saida = new Map<string, DependenciaGantt[]>();
+/** CPM simples sobre datas de calendário (sem calendário de feriados). */
+export function caminhoCritico(tarefas: TarefaGantt[], deps: DependenciaGantt[]): ResultadoCpm {
+  if (tarefas.length === 0) {
+    return { folga: {}, critica: new Set(), inicioProjeto: "", fimProjeto: "" };
+  }
+  const porId = new Map(tarefas.map((t) => [t.id, t]));
+  const sucessoras = new Map<string, DependenciaGantt[]>();
+  const predecessoras = new Map<string, DependenciaGantt[]>();
   for (const d of deps) {
     if (!porId.has(d.etapa_id) || !porId.has(d.depende_de_etapa_id)) continue;
-    entrada.set(d.etapa_id, [...(entrada.get(d.etapa_id) ?? []), d]);
-    saida.set(d.depende_de_etapa_id, [...(saida.get(d.depende_de_etapa_id) ?? []), d]);
+    sucessoras.set(d.depende_de_etapa_id, [...(sucessoras.get(d.depende_de_etapa_id) ?? []), d]);
+    predecessoras.set(d.etapa_id, [...(predecessoras.get(d.etapa_id) ?? []), d]);
   }
 
-  const inicio = new Map<string, number>();
-  const fim = new Map<string, number>();
-  for (const id of ordem) {
-    const e = porId.get(id)!;
-    const dur = Math.max(1, Number(e.duracao_dias) || 1);
-    let ini = dataParaDia(base, e.data_inicio);
-    for (const d of entrada.get(id) ?? []) {
-      const pInicio = inicio.get(d.depende_de_etapa_id) ?? 0;
-      const pFim = fim.get(d.depende_de_etapa_id) ?? 0;
-      const minimo = (d.tipo === "II" ? pInicio : pFim) + (Number(d.folga_dias) || 0);
-      if (minimo > ini) ini = minimo;
+  const inicioProjeto = tarefas.map((t) => t.inicio).sort()[0];
+  const duracao = (t: TarefaGantt) => Math.max(diffDias(t.inicio, t.fim), 0);
+
+  // Datas cedo (forward pass), em dias a partir do início do projeto.
+  const cedoIni: Record<string, number> = {};
+  const cedoFim: Record<string, number> = {};
+  const resolver = (id: string, pilha = new Set<string>()): number => {
+    if (cedoIni[id] !== undefined) return cedoIni[id];
+    if (pilha.has(id)) return diffDias(inicioProjeto, porId.get(id)!.inicio);
+    pilha.add(id);
+    const t = porId.get(id)!;
+    let ini = diffDias(inicioProjeto, t.inicio);
+    for (const d of predecessoras.get(id) ?? []) {
+      const p = porId.get(d.depende_de_etapa_id)!;
+      const pIni = resolver(p.id, pilha);
+      const base = d.tipo === "II" ? pIni : pIni + duracao(p);
+      ini = Math.max(ini, base + (d.folga_dias ?? 0));
     }
-    inicio.set(id, ini);
-    fim.set(id, ini + dur);
+    cedoIni[id] = ini;
+    cedoFim[id] = ini + duracao(t);
+    return ini;
+  };
+  for (const t of tarefas) resolver(t.id);
+
+  const fimProjetoDias = Math.max(...tarefas.map((t) => cedoFim[t.id]));
+
+  // Datas tarde (backward pass).
+  const tardeFim: Record<string, number> = {};
+  const calcTarde = (id: string, pilha = new Set<string>()): number => {
+    if (tardeFim[id] !== undefined) return tardeFim[id];
+    if (pilha.has(id)) return fimProjetoDias;
+    pilha.add(id);
+    const suc = sucessoras.get(id) ?? [];
+    let fim = suc.length ? Infinity : fimProjetoDias;
+    for (const d of suc) {
+      const s = porId.get(d.etapa_id)!;
+      const sTarde = calcTarde(s.id, pilha) - duracao(s);
+      fim = Math.min(fim, d.tipo === "II" ? sTarde + duracao(porId.get(id)!) - (d.folga_dias ?? 0) : sTarde - (d.folga_dias ?? 0));
+    }
+    tardeFim[id] = fim === Infinity ? fimProjetoDias : fim;
+    return tardeFim[id];
+  };
+  for (const t of tarefas) calcTarde(t.id);
+
+  const folga: Record<string, number> = {};
+  const critica = new Set<string>();
+  for (const t of tarefas) {
+    const f = Math.round(tardeFim[t.id] - cedoFim[t.id]);
+    folga[t.id] = f;
+    if (f <= 0) critica.add(t.id);
   }
 
-  const duracaoTotal = Math.max(...ordem.map((id) => fim.get(id) ?? 0));
-
-  const fimTarde = new Map<string, number>();
-  for (const id of [...ordem].reverse()) {
-    const sucessores = saida.get(id) ?? [];
-    if (sucessores.length === 0) {
-      fimTarde.set(id, duracaoTotal);
-      continue;
-    }
-    let limite = Infinity;
-    for (const d of sucessores) {
-      const sucId = d.etapa_id;
-      const durSuc = Math.max(1, Number(porId.get(sucId)?.duracao_dias) || 1);
-      const inicioTardeSuc = (fimTarde.get(sucId) ?? duracaoTotal) - durSuc;
-      const cand = d.tipo === "II" ? inicioTardeSuc + durSuc - (Number(d.folga_dias) || 0)
-                                   : inicioTardeSuc - (Number(d.folga_dias) || 0);
-      if (cand < limite) limite = cand;
-    }
-    fimTarde.set(id, limite === Infinity ? duracaoTotal : limite);
-  }
-
-  const calculadas: EtapaCalculada[] = etapas.map((e) => {
-    const dur = Math.max(1, Number(e.duracao_dias) || 1);
-    const ini = inicio.get(e.id) ?? 0;
-    const f = fim.get(e.id) ?? ini + dur;
-    const ft = fimTarde.get(e.id) ?? duracaoTotal;
-    const folga = Math.max(0, ft - f);
-    return {
-      ...e,
-      inicio: ini,
-      fim: f,
-      inicioTarde: ft - dur,
-      fimTarde: ft,
-      folga,
-      critica: folga === 0,
-      dataInicio: diaParaData(base, ini),
-      dataFim: diaParaData(base, f),
-    };
-  });
-
-  return { etapas: calculadas, base, duracaoTotal };
+  return {
+    folga,
+    critica,
+    inicioProjeto,
+    fimProjeto: somarDias(inicioProjeto, fimProjetoDias),
+  };
 }
 
-/** Distribui o valor de cada etapa pelos meses que ela atravessa. */
-export function previstoMensal(etapas: EtapaCalculada[]): { mes: string; valor: number }[] {
-  const mapa = new Map<string, number>();
-  for (const e of etapas) {
-    const valor = Number(e.valor_previsto) || 0;
-    if (!valor) continue;
-    const dias = Math.max(1, e.fim - e.inicio);
-    const porDia = valor / dias;
-    const ini = new Date(`${e.dataInicio}T00:00:00Z`);
-    for (let d = 0; d < dias; d++) {
-      const dia = new Date(ini.getTime() + d * DIA);
-      const mes = `${dia.getUTCFullYear()}-${String(dia.getUTCMonth() + 1).padStart(2, "0")}-01`;
-      mapa.set(mes, (mapa.get(mes) ?? 0) + porDia);
+export interface PontoCurvaS {
+  mes: string;
+  previsto: number;
+  realizado: number;
+  previstoAcum: number;
+  realizadoAcum: number;
+}
+
+/** Distribui o valor de cada tarefa linearmente pelos meses que ela atravessa. */
+export function curvaS(tarefas: TarefaGantt[]): PontoCurvaS[] {
+  const meses = new Map<string, { previsto: number; realizado: number }>();
+  for (const t of tarefas) {
+    const dias = Math.max(diffDias(t.inicio, t.fim), 1);
+    const porDia = Number(t.valor_previsto || 0) / dias;
+    for (let k = 0; k < dias; k++) {
+      const iso = somarDias(t.inicio, k);
+      const mes = iso.slice(0, 7);
+      const atual = meses.get(mes) ?? { previsto: 0, realizado: 0 };
+      atual.previsto += porDia;
+      atual.realizado += (porDia * Number(t.percentual_realizado || 0)) / 100;
+      meses.set(mes, atual);
     }
   }
-  return [...mapa.entries()]
-    .map(([mes, valor]) => ({ mes, valor: Math.round(valor * 100) / 100 }))
-    .sort((a, b) => a.mes.localeCompare(b.mes));
+  let pa = 0;
+  let ra = 0;
+  return [...meses.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([mes, v]) => {
+      pa += v.previsto;
+      ra += v.realizado;
+      return {
+        mes,
+        previsto: Math.round(v.previsto * 100) / 100,
+        realizado: Math.round(v.realizado * 100) / 100,
+        previstoAcum: Math.round(pa * 100) / 100,
+        realizadoAcum: Math.round(ra * 100) / 100,
+      };
+    });
 }
