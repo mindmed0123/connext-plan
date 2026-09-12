@@ -60,6 +60,10 @@ export function ServicoFormDialog({
   const { empresaId } = useAuth();
   const qc = useQueryClient();
   const [form, setForm] = useState<ServicoEdit>(empty());
+  const { opcoes: unidadesCad } = useListaOpcoes("unidade");
+  const unidades = unidadesCad.length
+    ? unidadesCad.map((u) => ({ value: u.valor, label: u.rotulo }))
+    : UNIDADES.map((u) => ({ value: u, label: u.toUpperCase() }));
 
   useEffect(() => {
     if (open) setForm(servico ? { ...empty(), ...servico } : empty());
