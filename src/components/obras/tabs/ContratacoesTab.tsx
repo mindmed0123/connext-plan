@@ -123,6 +123,8 @@ export function ContratacoesTab({ obraId }: { obraId: string }) {
           quantidade_parcelas: qtd,
           forma_pagamento_prevista: (form.forma_pagamento_prevista || null) as FormaPagamento | null,
           observacoes: form.observacoes || null,
+          etapa_id: form.etapa_id,
+          orcamento_item_id: form.orcamento_item_id,
           created_by: u.user?.id,
         }])
         .select("id")
