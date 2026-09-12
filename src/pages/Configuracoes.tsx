@@ -15,6 +15,7 @@ import { StatusConfigCard, RotulosConfigCard, OrigensConfigCard } from "@/compon
 import { GruposConfigCard, CategoriasConfigCard, CentrosCustoConfigCard, ListasConfigCard } from "@/components/configuracoes/ConfigFinanceiroCards";
 import { ConfigFiscalCard, ConfigDocumentosCard, ConfigMarcaCard } from "@/components/configuracoes/ConfigFiscalCards";
 import { ConfigPerfisCard } from "@/components/configuracoes/ConfigPerfisCard";
+import { ConfigPerfilCard, ConfigModulosCard, ConfigDadosExemploCard } from "@/components/configuracoes/ConfigPerfilCard";
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
@@ -218,6 +219,10 @@ export default function Configuracoes() {
           Esses dados aparecem no cabeçalho dos PDFs de orçamento.
         </p>
       </div>
+
+      <ConfigPerfilCard />
+      <ConfigModulosCard />
+      <ConfigDadosExemploCard />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Retenções fiscais</CardTitle></CardHeader>
