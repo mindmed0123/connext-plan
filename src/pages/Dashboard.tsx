@@ -17,6 +17,7 @@ import { AgendaPagamentos } from "@/components/dashboard/AgendaPagamentos";
 import { RankingTerceirizados, RankingResponsaveis } from "@/components/dashboard/Rankings";
 import { ChartsBlock } from "@/components/dashboard/ChartsBlock";
 import { AvancoObras } from "@/components/dashboard/AvancoObras";
+import { SaldosContas } from "@/components/dashboard/SaldosContas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 
@@ -108,6 +109,7 @@ export default function Dashboard() {
       {/* BLOCO 3 — Financeiro */}
       <section>
         <SectionTitle>Financeiro</SectionTitle>
+        <div className="mb-4"><SaldosContas /></div>
         <div className="space-y-4">
           <PipelineFinanceiro data={data!} />
 
