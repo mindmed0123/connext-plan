@@ -355,7 +355,7 @@ export function OrcamentoFormDialog({
 
       // Salva orçamento + itens numa única transação no banco (os totais são
       // calculados pelo próprio banco, nunca pelo front)
-      const { error } = await supabase.rpc("salvar_orcamento", {
+      const { data: salvoId, error } = await supabase.rpc("salvar_orcamento", {
         _orcamento: { ...payload, id: orcamentoId ?? null },
         _itens: itens.map((it, idx) => ({
           servico_id: it.servico_id || null,
@@ -373,6 +373,19 @@ export function OrcamentoFormDialog({
         })),
       });
       if (error) throw error;
+
+      // Alçada de aprovação ao enviar o orçamento
+      if (novoStatus === "enviado" && salvoId) {
+        const { data: pendentes } = await supabase.rpc("solicitar_aprovacao", {
+          _documento: "orcamento",
+          _registro_id: salvoId as string,
+          _valor: total,
+          _descricao: `Orçamento ${numero ?? ""} — ${clienteNome}`.trim(),
+        });
+        if ((pendentes ?? 0) > 0) {
+          toast.info("Orçamento enviado para aprovação interna");
+        }
+      }
     },
     onSuccess: (_d, status) => {
       toast.success(status === "enviado" ? "Orçamento enviado!" : "Rascunho salvo!");
