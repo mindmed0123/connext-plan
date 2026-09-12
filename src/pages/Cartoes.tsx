@@ -294,6 +294,26 @@ export default function Cartoes() {
     setDespDialog(true);
   };
 
+  // Ao salvar a edição de uma parcela, pergunta o escopo (esta parcela x todo o parcelamento)
+  const abrirSalvar = async () => {
+    const atual: any = editingDesp ?? {};
+    const grupo = atual.grupo_parcelamento as string | null;
+    const n = Number(atual.total_parcelas ?? 0);
+    if (!editingDespId || !grupo || n <= 1) {
+      saveDesp.mutate({ escopo: "parcela" });
+      return;
+    }
+    const { data } = await supabase
+      .from("cartao_despesas")
+      .select("valor")
+      .eq("grupo_parcelamento", grupo);
+    const total = (data ?? []).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
+    setEscopoTotal(arredondar2(total).toFixed(2));
+    setEscopoDialog(true);
+  };
+
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
