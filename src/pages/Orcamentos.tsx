@@ -15,6 +15,7 @@ import { OrcamentoDetailSheet } from "@/components/orcamentos/OrcamentoDetailShe
 import { Input } from "@/components/ui/input";
 import { ORC_STATUS_BADGE, ORC_STATUS_OPTIONS } from "@/components/orcamentos/orc-helpers";
 import { gerarOrcamentoPDF } from "@/lib/orcamento-pdf";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
 import { useObraConfig } from "@/hooks/useObraConfig";
 import { toast } from "sonner";
 import {
@@ -125,6 +126,9 @@ export default function Orcamentos() {
       cep: e.cep ?? null,
       telefone: e.telefone ?? null,
       logo_url: e.logo_url ?? null,
+      email: e.email ?? null,
+      cor_primaria: config.cor_primaria,
+      texto_rodape: config.texto_rodape,
     }, rotulos.codigo_obra);
     toast.success("PDF gerado!");
   };

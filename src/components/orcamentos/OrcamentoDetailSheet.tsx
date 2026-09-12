@@ -12,6 +12,7 @@ import { FileDown, Pencil, Check, X, MessageSquare } from "lucide-react";
 import { gerarOrcamentoPDF } from "@/lib/orcamento-pdf";
 import { toast } from "sonner";
 import { ORC_STATUS_BADGE } from "./orc-helpers";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
 import { useObraConfig } from "@/hooks/useObraConfig";
 
 export function OrcamentoDetailSheet({
@@ -93,6 +94,9 @@ export function OrcamentoDetailSheet({
       cep: e.cep ?? null,
       telefone: e.telefone ?? null,
       logo_url: e.logo_url ?? null,
+      email: e.email ?? null,
+      cor_primaria: config.cor_primaria,
+      texto_rodape: config.texto_rodape,
     }, rotulos.codigo_obra);
     toast.success("PDF gerado!");
   };
