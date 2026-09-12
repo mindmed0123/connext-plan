@@ -77,7 +77,8 @@ export default function Cartoes() {
           .order("id")
           .range(inicio, inicio + passo - 1);
         if (filtroCartao !== "todos") q = q.eq("cartao_id", filtroCartao);
-        if (desde) q = q.gte("data_compra", desde);
+        // Filtra pela FATURA (não pela data da compra), para não esconder parcelas futuras de compras antigas
+        if (desde) q = q.gte("fatura_vencimento", desde);
         const { data, error } = await q;
         if (error) throw error;
         linhas.push(...(data ?? []));
