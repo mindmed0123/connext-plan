@@ -18,6 +18,8 @@ import {
   ShoppingCart,
   FileSignature,
   Ruler,
+  Truck,
+  Landmark,
 } from "lucide-react";
 import iconLogo from "@/assets/icon.png";
 import {
