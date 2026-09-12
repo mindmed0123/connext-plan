@@ -83,6 +83,22 @@ export function OrcamentoFormDialog({
   const [numero, setNumero] = useState<string | null>(null);
   const [servicoSearch, setServicoSearch] = useState("");
   const [detalheAberto, setDetalheAberto] = useState<Record<number, boolean>>({});
+  const [importarAberto, setImportarAberto] = useState(false);
+
+  const aplicarImportacao = (novos: ItemImportado[]) => {
+    setItens((arr) => [
+      ...arr,
+      ...novos.map((n) => ({
+        descricao: n.descricao,
+        unidade: n.unidade || "un",
+        quantidade: Number(n.quantidade) || 0,
+        preco_unitario: Number(n.preco_unitario) || 0,
+        desconto_pct: 0,
+        aliquota_iss: 0,
+        bdi_pct: null,
+      })),
+    ]);
+  };
 
   // Proposta comercial (campos extras Omie-like)
   const [objeto, setObjeto] = useState("");
@@ -784,6 +800,11 @@ export function OrcamentoFormDialog({
             </div>
           </div>
         )}
+        <ImportarItensDialog
+          open={importarAberto}
+          onOpenChange={setImportarAberto}
+          onConfirmar={aplicarImportacao}
+        />
       </DialogContent>
     </Dialog>
   );
