@@ -21,3 +21,9 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.portal-obra]
+verify_jwt = false
+
+[functions.notificacoes-agenda]
+verify_jwt = false
