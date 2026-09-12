@@ -48,6 +48,8 @@ import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { instalarErrosEmPortugues } from "@/lib/erros";
 import { hashComEmpresa } from "@/lib/tenant-cache";
+import { detectarLimitePlano } from "@/lib/plano-limite";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient({
   // Qualquer mutação bem-sucedida em qualquer aba atualiza todas as telas,
