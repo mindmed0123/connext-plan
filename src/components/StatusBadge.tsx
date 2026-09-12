@@ -1,11 +1,9 @@
-import { OBRA_STATUS_COLOR, OBRA_STATUS_LABEL } from "@/lib/obra-helpers";
-import type { Database } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
+import { useObraConfig } from "@/hooks/useObraConfig";
 
-type ObraStatus = Database["public"]["Enums"]["obra_status"];
-
-export function StatusBadge({ status, className }: { status: ObraStatus; className?: string }) {
-  const color = OBRA_STATUS_COLOR[status];
+export function StatusBadge({ status, className }: { status?: string | null; className?: string }) {
+  const { statusLabel, statusColor } = useObraConfig();
+  const color = statusColor(status);
   return (
     <span
       className={cn(
@@ -13,13 +11,13 @@ export function StatusBadge({ status, className }: { status: ObraStatus; classNa
         className
       )}
       style={{
-        borderColor: `hsl(var(--${color}) / 0.25)`,
-        backgroundColor: `hsl(var(--${color}) / 0.10)`,
-        color: `hsl(var(--${color}))`,
+        borderColor: `${color}40`,
+        backgroundColor: `${color}1A`,
+        color,
       }}
     >
-      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: `hsl(var(--${color}))` }} />
-      {OBRA_STATUS_LABEL[status]}
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+      {statusLabel(status)}
     </span>
   );
 }
