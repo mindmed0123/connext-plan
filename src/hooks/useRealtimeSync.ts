@@ -35,6 +35,11 @@ const TABELAS_COMPARTILHADAS = [
   "servicos",
   "medicoes",
   "contratos_clientes",
+  "fornecedores",
+  "contas_pagar",
+  "contas_pagar_parcelas",
+  "contas_bancarias",
+  "extrato_bancario",
 ] as const;
 
 /**
