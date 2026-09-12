@@ -185,7 +185,10 @@ export function PermissoesEditor({ pessoaId }: { pessoaId: string }) {
             ) : (
               APP_MODULOS.map((m) => (
                 <TableRow key={m}>
-                  <TableCell className="font-medium">{MODULO_LABEL[m]}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="mr-2">{MODULO_LABEL[m]}</span>
+                    {foraDoPerfil(m) && <Badge variant="outline" className="text-[10px]">ajustado</Badge>}
+                  </TableCell>
                   {(["can_view", "can_create", "can_edit", "can_delete"] as const).map((campo) => (
                     <TableCell key={campo} className="text-center">
                       <Checkbox
