@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
+import { ORIGEM_LABEL, getRegiaoLabel, formatCurrency } from "@/lib/obra-helpers";
 import { useObraConfig } from "@/hooks/useObraConfig";
 import { StatusPipeline } from "@/components/obras/StatusPipeline";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
