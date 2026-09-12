@@ -10,6 +10,7 @@ import { Search, Loader2, Save, Upload, Trash2, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 import { toast } from "sonner";
+import { StatusConfigCard, RotulosConfigCard, OrigensConfigCard } from "@/components/configuracoes/ConfigObraCards";
 
 const formatCnpj = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 14);
@@ -24,7 +25,7 @@ export default function Configuracoes() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
   const { data: regioes } = useQuery({
-    queryKey: ["regioes-obra"],
+    queryKey: [empresaId, "regioes-obra"],
     enabled: !!empresaId,
     queryFn: async () => {
       const { data } = await supabase.from("regioes_obra").select("*").order("nome");
@@ -37,13 +38,13 @@ export default function Configuracoes() {
     const { error } = await supabase.from("regioes_obra").insert({ nome: novaRegiaoCfg.trim(), empresa_id: empresaId as string });
     if (error) return toast.error(error.message);
     setNovaRegiaoCfg("");
-    qc.invalidateQueries({ queryKey: ["regioes-obra"] });
+    qc.invalidateQueries({ queryKey: [empresaId, "regioes-obra"] });
     toast.success("Região adicionada");
   };
   const removeRegiaoCfg = async (id: string) => {
     const { error } = await supabase.from("regioes_obra").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["regioes-obra"] });
+    qc.invalidateQueries({ queryKey: [empresaId, "regioes-obra"] });
   };
 
   const { config: cardsVisiveis, saveConfig, TODOS_OS_CARDS } = useDashboardConfig();
@@ -404,6 +405,10 @@ export default function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <RotulosConfigCard />
+      <StatusConfigCard />
+      <OrigensConfigCard />
 
       <Card>
         <CardHeader>
