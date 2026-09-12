@@ -37,11 +37,31 @@ export function FaturamentoFormDialog({ tipo, open, onOpenChange }: { tipo: Tipo
   const [nfData, setNfData] = useState("");
   const [nfValor, setNfValor] = useState("");
 
+  const [pcId, setPcId] = useState<string>("");
+
   const obras = useQuery({
     queryKey: ["obras-select"],
     enabled: open && vinculo === "existente",
     queryFn: async () => (await (supabase.from("obras")).select("id, codigo_chamado").eq("arquivada", false).order("codigo_chamado")).data ?? [],
   });
+
+  const pcsObra = useQuery({
+    queryKey: ["pcs-sem-nf", obraId],
+    enabled: open && tipo === "nf" && !!obraId,
+    queryFn: async () => {
+      const [{ data: pcs }, { data: nfs }] = await Promise.all([
+        supabase.from("pedidos_compra").select("id, numero_pedido, valor").eq("obra_id", obraId).order("created_at", { ascending: false }),
+        supabase.from("notas_fiscais").select("pedido_compra_id").eq("obra_id", obraId),
+      ]);
+      const usados = new Set((nfs ?? []).map((n) => n.pedido_compra_id).filter(Boolean));
+      return (pcs ?? []).filter((p) => !usados.has(p.id));
+    },
+  });
+
+  useEffect(() => {
+    const lista = pcsObra.data ?? [];
+    if (!pcId && lista.length === 1) setPcId(lista[0].id);
+  }, [pcsObra.data]);
 
   useEffect(() => {
     if ((tipo !== "nf" && !(tipo === "pc" && withNf)) || !obraId) return;
