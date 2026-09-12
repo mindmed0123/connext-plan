@@ -25,11 +25,14 @@ import {
   SkipForward,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { PERFIS, PerfilOperacao } from "@/lib/modulos";
+import { useModulos } from "@/hooks/useModulos";
 
-type StepKey = "welcome" | "profile" | "obra" | "servico" | "equipe" | "done";
+type StepKey = "welcome" | "operacao" | "profile" | "obra" | "servico" | "equipe" | "done";
 
 const STEPS: { key: StepKey; title: string; icon: any }[] = [
   { key: "welcome", title: "Boas-vindas", icon: Sparkles },
+  { key: "operacao", title: "Tipo de operação", icon: Building2 },
   { key: "profile", title: "Seu perfil", icon: Building2 },
   { key: "obra", title: "Primeira obra", icon: HardHat },
   { key: "servico", title: "Serviço", icon: Wrench },
