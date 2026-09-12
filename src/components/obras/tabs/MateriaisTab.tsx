@@ -25,6 +25,8 @@ const empty = {
   forma_pagamento: "",
   numero_nf: "",
   observacoes: "",
+  etapa_id: null as string | null,
+  orcamento_item_id: null as string | null,
 };
 
 export function MateriaisTab({ obraId }: { obraId: string }) {
@@ -81,6 +83,8 @@ export function MateriaisTab({ obraId }: { obraId: string }) {
         numero_nf: form.numero_nf || null,
         observacoes: form.observacoes || null,
         anexo_path,
+        etapa_id: form.etapa_id,
+        orcamento_item_id: form.orcamento_item_id,
         created_by: u.user?.id,
       }]);
       if (error) throw error;
