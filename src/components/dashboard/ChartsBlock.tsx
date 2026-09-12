@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DashboardData } from "@/hooks/useDashboardData";
-import { OBRA_STATUS_LABEL, OBRA_STATUS_LIST, OBRA_STATUS_COLOR, formatCurrency, type ObraStatus } from "@/lib/obra-helpers";
+import { formatCurrency } from "@/lib/obra-helpers";
+import { useObraConfig } from "@/hooks/useObraConfig";
 import { shortMonthYear } from "@/lib/dashboard-helpers";
 import { parseDateString } from "@/lib/date";
 
