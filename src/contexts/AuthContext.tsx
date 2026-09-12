@@ -54,6 +54,7 @@ async function isSuperAdmin(userId: string) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const qc = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setEmpresaId(null);
         setEmpresaNome(null);
+        limparEscopoEmpresa(qc);
         setLoading(false);
       }
     });
