@@ -80,21 +80,28 @@ Deno.serve(async (req) => {
     const redirectTo = requestOrigin?.startsWith("https://")
       ? `${requestOrigin}/auth`
       : "https://gestaodeobra.online/auth";
-    const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: { nome: nome ?? email },
-    });
-    if (invErr) {
-      const alreadyExists = /already|registered|exists/i.test(invErr.message);
-      return json({
-        error: alreadyExists
-          ? "Este e-mail já possui cadastro ou convite. Use a recuperação de senha para acessar."
-          : `Não foi possível enviar o convite: ${invErr.message}`,
-      }, 400);
+
+    // Se já existe conta com este e-mail, não falhamos: vinculamos e mandamos link de senha.
+    const { data: existingUserId } = await admin.rpc("auth_user_id_by_email", { _email: email });
+
+    let newUserId: string | null = (existingUserId as string | null) ?? null;
+    let mensagem = `Convite enviado para ${email}. O convidado vai receber um e-mail para definir a senha.`;
+
+    if (!newUserId) {
+      const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+        data: { nome: nome ?? email },
+      });
+      if (invErr) {
+        console.error("inviteUserByEmail falhou", invErr);
+        return json({ error: `Não foi possível enviar o convite: ${invErr.message}` }, 400);
+      }
+      newUserId = inv.user?.id ?? null;
+      if (!newUserId) return json({ error: "O convite não retornou um usuário válido." }, 500);
+    } else {
+      mensagem = `${email} já tinha cadastro. Acesso liberado nesta empresa e e-mail enviado para definir a senha.`;
     }
 
-    const newUserId = inv.user?.id;
-    if (!newUserId) return json({ error: "O convite não retornou um usuário válido." }, 500);
 
     // Nunca sobrescrever o vínculo de outra empresa
     const { data: rolesExistentes, error: rolesExistentesErr } = await admin
