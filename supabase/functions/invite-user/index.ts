@@ -127,8 +127,10 @@ Deno.serve(async (req) => {
         .from("user_roles")
         .insert({ user_id: newUserId, role, empresa_id: empresaId });
       if (roleError) {
-        return json({ error: "Convite enviado, mas não foi possível atribuir a função ao usuário." }, 500);
+        console.error("insert user_roles falhou", roleError);
+        return json({ error: `Convite enviado, mas não foi possível atribuir a função: ${roleError.message}` }, 500);
       }
+
     }
 
     const { data: existing, error: lookupError } = await admin
