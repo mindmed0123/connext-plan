@@ -6215,6 +6215,7 @@ export type Database = {
         Returns: undefined
       }
       aprovar_orcamento: { Args: { _id: string }; Returns: undefined }
+      auth_user_id_by_email: { Args: { _email: string }; Returns: string }
       calc_fatura_fechamento: {
         Args: { _data_compra: string; _dia_fech: number; _offset?: number }
         Returns: string
