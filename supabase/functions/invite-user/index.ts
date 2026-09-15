@@ -163,7 +163,10 @@ Deno.serve(async (req) => {
           status: "ativo",
           perfil_id: perfilValido,
         }).select("id").maybeSingle();
-    if (personResult.error) return json({ error: "Convite enviado, mas o cadastro do funcionário não pôde ser vinculado." }, 500);
+    if (personResult.error) {
+      console.error("vínculo pessoas falhou", personResult.error);
+      return json({ error: `Convite enviado, mas o cadastro do funcionário não pôde ser vinculado: ${personResult.error.message}` }, 500);
+    }
 
     const pessoaId = personResult.data?.id ?? existing?.id ?? null;
     if (perfilValido && pessoaId) {
@@ -180,7 +183,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, user_id: newUserId });
+    // Usuário que já existia: manda e-mail de definição de senha (fluxo de recuperação)
+    if (existingUserId) {
+      const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, { redirectTo });
+      if (resetErr) {
+        console.error("resetPasswordForEmail falhou", resetErr);
+        mensagem = `${email} já tinha cadastro e agora tem acesso a esta empresa. Peça para entrar com a senha atual ou usar "Esqueci minha senha".`;
+      }
+    }
+
+    return json({ ok: true, user_id: newUserId, message: mensagem });
+
   } catch (error) {
     console.error("invite-user failed", error);
     return json({ error: "Erro interno ao enviar o convite. Tente novamente." }, 500);
