@@ -19,19 +19,33 @@ export function InviteUserDialog({ open, onOpenChange }: { open: boolean; onOpen
   const handleInvite = async () => {
     if (!email) return toast.error("Informe o e-mail");
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke("invite-user", {
-      body: { email, nome, role, perfil_id: perfilId === "nenhum" ? null : perfilId },
-    });
+    let payload: any = null;
+    let fnError: any = null;
+    try {
+      const res = await supabase.functions.invoke("invite-user", {
+        body: { email, nome, role, perfil_id: perfilId === "nenhum" ? null : perfilId },
+      });
+      payload = res.data;
+      fnError = res.error;
+      // funções do Supabase não devolvem o corpo em respostas de erro: lemos direto
+      if (fnError && typeof fnError.context?.json === "function") {
+        payload = await fnError.context.json().catch(() => null);
+      }
+    } catch (e: any) {
+      fnError = e;
+    }
     setBusy(false);
-    if (error || (data)?.error) {
-      toast.error((data)?.error ?? error?.message ?? "Erro ao convidar");
+
+    if (payload?.error || (fnError && !payload?.ok)) {
+      toast.error(payload?.error ?? fnError?.message ?? "Erro ao convidar");
       return;
     }
-    toast.success(`Convite enviado para ${email}`);
+    toast.success(payload?.message ?? `Convite enviado para ${email}`);
     setEmail("");
     setNome("");
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

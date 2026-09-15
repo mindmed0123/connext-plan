@@ -242,14 +242,17 @@ export default function Onboarding() {
     }
     setBusy(true);
     try {
-      const { error } = await supabase.functions.invoke("invite-user", {
-        body: { email: convEmail, nome: convNome || convEmail.split("@")[0], role: "user" },
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: { email: convEmail, nome: convNome || convEmail.split("@")[0], role: "operacional" },
       });
+      const msgErro = (data as any)?.error;
+      if (msgErro) throw new Error(msgErro);
       if (error) throw error;
-      toast.success("Convite enviado!");
+      toast.success((data as any)?.message ?? "Convite enviado!");
       next();
     } catch (e: any) {
       toast.error(e.message ?? "Não foi possível convidar agora — você pode fazer isso depois em Equipes");
+
     } finally {
       setBusy(false);
     }

@@ -80,21 +80,28 @@ Deno.serve(async (req) => {
     const redirectTo = requestOrigin?.startsWith("https://")
       ? `${requestOrigin}/auth`
       : "https://gestaodeobra.online/auth";
-    const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: { nome: nome ?? email },
-    });
-    if (invErr) {
-      const alreadyExists = /already|registered|exists/i.test(invErr.message);
-      return json({
-        error: alreadyExists
-          ? "Este e-mail já possui cadastro ou convite. Use a recuperação de senha para acessar."
-          : `Não foi possível enviar o convite: ${invErr.message}`,
-      }, 400);
+
+    // Se já existe conta com este e-mail, não falhamos: vinculamos e mandamos link de senha.
+    const { data: existingUserId } = await admin.rpc("auth_user_id_by_email", { _email: email });
+
+    let newUserId: string | null = (existingUserId as string | null) ?? null;
+    let mensagem = `Convite enviado para ${email}. O convidado vai receber um e-mail para definir a senha.`;
+
+    if (!newUserId) {
+      const { data: inv, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+        data: { nome: nome ?? email },
+      });
+      if (invErr) {
+        console.error("inviteUserByEmail falhou", invErr);
+        return json({ error: `Não foi possível enviar o convite: ${invErr.message}` }, 400);
+      }
+      newUserId = inv.user?.id ?? null;
+      if (!newUserId) return json({ error: "O convite não retornou um usuário válido." }, 500);
+    } else {
+      mensagem = `${email} já tinha cadastro. Acesso liberado nesta empresa e e-mail enviado para definir a senha.`;
     }
 
-    const newUserId = inv.user?.id;
-    if (!newUserId) return json({ error: "O convite não retornou um usuário válido." }, 500);
 
     // Nunca sobrescrever o vínculo de outra empresa
     const { data: rolesExistentes, error: rolesExistentesErr } = await admin
@@ -120,8 +127,10 @@ Deno.serve(async (req) => {
         .from("user_roles")
         .insert({ user_id: newUserId, role, empresa_id: empresaId });
       if (roleError) {
-        return json({ error: "Convite enviado, mas não foi possível atribuir a função ao usuário." }, 500);
+        console.error("insert user_roles falhou", roleError);
+        return json({ error: `Convite enviado, mas não foi possível atribuir a função: ${roleError.message}` }, 500);
       }
+
     }
 
     const { data: existing, error: lookupError } = await admin
@@ -156,7 +165,10 @@ Deno.serve(async (req) => {
           status: "ativo",
           perfil_id: perfilValido,
         }).select("id").maybeSingle();
-    if (personResult.error) return json({ error: "Convite enviado, mas o cadastro do funcionário não pôde ser vinculado." }, 500);
+    if (personResult.error) {
+      console.error("vínculo pessoas falhou", personResult.error);
+      return json({ error: `Convite enviado, mas o cadastro do funcionário não pôde ser vinculado: ${personResult.error.message}` }, 500);
+    }
 
     const pessoaId = personResult.data?.id ?? existing?.id ?? null;
     if (perfilValido && pessoaId) {
@@ -173,7 +185,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, user_id: newUserId });
+    // Usuário que já existia: manda e-mail de definição de senha (fluxo de recuperação)
+    if (existingUserId) {
+      const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, { redirectTo });
+      if (resetErr) {
+        console.error("resetPasswordForEmail falhou", resetErr);
+        mensagem = `${email} já tinha cadastro e agora tem acesso a esta empresa. Peça para entrar com a senha atual ou usar "Esqueci minha senha".`;
+      }
+    }
+
+    return json({ ok: true, user_id: newUserId, message: mensagem });
+
   } catch (error) {
     console.error("invite-user failed", error);
     return json({ error: "Erro interno ao enviar o convite. Tente novamente." }, 500);
