@@ -606,7 +606,7 @@ export type Database = {
           ativo?: boolean
           cor?: string | null
           created_at?: string
-          empresa_id: string
+          empresa_id?: string
           grupo: Database["public"]["Enums"]["categoria_grupo"]
           grupo_id?: string | null
           id?: string
@@ -3109,7 +3109,7 @@ export type Database = {
           data_vencimento?: string | null
           descricao: string
           documento_num?: string | null
-          empresa_id: string
+          empresa_id?: string
           etapa_id?: string | null
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
@@ -5606,7 +5606,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data?: string
-          empresa_id: string
+          empresa_id?: string
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -5744,7 +5744,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          empresa_id: string
+          empresa_id?: string
           id?: string
           nome: string
         }
