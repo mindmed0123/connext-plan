@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789660097681,
+      "tag": "0000_default_empresa_id_lancamentos",
+      "breakpoints": true
+    }
+  ]
+}
