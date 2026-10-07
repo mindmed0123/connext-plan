@@ -8,6 +8,13 @@
       "when": 1789660097681,
       "tag": "0000_default_empresa_id_lancamentos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791377582922,
+      "tag": "0001_grant_execute_rpcs_faltantes",
+      "breakpoints": true
     }
   ]
 }
