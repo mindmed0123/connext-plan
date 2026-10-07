@@ -66,7 +66,7 @@ export function useRealtimeSync() {
       }, 350);
     };
 
-    const channel = supabase.channel(`sync-${empresaId}`);
+    const channel = supabase.channel(`sync-${empresaId}-${Math.random().toString(36).slice(2)}`);
     for (const table of TABELAS_COMPARTILHADAS) {
       channel.on(
         "postgres_changes",
