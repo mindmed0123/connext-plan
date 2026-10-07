@@ -136,7 +136,7 @@ export default function Etapas() {
   // Realtime: invalidate on any obra change
   useEffect(() => {
     const ch = supabase
-      .channel("etapas-obras")
+      .channel(`etapas-obras-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "obras", filter: `empresa_id=eq.${empresaId}` }, () => {
         qc.invalidateQueries({ queryKey: [empresaId, "etapas"] });
         qc.invalidateQueries({ queryKey: ["obras"] });

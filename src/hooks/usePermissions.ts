@@ -90,9 +90,11 @@ export function usePermissions() {
 
   // Realtime: refletir mudanças de permissões assim que o admin salvar
   useEffect(() => {
-    if (!authReady || !user?.id || isAdmin) return;
+    if (!authReady || !user?.id || isAdmin || roleLoading) return;
+    // Nome único por instância: vários componentes usam este hook ao mesmo
+    // tempo e reaproveitar um canal já inscrito derruba a tela.
     const ch = supabase
-      .channel(`perm-${user.id}`)
+      .channel(`perm-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "pessoa_permissoes" },
