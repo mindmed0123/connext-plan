@@ -63,6 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [empresaNome, setEmpresaNome] = useState<string | null>(null);
 
+  /**
+   * Troca o escopo do cache ANTES de publicar a empresa no estado. Se a troca
+   * acontecesse depois (num efeito), as consultas que as telas já tinham
+   * disparado seriam canceladas em silêncio e a tela ficaria girando para sempre
+   * ao abrir/atualizar uma página com o usuário já logado.
+   */
+  const publicarEmpresa = (uid: string, id: string | null, nome: string | null) => {
+    aplicarEscopoEmpresa(qc, `${uid}:${id ?? "sem-empresa"}`);
+    setEmpresaId(id);
+    setEmpresaNome(nome);
+  };
+
   const loadEmpresa = async (uid: string | undefined) => {
     if (!uid) {
       setEmpresaId(null);
@@ -73,8 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let { empresaId, empresaNome, empresaAtivo } = await fetchEmpresa(uid);
 
     if (superAdmin) {
-      setEmpresaId(null);
-      setEmpresaNome(null);
+      publicarEmpresa(uid, null, null);
       return;
     }
 
@@ -111,8 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return;
     }
-    setEmpresaId(empresaId);
-    setEmpresaNome(empresaNome);
+    publicarEmpresa(uid, empresaId, empresaNome);
   };
 
   const authReadyRef = useRef(false);
