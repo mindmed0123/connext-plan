@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -144,7 +144,13 @@ export default function Contratos() {
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-1">{c.objeto}</p>
                 </TableCell>
-                <TableCell>{c.obras?.codigo_chamado ?? "—"}</TableCell>
+                <TableCell>
+                  {c.obra_id && c.obras?.codigo_chamado ? (
+                    <Link to={`/obras/${c.obra_id}`} className="text-primary underline-offset-2 hover:underline">
+                      {c.obras.codigo_chamado}
+                    </Link>
+                  ) : "—"}
+                </TableCell>
                 <TableCell>{c.clientes?.nome ?? "—"}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatCurrency(Number(c.valor_global ?? 0))}</TableCell>
                 <TableCell className="text-xs">

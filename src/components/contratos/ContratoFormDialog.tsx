@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -59,6 +60,7 @@ export function ContratoFormDialog({
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState(vazio(prefill));
+  const [criarObra, setCriarObra] = useState(true);
 
   useEffect(() => {
     if (!open) return;
@@ -83,6 +85,7 @@ export function ContratoFormDialog({
       setForm(vazio(prefill));
     }
     setFile(null);
+    setCriarObra(true);
   }, [open, contrato, prefill?.obra_id, prefill?.cliente_id]);
 
   const obras = useQuery({
@@ -109,8 +112,31 @@ export function ContratoFormDialog({
         if (upErr) throw upErr;
         documento_url = path;
       }
+      // Contrato novo sem obra: cria a obra junto para tudo ficar ligado
+      let obraId: string | null = form.obra_id || null;
+      if (!obraId && !contrato?.id && criarObra) {
+        const criar = (codigo: string) =>
+          supabase.rpc("criar_obra_segura", {
+            _codigo_chamado: codigo,
+            _origem: "Contrato",
+            _regiao_label: "",
+            _engenheiro_responsavel: "",
+            _descricao_servico: form.objeto.trim(),
+            _endereco: "",
+            _data_recebimento: form.data_inicio || getTodayDateInputValue(),
+          });
+        let { data: nova, error: obraErr } = await criar(form.numero_contrato.trim());
+        // número de contrato já usado como código de outra obra: gera um código automático
+        if (obraErr && form.numero_contrato.trim()) ({ data: nova, error: obraErr } = await criar(""));
+        if (obraErr) throw new Error(`Não foi possível criar a obra do contrato: ${obraErr.message}`);
+        const novaObra: any = Array.isArray(nova) ? nova[0] : nova;
+        obraId = novaObra?.id ?? null;
+        if (obraId && form.cliente_id) {
+          await supabase.from("obras").update({ cliente_id: form.cliente_id }).eq("id", obraId);
+        }
+      }
       const payload = {
-        obra_id: form.obra_id || null,
+        obra_id: obraId,
         cliente_id: form.cliente_id || null,
         numero_contrato: form.numero_contrato.trim() || null,
         objeto: form.objeto.trim(),
@@ -134,7 +160,13 @@ export function ContratoFormDialog({
       }
     },
     onSuccess: () => {
-      toast.success(contrato?.id ? "Contrato atualizado" : "Contrato criado");
+      toast.success(
+        contrato?.id
+          ? "Contrato atualizado"
+          : !form.obra_id && criarObra
+            ? "Contrato criado e obra cadastrada na aba Obras"
+            : "Contrato criado",
+      );
       qc.invalidateQueries({ queryKey: [empresaId, "contratos"] });
       qc.invalidateQueries();
       onOpenChange(false);
@@ -166,6 +198,17 @@ export function ContratoFormDialog({
                 </SelectContent>
               </Select>
             </div>
+            {!form.obra_id && !contrato?.id && (
+              <label className="flex cursor-pointer items-start gap-2 rounded-md border bg-muted/40 p-2.5 text-sm sm:col-span-2 sm:order-last">
+                <Checkbox checked={criarObra} onCheckedChange={(v) => setCriarObra(v === true)} className="mt-0.5" />
+                <span>
+                  Criar a obra automaticamente com este contrato
+                  <span className="block text-xs text-muted-foreground">
+                    A obra aparece na aba Obras com o valor do contrato. Desmarque se ela já existir e escolha acima.
+                  </span>
+                </span>
+              </label>
+            )}
             <div className="space-y-1.5">
               <Label>Cliente</Label>
               <Select

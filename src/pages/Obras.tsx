@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search } from "lucide-react";
+import { FileSignature, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +31,7 @@ export default function Obras() {
     queryFn: async () => {
       let q: any = supabase
         .from("obras")
-        .select("*, orcamentos(valor_orcamento, status, created_at), obra_adendos(valor_total, status)")
+        .select("*, orcamentos(valor_orcamento, status, created_at), obra_adendos(valor_total, status), contratos_clientes(id, numero_contrato, valor_global, status)")
         .order("created_at", { ascending: false });
       if (!mostrarArquivadas) q = q.eq("arquivada", false);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
@@ -61,11 +61,21 @@ export default function Obras() {
       .filter((a) => ADENDO_ATIVO.includes(a.status))
       .reduce((s, a) => s + Number(a.valor_total || 0), 0);
 
+  /** Contratos que valem para a obra (encerrados ficam fora do valor). */
+  const contratosVigentes = (contratos: Array<{ valor_global: number; status: string }> | null) =>
+    (contratos ?? []).filter((c) => c.status !== "encerrado");
+
   const getValorObra = (
     orcs: Array<{ valor_orcamento: number; status: string; created_at: string }> | null,
     adendos: Array<{ valor_total: number; status: string }> | null,
+    contratos: Array<{ valor_global: number; status: string }> | null,
   ) => {
     const valorAdendos = getValorAdendos(adendos);
+    // O contrato assinado manda no valor da obra; sem contrato, vale o orçamento.
+    const vigentes = contratosVigentes(contratos);
+    if (vigentes.length > 0) {
+      return vigentes.reduce((s, c) => s + Number(c.valor_global || 0), 0) + valorAdendos;
+    }
     let valorOrc: number | null = null;
     if (orcs && orcs.length > 0) {
       const aprovado = orcs.find((o) => o.status === "aprovado");
@@ -131,6 +141,7 @@ export default function Obras() {
           <TableHeader>
             <TableRow>
               <TableHead>{rotulos.codigo_obra}</TableHead>
+              <TableHead>Contrato</TableHead>
               <TableHead>Origem</TableHead>
               <TableHead>Região</TableHead>
               <TableHead>Engenheiro</TableHead>
@@ -141,14 +152,16 @@ export default function Obras() {
           </TableHeader>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-10">Carregando...</TableCell></TableRow>
             )}
             {!isLoading && (obras?.length ?? 0) === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">Nenhuma obra encontrada. Clique em "Nova obra" para criar.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-10">Nenhuma obra encontrada. Clique em "Nova obra" para criar.</TableCell></TableRow>
             )}
             {obras?.map((o: any) => {
-              const valor = getValorObra(o.orcamentos, o.obra_adendos);
+              const valor = getValorObra(o.orcamentos, o.obra_adendos, o.contratos_clientes);
+              const contratos = contratosVigentes(o.contratos_clientes) as any[];
               const isAprovado =
+                contratos.length > 0 ||
                 o.orcamentos?.some((or: any) => or.status === "aprovado") ||
                 getValorAdendos(o.obra_adendos) > 0;
               return (
@@ -161,7 +174,17 @@ export default function Obras() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm">{ORIGEM_LABEL[o.origem]}</TableCell>
+                  <TableCell className="text-sm">
+                    {contratos.length > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                        <FileSignature className="h-3 w-3" />
+                        {contratos.map((c) => c.numero_contrato ?? "s/nº").join(", ")}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">{ORIGEM_LABEL[o.origem] ?? o.origem}</TableCell>
                   <TableCell className="text-sm">{getRegiaoLabel(o)}</TableCell>
                   <TableCell className="text-sm">{o.engenheiro_responsavel}</TableCell>
                   <TableCell className="text-sm">{formatDateBR(o.data_recebimento)}</TableCell>
