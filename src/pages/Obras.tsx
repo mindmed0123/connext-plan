@@ -176,7 +176,7 @@ export default function Obras() {
                   </TableCell>
                   <TableCell className="text-sm">
                     {contratos.length > 0 ? (
-                      <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                         <FileSignature className="h-3 w-3" />
                         {contratos.map((c) => c.numero_contrato ?? "s/nº").join(", ")}
                       </span>
