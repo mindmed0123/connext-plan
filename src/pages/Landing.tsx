@@ -387,7 +387,6 @@ export default function Landing() {
   });
 
   const cta = (origem: string) => () => trackEvent("cta_click", { origem });
-  const claro = scrolled || mobileMenu ? false : true;
 
   return (
     <div className="min-h-screen bg-white text-[#0F2448]" style={{ fontFamily: FONT, fontFeatureSettings: '"ss01"' }}>
