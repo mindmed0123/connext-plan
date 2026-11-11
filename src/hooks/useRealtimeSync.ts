@@ -42,6 +42,7 @@ const TABELAS_COMPARTILHADAS = [
   "extrato_bancario",
   "diario_obra",
   "fotos_obra",
+  "obra_status_config",
 ] as const;
 
 /**
