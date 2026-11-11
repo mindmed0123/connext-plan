@@ -4,6 +4,7 @@ import { fetchAllRows } from "@/lib/fetch-all";
 import { toDateKey } from "@/lib/date";
 import type { ObraStatus } from "@/lib/obra-helpers";
 import { getRegiaoLabel } from "@/lib/obra-helpers";
+import { calcularValoresObras, valorFechado, type ValorObra } from "@/lib/valor-obra";
 
 export interface DashboardFilters {
   from?: string;
@@ -33,6 +34,8 @@ export function useDashboardData(filters: DashboardFilters) {
         timeline,
         fotos,
         resumoRes,
+        contratosCli,
+        medicoesRaw,
       ] = await Promise.all([
         fetchAllRows<any>((f, t) =>
           supabase
@@ -106,6 +109,12 @@ export function useDashboardData(filters: DashboardFilters) {
           supabase.from("fotos_obra").select("obra_id,data_upload").order("id").range(f, t),
         ),
         supabase.rpc("get_obra_financeiro_resumo", { _obra_id: null }),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("contratos_clientes").select("id,obra_id,valor_global,status").order("id").range(f, t),
+        ),
+        fetchAllRows<any>((f, t) =>
+          supabase.from("medicoes").select("id,obra_id,valor_medido,status").order("id").range(f, t),
+        ),
       ]);
 
       const { data: statusCfg } = await supabase
@@ -173,32 +182,15 @@ export function useDashboardData(filters: DashboardFilters) {
       });
       const obraIds = new Set(obrasFiltered.map((o) => o.id));
 
-      // Receita contratada = orçamento APROVADO (único por obra) + adendos assinados.
-      // Sem orçamento aprovado, usa a versão mais recente apenas como previsão.
-      const ADENDO_ATIVO = ["assinado", "em_execucao", "concluido"];
+      // Valor da obra: contrato com o cliente manda; sem contrato, orçamento (regra única em lib/valor-obra)
+      const valoresObra: Map<string, ValorObra> = calcularValoresObras(orcs, adendos, contratosCli);
       const valorPorObra = new Map<string, number>();
-      const temAprovado = new Set<string>();
-      for (const o of orcs) {
-        const v = Number((o as { valor_total?: number }).valor_total ?? o.valor_orcamento ?? 0);
-        if (o.status === "aprovado") {
-          valorPorObra.set(o.obra_id, v);
-          temAprovado.add(o.obra_id);
-        } else if (!temAprovado.has(o.obra_id) && !valorPorObra.has(o.obra_id)) {
-          valorPorObra.set(o.obra_id, v);
-        }
-      }
+      for (const [id, v] of valoresObra) valorPorObra.set(id, v.valor);
       const valorAdendosPorObra = new Map<string, number>();
       for (const a of adendos) {
-        if (!ADENDO_ATIVO.includes(a.status)) continue;
-        valorAdendosPorObra.set(
-          a.obra_id,
-          (valorAdendosPorObra.get(a.obra_id) ?? 0) + Number(a.valor_total || 0),
-        );
+        if (!["assinado", "em_execucao", "concluido"].includes(a.status)) continue;
+        valorAdendosPorObra.set(a.obra_id, (valorAdendosPorObra.get(a.obra_id) ?? 0) + Number(a.valor_total || 0));
       }
-      for (const [obraId, valorAdendo] of valorAdendosPorObra) {
-        valorPorObra.set(obraId, (valorPorObra.get(obraId) ?? 0) + valorAdendo);
-      }
-
 
       const sumValueByObras = (predicate: (s: ObraStatus) => boolean) =>
         obrasFiltered
@@ -227,12 +219,15 @@ export function useDashboardData(filters: DashboardFilters) {
         .filter(([id]) => obraIds.has(id))
         .reduce((s, [, v]) => s + v, 0);
 
-      const valorTotalAprovado =
-        orcs
-          .filter((o) => obraIds.has(o.obra_id) && o.status === "aprovado")
-          .reduce((s, o) => s + Number(o.valor_total ?? o.valor_orcamento ?? 0), 0) +
-        valorAdendosFiltrados;
+      // Fechado = contrato ou orçamento aprovado (+ aditivos), um valor por obra
+      const valorTotalAprovado = Array.from(valoresObra.entries())
+        .filter(([id]) => obraIds.has(id))
+        .reduce((s, [, v]) => s + valorFechado(v), 0);
 
+      // Medido (medições aprovadas/enviadas) das obras filtradas
+      const valorMedido = (medicoesRaw as Array<{ obra_id: string; valor_medido: number; status: string }>)
+        .filter((m) => obraIds.has(m.obra_id) && m.status !== "rascunho" && m.status !== "rejeitada")
+        .reduce((s, m) => s + Number(m.valor_medido || 0), 0);
 
       const catDe = (s: string) => statusCategoria.get(s) ?? null;
       const valorEmOrcamento = sumValueByObras((s) => catDe(s) === "nao_iniciada");
@@ -316,7 +311,9 @@ export function useDashboardData(filters: DashboardFilters) {
       return {
         obras: obrasFiltered,
         valorPorObra,
+        valoresObra,
         porEtapa,
+        statusCategoria,
         responsibleByObra,
         pessoas,
         nfs: nfs.filter((n) => obraIds.has(n.obra_id)),
@@ -345,6 +342,7 @@ export function useDashboardData(filters: DashboardFilters) {
         valorPendenteTerc,
         valorTotalOrcado,
         valorTotalAprovado,
+        valorMedido,
         valorTotalFaturado,
         valorRecebido,
         valorEmAberto,
