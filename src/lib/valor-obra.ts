@@ -36,7 +36,8 @@ export function calcularValoresObras(
 
   const orcPorObra = new Map<string, { valor: number; aprovado: boolean; created: string }>();
   for (const o of orcamentos) {
-    const valor = num(o.valor_total ?? o.valor_orcamento);
+    // valor_total pode vir zerado em orçamentos lançados só com valor: usa o que estiver preenchido
+    const valor = num(o.valor_total) > 0 ? num(o.valor_total) : num(o.valor_orcamento);
     const aprovado = o.status === "aprovado";
     const created = o.created_at ?? "";
     const atual = orcPorObra.get(o.obra_id);
