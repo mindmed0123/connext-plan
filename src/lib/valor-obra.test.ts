@@ -33,4 +33,9 @@ describe("valor da obra", () => {
     expect(m.get("a")!.valor).toBe(300);
     expect(valorFechado(m.get("a"))).toBe(0);
   });
+
+  it("orçamento com total zerado usa o valor lançado (caso Infraestrutura Mogi)", () => {
+    const m = calcularValoresObras([{ obra_id: "a", status: "aprovado", valor_orcamento: 342000, valor_total: 0 }], [], []);
+    expect(m.get("a")!.valor).toBe(342000);
+  });
 });
