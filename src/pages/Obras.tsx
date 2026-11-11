@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileSignature, Plus, Search } from "lucide-react";
@@ -15,19 +15,23 @@ import { ORIGEM_LABEL, getRegiaoLabel } from "@/lib/obra-helpers";
 import { useObraConfig } from "@/hooks/useObraConfig";
 import { ObraFormDialog } from "@/components/obras/ObraFormDialog";
 import { formatDateBR } from "@/lib/date";
+import { calcularValoresObras, ADENDO_ATIVO } from "@/lib/valor-obra";
 
 export default function Obras() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const { statuses, rotulos } = useObraConfig();
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [params] = useSearchParams();
+  // Vindo do Painel: ?status=<etapa> ou ?etapa=nao_iniciada|em_execucao|concluida
+  const [statusFilter, setStatusFilter] = useState<string>(params.get("status") ?? "all");
+  const [etapaFilter, setEtapaFilter] = useState<string>(params.get("etapa") ?? "all");
   const [regiaoFilter, setRegiaoFilter] = useState<string>("all");
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
   const [openForm, setOpenForm] = useState(false);
 
   const { data: obras, isLoading } = useQuery({
-    queryKey: ["obras", { search, statusFilter, regiaoFilter, mostrarArquivadas }],
+    queryKey: ["obras", { search, statusFilter, etapaFilter, regiaoFilter, mostrarArquivadas, nStatus: statuses.length }],
     queryFn: async () => {
       let q: any = supabase
         .from("obras")
@@ -35,6 +39,10 @@ export default function Obras() {
         .order("created_at", { ascending: false });
       if (!mostrarArquivadas) q = q.eq("arquivada", false);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      else if (etapaFilter !== "all") {
+        const chaves = statuses.filter((st) => st.categoria === etapaFilter).map((st) => st.chave);
+        if (chaves.length) q = q.in("status", chaves);
+      }
       if (regiaoFilter !== "all") q = q.eq("regiao_label", regiaoFilter);
       if (search.trim()) q = q.ilike("codigo_chamado", `%${search.trim()}%`);
       const { data, error } = await q;
@@ -54,8 +62,6 @@ export default function Obras() {
   const formatBRL = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const ADENDO_ATIVO = ["assinado", "em_execucao", "concluido"];
-
   const getValorAdendos = (adendos: Array<{ valor_total: number; status: string }> | null) =>
     (adendos ?? [])
       .filter((a) => ADENDO_ATIVO.includes(a.status))
@@ -65,27 +71,15 @@ export default function Obras() {
   const contratosVigentes = (contratos: Array<{ valor_global: number; status: string }> | null) =>
     (contratos ?? []).filter((c) => c.status !== "encerrado");
 
-  const getValorObra = (
-    orcs: Array<{ valor_orcamento: number; status: string; created_at: string }> | null,
-    adendos: Array<{ valor_total: number; status: string }> | null,
-    contratos: Array<{ valor_global: number; status: string }> | null,
-  ) => {
-    const valorAdendos = getValorAdendos(adendos);
-    // O contrato assinado manda no valor da obra; sem contrato, vale o orçamento.
-    const vigentes = contratosVigentes(contratos);
-    if (vigentes.length > 0) {
-      return vigentes.reduce((s, c) => s + Number(c.valor_global || 0), 0) + valorAdendos;
-    }
-    let valorOrc: number | null = null;
-    if (orcs && orcs.length > 0) {
-      const aprovado = orcs.find((o) => o.status === "aprovado");
-      const recente = [...orcs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-      valorOrc = Number((aprovado ?? recente).valor_orcamento);
-    }
-    if (valorOrc == null && valorAdendos === 0) return null;
-    return (valorOrc ?? 0) + valorAdendos;
+  /** Mesma regra do Painel (lib/valor-obra): contrato > orçamento aprovado > mais recente, + aditivos. */
+  const getValorObra = (o: any): number | null => {
+    const v = calcularValoresObras(
+      (o.orcamentos ?? []).map((x: any) => ({ ...x, obra_id: o.id })),
+      (o.obra_adendos ?? []).map((x: any) => ({ ...x, obra_id: o.id })),
+      (o.contratos_clientes ?? []).map((x: any) => ({ ...x, obra_id: o.id })),
+    ).get(o.id);
+    return v ? v.valor : null;
   };
-
 
   return (
     <div className="space-y-5">
@@ -109,10 +103,12 @@ export default function Obras() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setEtapaFilter("all"); }}>
           <SelectTrigger className="w-[200px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="all">
+              {etapaFilter === "em_execucao" ? "Em execução (todas)" : etapaFilter === "nao_iniciada" ? "Não iniciadas (todas)" : etapaFilter === "concluida" ? "Concluídas (todas)" : "Todos os status"}
+            </SelectItem>
             {statuses.map((s) => (
               <SelectItem key={s.chave} value={s.chave}>{s.nome}</SelectItem>
             ))}
@@ -158,7 +154,7 @@ export default function Obras() {
               <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-10">Nenhuma obra encontrada. Clique em "Nova obra" para criar.</TableCell></TableRow>
             )}
             {obras?.map((o: any) => {
-              const valor = getValorObra(o.orcamentos, o.obra_adendos, o.contratos_clientes);
+              const valor = getValorObra(o);
               const contratos = contratosVigentes(o.contratos_clientes) as any[];
               const isAprovado =
                 contratos.length > 0 ||
