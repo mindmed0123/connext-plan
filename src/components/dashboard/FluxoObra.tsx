@@ -48,7 +48,7 @@ export function FluxoObra({ data }: { data: DashboardData }) {
 
   const etapas: Etapa[] = [
     { n: 1, titulo: "Em negociação", valor: naoIniciadas.valor, detalhe: `${naoIniciadas.qtd} ${plural} antes da execução`, to: "/obras?etapa=nao_iniciada", icon: FileText, accent: "status-orcamento" },
-    { n: 2, titulo: "Fechado (contrato/aprovado)", valor: data.valorTotalAprovado, detalhe: `${qtdFechadas} ${plural} com valor fechado`, to: "/contratos", icon: FileSignature, accent: "status-aprovado", modulo: "contratos" },
+    { n: 2, titulo: "Fechado", valor: data.valorTotalAprovado, detalhe: `${qtdFechadas} ${plural} com valor fechado`, to: "/contratos", icon: FileSignature, accent: "status-aprovado", modulo: "contratos" },
     { n: 3, titulo: "Em execução", valor: execucao.valor, detalhe: `${execucao.qtd} ${plural} em andamento`, to: "/obras?etapa=em_execucao", icon: Hammer, accent: "status-execucao" },
     { n: 4, titulo: "Medido", valor: data.valorMedido, detalhe: "Medições enviadas e aprovadas", to: "/medicoes", icon: Ruler, accent: "info", modulo: "medicoes" },
     { n: 5, titulo: "Faturado (NF)", valor: data.valorTotalFaturado, detalhe: `${concluidas.qtd} ${plural} concluídas`, to: "/faturamento", icon: Receipt, accent: "status-nf", modulo: "faturamento" },
@@ -67,7 +67,7 @@ export function FluxoObra({ data }: { data: DashboardData }) {
         </p>
       </CardHeader>
       <CardContent>
-        <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7 xl:grid-cols-4">
           {visiveis.map((e, i) => {
             const Icon = e.icon;
             return (
@@ -83,14 +83,14 @@ export function FluxoObra({ data }: { data: DashboardData }) {
                     </span>
                     <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: `hsl(var(--${e.accent}))` }} />
                   </div>
-                  <p className="mt-2 truncate text-lg font-bold tabular-nums">{formatCurrency(e.valor)}</p>
+                  <p className="mt-2 whitespace-nowrap text-[15px] font-bold leading-tight tabular-nums">{formatCurrency(e.valor)}</p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">{e.detalhe}</p>
                   <span className="mt-auto pt-2 text-[11px] font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
                     Abrir →
                   </span>
                 </Link>
                 {i < visiveis.length - 1 && (
-                  <ChevronRight className="absolute -right-2.5 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 text-muted-foreground xl:block" />
+                  <ChevronRight className="absolute -right-2.5 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 text-muted-foreground 2xl:block" />
                 )}
               </li>
             );
