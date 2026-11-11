@@ -16,6 +16,7 @@ import { AgendaRecebimentos } from "@/components/dashboard/AgendaRecebimentos";
 import { AgendaPagamentos } from "@/components/dashboard/AgendaPagamentos";
 import { RankingTerceirizados, RankingResponsaveis } from "@/components/dashboard/Rankings";
 import { ChartsBlock } from "@/components/dashboard/ChartsBlock";
+import { FluxoObra } from "@/components/dashboard/FluxoObra";
 import { AvancoObras } from "@/components/dashboard/AvancoObras";
 import { SaldosContas } from "@/components/dashboard/SaldosContas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,6 +80,9 @@ export default function Dashboard() {
         pessoas={data?.pessoas ?? []}
       />
 
+      {/* BLOCO 0 — Fluxo da obra, etapa por etapa */}
+      <FluxoObra data={data} />
+
       {/* BLOCO 1 — Resumo executivo */}
       <section>
         <SectionTitle>Resumo executivo</SectionTitle>
@@ -86,8 +90,8 @@ export default function Dashboard() {
           {showCard("obras_ativas") && <KpiCard title="Obras ativas" value={String(data?.totalAtivas ?? "—")} icon={HardHat} accent="primary" to="/obras" />}
           {showCard("obras_executadas") && <KpiCard title="Obras finalizadas" value={String(data?.qtdObrasExecutadas ?? 0)} hint={formatCurrency(data?.valorObrasExecutadas)} icon={CheckCircle2} accent="success" to="/obras" />}
           {showCard("em_orcamento") && <KpiCard title="Em orçamento" value={formatCurrency(data?.valorEmOrcamento)} hint="Aguardando aprovação" icon={FileText} accent="status-orcamento" to="/orcamentos" />}
-          {showCard("em_execucao") && <KpiCard title="Em execução" value={formatCurrency(data?.valorEmExecucao)} icon={Hammer} accent="status-execucao" to="/execucoes" />}
-          {showCard("finalizadas") && <KpiCard title="Finalizadas aguardando" value={formatCurrency(data?.valorFinalizadasAguard)} hint={`${data?.qtdFinalizadasAguard ?? 0} obras travadas`} icon={CheckCircle2} accent="status-finalizado" />}
+          {showCard("em_execucao") && <KpiCard title="Em execução" value={formatCurrency(data?.valorEmExecucao)} icon={Hammer} accent="status-execucao" to="/obras?etapa=em_execucao" />}
+          {showCard("finalizadas") && <KpiCard title="Finalizadas aguardando" value={formatCurrency(data?.valorFinalizadasAguard)} hint={`${data?.qtdFinalizadasAguard ?? 0} obras travadas`} icon={CheckCircle2} accent="status-finalizado" to="/obras?etapa=concluida" />}
           {showCard("total_a_receber") && <KpiCard title="Total a receber" value={formatCurrency(data?.valorAReceber)} icon={Wallet} accent="success" to="/recebimentos" />}
           {showCard("recebimentos_15d") && <KpiCard title="Recebimentos 15 dias" value={formatCurrency(data?.valorReceber15d)} icon={Clock} accent="info" to="/recebimentos" />}
           {showCard("pago_terceirizados") && <KpiCard title="Pago a terceirizados" value={formatCurrency(data?.valorPagoTerc)} icon={TrendingUp} accent="status-pago" to="/financeiro" />}
@@ -114,8 +118,8 @@ export default function Dashboard() {
           <PipelineFinanceiro data={data!} />
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <KpiCard title="Total orçado" value={formatCurrency(data?.valorTotalOrcado)} icon={FileText} accent="status-orcamento" />
-            <KpiCard title="Total aprovado" value={formatCurrency(data?.valorTotalAprovado)} icon={CheckCircle2} accent="status-aprovado" />
+            <KpiCard title="Valor total das obras" hint="Contrato; sem contrato, orçamento" value={formatCurrency(data?.valorTotalOrcado)} icon={FileText} accent="status-orcamento" />
+            <KpiCard title="Total fechado" hint="Contratos e orçamentos aprovados" value={formatCurrency(data?.valorTotalAprovado)} icon={CheckCircle2} accent="status-aprovado" />
             <KpiCard title="Total faturado (NF)" value={formatCurrency(data?.valorTotalFaturado)} icon={Receipt} accent="status-nf" />
             <KpiCard title="Total recebido" value={formatCurrency(data?.valorRecebido)} icon={Wallet} accent="status-pago" />
             <KpiCard title="Em aberto (faturado − recebido)" value={formatCurrency(data?.valorEmAberto)} icon={Clock} accent="warning" />

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/obra-helpers";
 import { useObraConfig } from "@/hooks/useObraConfig";
@@ -20,7 +21,7 @@ export function EtapasOverview({ porEtapa }: Props) {
             const v = porEtapa.get(s.chave) ?? { qtd: 0, valor: 0 };
             const pct = (v.qtd / max) * 100;
             return (
-              <div key={s.chave} className="grid grid-cols-12 items-center gap-3 text-sm">
+              <Link key={s.chave} to={`/obras?status=${s.chave}`} className="grid grid-cols-12 items-center gap-3 rounded-md px-1 py-0.5 text-sm transition-colors hover:bg-muted/60">
                 <div className="col-span-4 flex items-center gap-2 truncate">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.cor }} />
                   <span className="truncate text-foreground">{s.nome}</span>
@@ -32,7 +33,7 @@ export function EtapasOverview({ porEtapa }: Props) {
                 </div>
                 <div className="col-span-1 text-right text-sm font-semibold tabular-nums">{v.qtd}</div>
                 <div className="col-span-2 text-right text-xs text-muted-foreground tabular-nums">{formatCurrency(v.valor)}</div>
-              </div>
+              </Link>
             );
           })}
         </div>
