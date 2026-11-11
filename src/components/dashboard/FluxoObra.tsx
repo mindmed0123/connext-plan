@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/obra-helpers";
 import { useModulos } from "@/hooks/useModulos";
 import { useObraConfig } from "@/hooks/useObraConfig";
 import type { DashboardData } from "@/hooks/useDashboardData";
+import type { ModuloChave } from "@/lib/modulos";
 
 interface Etapa {
   n: number;
@@ -15,7 +16,7 @@ interface Etapa {
   to: string;
   icon: LucideIcon;
   accent: string;
-  modulo?: string;
+  modulo?: ModuloChave;
 }
 
 /**
@@ -55,7 +56,7 @@ export function FluxoObra({ data }: { data: DashboardData }) {
     { n: 7, titulo: "A receber", valor: data.valorAReceber, detalhe: "Ainda falta entrar", to: "/recebimentos", icon: Clock, accent: "warning", modulo: "recebimentos" },
   ];
 
-  const visiveis = etapas.filter((e) => !e.modulo || moduloAtivo(e.modulo as never));
+  const visiveis = etapas.filter((e) => !e.modulo || moduloAtivo(e.modulo));
 
   return (
     <Card>
