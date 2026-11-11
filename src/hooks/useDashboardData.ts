@@ -186,11 +186,6 @@ export function useDashboardData(filters: DashboardFilters) {
       const valoresObra: Map<string, ValorObra> = calcularValoresObras(orcs, adendos, contratosCli);
       const valorPorObra = new Map<string, number>();
       for (const [id, v] of valoresObra) valorPorObra.set(id, v.valor);
-      const valorAdendosPorObra = new Map<string, number>();
-      for (const a of adendos) {
-        if (!["assinado", "em_execucao", "concluido"].includes(a.status)) continue;
-        valorAdendosPorObra.set(a.obra_id, (valorAdendosPorObra.get(a.obra_id) ?? 0) + Number(a.valor_total || 0));
-      }
 
       const sumValueByObras = (predicate: (s: ObraStatus) => boolean) =>
         obrasFiltered
@@ -209,12 +204,7 @@ export function useDashboardData(filters: DashboardFilters) {
         porEtapa.set(o.status as ObraStatus, cur);
       }
 
-      // Financeiro
-      const valorAdendosFiltrados = Array.from(valorAdendosPorObra.entries())
-        .filter(([id]) => obraIds.has(id))
-        .reduce((s, [, v]) => s + v, 0);
-
-      // Um valor por obra (orçamento aprovado quando existe), nunca a soma de versões
+      // Um valor por obra (contrato > orçamento aprovado > mais recente), nunca a soma de versões
       const valorTotalOrcado = Array.from(valorPorObra.entries())
         .filter(([id]) => obraIds.has(id))
         .reduce((s, [, v]) => s + v, 0);
